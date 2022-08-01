@@ -1,0 +1,1400 @@
+{extend name="platform/new_base" /}
+{block name="resource"}
+
+{/block}
+{block name="main"}
+<style>
+    .label-danger a{padding-top:5px;}
+    #editIcon-pa{
+        position: absolute;
+        left: 385px;
+        top: 10px;
+        width: 18px;
+        height: 18px;
+        display: none;
+    }
+    .editChange{position: relative;cursor: pointer;}
+    .editChange:hover #editIcon-pa {
+        display: block;
+    }
+</style>
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">商品分类</label>
+                    <div class="v__controls">
+                        <input type="text" id="select_cname" name="select_cname" class="v__control_input J-selectCategory" placeholder="请选择分类" autocomplete="off">
+                    </div>
+                    <input type="hidden" id="category_id_1" name="category_id_1" autocomplete="off">
+                    <input type="hidden" id="category_id_2" name="category_id_2" autocomplete="off">
+                    <input type="hidden" id="category_id_3" name="category_id_3" autocomplete="off">
+                    <input type="hidden" id="select_name_hidden" name="select_name_hidden" autocomplete="off">
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">商品名称</label>
+                    <div class="v__controls">
+                        <input type="text" id="goods_name" class="v__control_input" placeholder="请输入商品名称" autocomplete="off">
+                    </div>
+                </div>
+                {if($distributionStatus==1)}
+                <div class="v__control-group">
+                    <label class="v__control-label">分销信息</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="is_distribution">
+                            <option value="">全部</option>
+                            <option value="1">参与分销</option>
+                            <option value="2">不参与分销</option>
+                            <option value="3">参与分销并设置商品独立规则</option>
+                        </select>
+                    </div>
+                </div>
+                {/if}
+                {if($globalStatus==1 || $areaStatus==1 || $teamStatus==1)}
+                <div class="v__control-group">
+                    <label class="v__control-label">分红信息</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="is_bonus">
+                            <option value="">全部</option>
+                            <option value="1">参与分红</option>
+                            <option value="2">不参与分红</option>
+                            <option value="3">参与分红并设置商品独立规则</option>
+                        </select>
+                    </div>
+                </div>
+                {/if}
+                <div class="v__control-group">
+                    <label class="v__control-label">商品标签</label>
+                    <div class="v__controls">
+                    	<div class="checkbox_three" style="margin-top: 6px;">
+                            <label class="checkbox-inline"><input type="checkbox" name="label_list" value="1">推荐</label>
+	                        <label class="checkbox-inline"><input type="checkbox" name="label_list" value="2">新品</label>
+	                        <label class="checkbox-inline"><input type="checkbox" name="label_list" value="3">热卖</label>
+	                        <label class="checkbox-inline"><input type="checkbox" name="label_list" value="4">促销</label>
+	                        <label class="checkbox-inline"><input type="checkbox" name="label_list" value="5">包邮</label>
+	                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i>搜索</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<!-- page -->
+<ul class="nav nav-tabs v-nav-tabs fs-12">
+    <li role="presentation" {if !$type} class="active" {/if}><a href="{:__URL('PLATFORM_MAIN/goods/selfgoodslist')}" class="flex-auto-center">全部<br><span class="J-all"></span></a></li>
+    <li role="presentation" {if condition="$type eq 1"} class="active" {/if}><a href="{:__URL('PLATFORM_MAIN/goods/selfgoodslist','type=1')}" class="flex-auto-center">出售中<br><span class="J-online"></span></a></li>
+    <li role="presentation" {if condition="$type eq 2"} class="active" {/if}><a href="{:__URL('PLATFORM_MAIN/goods/selfgoodslist','type=2')}" class="flex-auto-center">仓库中<br><span class="J-offline"></span></a></li>
+    <li role="presentation" {if condition="$type eq 3"} class="active" {/if}><a href="{:__URL('PLATFORM_MAIN/goods/selfgoodslist','type=3')}" class="flex-auto-center">已售罄<br><span class="J-soldout"></span></a></li>
+    <li role="presentation" {if condition="$type eq 4"} class="active" {/if}><a href="{:__URL('PLATFORM_MAIN/goods/selfgoodslist','type=4')}" class="flex-auto-center">库存预警<br><span class="J-alarm"></span></a></li>
+</ul>
+<div class="mb-10 flex flex-pack-justify">
+    <div class="">
+        <a href="{:__URL('PLATFORM_MAIN/goods/addgoods')}" class="btn btn-primary"><i class="icon icon-add1"></i> 发布商品</a>
+        <!--<a class="btn btn-default" href="javascript:void(0);">
+            <label class="checkbox-inline">
+                <input type="checkbox" id="checkAll">全选
+            </label>
+        </a>-->
+        {if($goodhelperStatus==1)}
+        <a href="{:__URL('PLATFORM_MAIN/addonslist/menu_addonslist?addons=goodImportHelper')}" class="btn btn-success" target="_blank">商品助手导入</a>
+        {/if}
+
+        <select name="batch" class="form-control inline-block" id="batch" style="width:100px;vertical-align: top;">批量操作
+            <option value="" id="default">批量操作</option>
+            <option value="1">批量修改售价</option>
+            <option value="2">批量修改佣金</option>
+            <option value="3">批量修改库存</option>
+        </select>
+
+        <a class="btn btn-default online" href="javascript:void(0);">上架</a>
+        <a class="btn btn-default outline" href="javascript:void(0);">下架</a>
+        <a class="btn btn-default deleteGood" href="javascript:void(0);">删除</a>
+    </div>
+</div>
+<table class="table v-table v-table-border table-auto-center" id="selfGoodsList">
+    <thead>
+    <tr class="order-list-item">
+        <th><input type="checkbox" id="checkAll" ></th>
+        <th>ID</th>
+        <th class="col-md-4">商品</th>
+        <th>售价（积分）</th>
+        <th class="col-md-1">原价</th>
+        <th class="col-md-1">库存</th>
+        <th class="col-md-1">状态</th>
+        <th class="col-md-3 pr-14 operationLeft">操作</th>
+    </tr>
+    </thead>
+    <tbody id="goods_list">
+
+    </tbody>
+</table>
+<input type="hidden" id="pageIndex">
+<input type="hidden" id="type" value="{$type}">
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+<!-- page end  -->
+{/block}
+
+
+
+
+{block name="script"}
+<script>
+    require(['util','sotr-selector','jqueryForm'],function(util){
+        //全选
+
+            util.initPage(LoadingInfo);
+
+        function LoadingInfo(page_index) {
+
+            var start_date = $("#startDate").val();
+            var end_date = $("#endDate").val();
+//      var state = $("#state").val();
+            var goods_name = $("#goods_name").val();
+            var category_id_1 = $("#category_id_1").val();
+            var category_id_2 = $("#category_id_2").val();
+            var category_id_3 = $("#category_id_3").val();
+            var type = $("#type").val();
+            var selectGoodsLabelId = $("#selectGoodsLabelId").val();
+            var supplier_id = $("#supplier_id").val();
+            var is_distribution = $("#is_distribution").val();
+            var is_bonus = $("#is_bonus").val();
+            var label_list = '';
+            $("input[name ='label_list']:checked").each(function(){
+            	label_list += $(this).val()+',';
+            });
+
+
+            $("#pageIndex").val(page_index);
+            $.ajax({
+                type: "post",
+                url: "{:__URL('PLATFORM_MAIN/goods/selfgoodslist')}",
+                data: {
+                    "page_index": page_index,
+                    "page_size": $("#showNumber").val(),
+                    "start_date": start_date,
+                    "end_date": end_date,
+//              "state": state,
+                    "goods_name": goods_name,
+                    "category_id_1": category_id_1,
+                    "category_id_2": category_id_2,
+                    "category_id_3": category_id_3,
+                    "selectGoodsLabelId": selectGoodsLabelId,
+                    "supplier_id": supplier_id,
+                    "is_distribution": is_distribution,
+                    "is_bonus": is_bonus,
+                    "label_list": label_list,
+                    "type":type
+                },
+                success: function (data) {
+                    
+                    getgoodscount();
+                    var html = '';
+                    var distributionStatus = {:json_encode($distributionStatus)};
+                    var globalStatus = {:json_encode($globalStatus)};
+                    var areaStatus = {:json_encode($areaStatus)};
+                    var teamStatus = {:json_encode($teamStatus)};
+                    if (data["data"].length > 0) {
+                        for (var i = 0; i < data["data"].length; i++) {
+                            if(data["data"][i]["goods_spec_format"].length<10){
+                                html += '<tr data-goodsid="'+data["data"][i]["goods_id"]+'" data-goodsType="'+data["data"][i]["goods_type"]+'">';
+                            }else{
+                                html += '<tr data-goodsid="'+data["data"][i]["goods_id"]+'" title="规格商品暂不支持快速编辑价格">';
+                            }
+                            html += '<td>';
+                            // html += '<input type="checkbox" value="\' + data["data"][i]["goods_id"] + \'" name="sub" data-state="\' + data["data"][i]["state"] + \'" type="checkbox">';
+                            html += '<input value="' + data["data"][i]["goods_id"] + '" data-promotion_type="' + data["data"][i]["promotion_type"] + '" name="sub" data-state="' + data["data"][i]["state"] + '" type="checkbox">';
+                            html += '</td>';
+                            html += '<td>' + data["data"][i]["goods_id"] + '</td>';
+                            html += '<td class="picword_td show_goodsname editChange">';
+                            html += '<div class="media text-left " style="position:relative;">';
+                            html += '<div class="editIcon-pa" id="editIcon-pa">';
+                            html += '<i class="icon icon-edit" data-name="'+data["data"][i]["goods_name"]+'"></i>';
+                            
+                            html += '</div>';
+                            html += '<div class="media-left"><p><img src="' + __IMG(data["data"][i]["pic_cover"]) + '" style="width:60px;height:60px;"></p></div>';
+                            html += '<div class="media-body v-media-body break-word">';
+                            html += '<div class="line-2-ellipsis line-title" style="width:300px;">';
+                            html += '<a class="a-goods-title" href="' + __URLS('SHOP_MAIN/goods/goodsinfo&goodsid=' + data["data"][i]["goods_id"]) + '" target="_blank">' + data["data"][i]["goods_name"] +'</a>';
+                            html += '<textarea class="editTextarea edit_goods_name" value="'+data["data"][i]  ["goods_name"]+'" style="height:60px;width:300px;display: none;">'+data["data"][i]["goods_name"]+'</textarea>';
+                            html += '</div>';
+                            html += '<div class="small-muted line-2-ellipsis"> </div>';
+                            html += '</div>';
+                            html += '</div>';
+                            html += '</td>';
+                            if(data["data"][i]["goods_spec_format"].length<10 && data["data"][i]["payment_type"] != 2){
+                                html += '<td class="goodsEdit">';
+                            }else{
+                                html += '<td>';
+                            }
+                            html += '<span class="editSpan">' + data["data"][i]["price"] + '积分</span>';
+                            html += '<input type="text" class="edit_price  editInput3" value="' + data["data"][i]["price"] + '" style="width: 30%;display: none">';
+                            if(data["data"][i]["goods_spec_format"].length<10 && data["data"][i]["payment_type"] != 2){
+                                html += '<span class="editIcon show_promotion_price"><i class="icon icon-edit"></i></span>';
+                            }
+                            else{
+                                html += '<span class="editIcon1"><i class="icon icon-edit"></i></span>';
+                            }
+                            html += '</td>';
+
+                            if(data["data"][i]["goods_spec_format"].length<10 && data["data"][i]["payment_type"] != 2){
+                                html += '<td class="goodsEdit">';
+                            }else{
+                                html += '<td>';
+                            }
+                            html += '<span class="editSpan">￥' + data["data"][i]["market_price"] + '</span>';
+                            html += '<input type="text" class="edit_market_price editInput3" value="' + data["data"][i]["market_price"] + '" style="width: 30%;display: none">';
+                            if(data["data"][i]["goods_spec_format"].length<10 && data["data"][i]["payment_type"] != 2){
+                                html += '<span class="editIcon show_price"><i class="icon icon-edit"></i></span>';
+                            }
+                            else{
+                                html += '<span class="editIcon1"><i class="icon icon-edit"></i></span>';
+                            }
+
+                            html += '</td>';
+                            if(data["data"][i]["goods_spec_format"].length<10 && !data["data"][i]["supplier_info"]){
+                                html += '<td class="goodsEdit">';
+                            }else{
+                                html += '<td>';
+                            }
+                            html += '<span class="editSpan">' + data["data"][i]["stock"] + '</span>';
+                            html += '<input type="text" class="edit_stock editInput3" value="' + data["data"][i]["stock"] + '" style="width: 30%;display: none">';
+                            if(data["data"][i]["goods_spec_format"].length<10 && !data["data"][i]["supplier_info"]){
+                                html += '<span class="editIcon show_stock"><i class="icon icon-edit"></i></span>';
+                            }
+                            else{
+                                html += '<span class="editIcon1"><i class="icon icon-edit"></i></span>';
+                            }
+                            html += '</td>';
+                            html += '<td>';
+                            if (data["data"][i]["state"] == 1) {
+                                html += '<a class="label-success v-label-success outline btn btn-default" data-id="'+data["data"][i]["goods_id"]+'" href="javascript:void(0);" >上架</a>';
+                            }else{
+                                html += '<a class="label-danger v-label-danger online btn btn-default" data-id="'+data["data"][i]["goods_id"]+'" href="javascript:void(0);" >下架</a>';
+                            }
+                            html += '</td>';
+
+                            html += '<td class="operationLeft fs-0">';
+                            if(data["data"][i]["state"] == 0 && data["data"][i]["supplier_operation"] == 1) {
+                                html += '<p class="btn-operation" style="color: black">供应商已删除该商品</p><br/>';
+                            }else if(data["data"][i]["state"] == 0 && data["data"][i]["supplier_operation"] == 2) {
+                                html += '<a class="btn-operation" style="color: black"">供应商已下架该商品</a><br/>';
+                            }
+                            if((data["data"][i]["state"] == 0 || data["data"][i]["state"] == 10)&& data["data"][i]["supplier_operation"]) {
+                                html += '<a class="btn-operation change_to_selfgoods" href="javascript:;" data-promotion_type="' + data["data"][i]["promotion_type"] + '" data-promotion_name="' + data["data"][i]["promotion_name"] + '" data-goods_id="'+data["data"][i]["goods_id"]+'">转为自营商品</a>';
+                            }else{
+                                html += '<a class="btn-operation" href="javascript:;" data-promotion_type="' + data["data"][i]["promotion_type"] + '" data-promotion_name="' + data["data"][i]["promotion_name"] + '" data-goods_id="'+data["data"][i]["goods_id"]+'" id="goods_edit">编辑</a>';
+                                // html +='<a class="btn-operation copy" href="javascript:void(0);"  data-clipboard-text="' + __URLS('SHOP_MAIN/goods/goodsinfo&goodsid=' + data["data"][i]["goods_id"]) + '">复制链接</a>';
+                                html +='<a class="btn-operation link-pr" data-wplatform="' + data["data"][i]["wplatForm"] + '" data-wurl="' + data["data"][i]["wurl"] + '" data-goods_id="' + data["data"][i]["goods_id"] + '" href="javascript:void(0);" > <span>链接</span> <div class="link-pos"> </div> </a>';
+                                html += '<a class="btn-operation" href="javascript:;" data-goods_id="'+data["data"][i]["goods_id"]+'" id="add_evaluate" data-eval-price="' + data["data"][i]["price"] + '" data-eval-goods_name="'+data["data"][i]["goods_name"]+'" data-eval-pic="' + __IMG(data["data"][i]["pic_cover"]) + '">添加评价</a>';
+                            }
+                            html +='<a class="btn-operation deleteGood text-red1" data-id="' + data["data"][i]["goods_id"] + '" data-promotion_type="' + data["data"][i]["promotion_type"] + '" data-promotion_name="' + data["data"][i]["promotion_name"] + '" href="javascript:void(0)">删除</a>';
+                            util.copy();
+                            html += '</td>';
+                            html += '</tr>';
+                            html += '<tr class="title-tr"><td colspan="8" class="text-right" style="border-top:0; padding: 8px 0 15px;">';
+                            if(data["data"][i]["supplier_name"]){
+                                html += '<span class="label font-color-red">供应商: '+ data["data"][i]["supplier_name"]+' </span>&nbsp;-&nbsp;';
+                            }
+                            if(data["data"][i]["wplatForm"]){
+								html += '<span class="label font-color-red">'+data["data"][i]["wplatForm"]+'采集</span>&nbsp;-&nbsp;';
+							}
+							if(data["data"][i]["is_distribution"]==1 && data["data"][i]["distribution_rule"]!=1 && distributionStatus==1){
+								html += '<span class="label font-color-red">参与分销</span>&nbsp;-&nbsp;';
+							}
+							if(data["data"][i]["is_distribution"]==1 && data["data"][i]["distribution_rule"]==1 && distributionStatus==1){
+								html += '<span class="label font-color-red">参与分销并设置商品独立规则</span>&nbsp;-&nbsp;';
+							}
+							if(((data["data"][i]["is_bonus_global"]==1 && globalStatus==1) || (data["data"][i]["is_bonus_area"]==1 && areaStatus==1) || (data["data"][i]["is_bonus_team"]==1 && teamStatus==1)) && data["data"][i]["bonus_rule"]!=1){
+								html += '<span class="label font-color-red">参与分红</span>&nbsp;-&nbsp;';
+							}
+							if(((data["data"][i]["is_bonus_global"]==1 && globalStatus==1) || (data["data"][i]["is_bonus_area"]==1 && areaStatus==1) || (data["data"][i]["is_bonus_team"]==1 && teamStatus==1)) && data["data"][i]["bonus_rule"]==1){
+								html += '<span class="label font-color-red">参与分红并设置商品独立规则</span>&nbsp;-&nbsp;';
+							}
+							if(data["data"][i]["is_recommend"]==1){
+								html += '<a href="javascript:void(0);" class="v-label-grey labels" data-label="recommend" data-id="'+data["data"][i]["goods_id"]+'">推荐</a>&nbsp;-&nbsp;';
+							}else{
+								html += '<a href="javascript:void(0);" class="v-label-danger labels" data-label="recommend" data-id="'+data["data"][i]["goods_id"]+'">推荐</a>&nbsp;-&nbsp;';
+							}
+							if(data["data"][i]["is_new"]==1){
+								html += '<a href="javascript:void(0);" class="v-label-grey labels" data-label="new" data-id="'+data["data"][i]["goods_id"]+'">新品</a>&nbsp;-&nbsp;';
+							}else{
+								html += '<a href="javascript:void(0);" class="v-label-danger labels" data-label="new" data-id="'+data["data"][i]["goods_id"]+'">新品</a>&nbsp;-&nbsp;';
+							}
+							if(data["data"][i]["is_hot"]==1){
+								html += '<a href="javascript:void(0);" class="v-label-grey labels" data-label="hot" data-id="'+data["data"][i]["goods_id"]+'">热卖</a>&nbsp;-&nbsp;';
+							}else{
+								html += '<a href="javascript:void(0);" class="v-label-danger labels" data-label="hot" data-id="'+data["data"][i]["goods_id"]+'">热卖</a>&nbsp;-&nbsp;';
+							}
+							if(data["data"][i]["is_promotion"]==1){
+								html += '<a href="javascript:void(0);" class="v-label-grey labels" data-label="promotion" data-id="'+data["data"][i]["goods_id"]+'">促销</a>&nbsp;-&nbsp;';
+							}else{
+								html += '<a href="javascript:void(0);" class="v-label-danger labels" data-label="promotion" data-id="'+data["data"][i]["goods_id"]+'">促销</a>&nbsp;-&nbsp;';
+							}
+							if(data["data"][i]["is_shipping_free"]==1){
+								html += '<a href="javascript:void(0);" class="v-label-grey labels" data-label="shipping_free" data-id="'+data["data"][i]["goods_id"]+'">包邮</a>';
+							}else{
+								html += '<a href="javascript:void(0);" class="v-label-danger labels" data-label="shipping_free" data-id="'+data["data"][i]["goods_id"]+'">包邮</a>';
+							}
+							html += '</td></tr>';
+                        }
+                    } else {
+                        html += '<tr align="center"><td colspan="8" class="h-200">暂无符合条件的数据记录</td></tr>';
+                    }
+                    $("#goods_list").html(html);
+                    util.tips();
+                    var totalpage = $("#page_count").val();
+                    if (totalpage == 1) {
+                        changeClass("all");
+                    }
+                        $('#page').paginator('option', {
+                        totalCounts: data['total_count']  // 动态修改总数
+                    });
+                    $("#pageNumber").append(html);
+                    goodListEdit();
+                }
+            });
+        }
+        $(".goods-items").mouseover(function(){
+            var index = $(this).index();
+            $(this).attr('data-goodsid').addClass('active-bg');
+            $(this).find('title-tr').addClass('active-bg')
+        })
+        $("#checkAll").on('click',function(){
+            $("#selfGoodsList input[type = 'checkbox']").prop("checked", this.checked);
+        })
+        //搜索
+        $('.search').on('click',function(){
+            util.initPage(LoadingInfo);
+        });
+        //分类
+        $('body').on('click','.J-selectCategory', function () {
+            setCategory();
+        });
+        function setCategory(){
+            var url = "{:__URL('PLATFORM_MAIN/goods/selectcategory')}";
+            util.confirm('选择分类','url:'+url, function () {
+                var cid1 = this.$content.find('#selected_c1').val();
+                var cid2 = this.$content.find('#selected_c2').val();
+                var cid3 = this.$content.find('#selected_c3').val();
+                var cname = this.$content.find('#selected_cn').val();
+                $("#category_id_1").val(cid1);
+                $("#category_id_2").val(cid2);
+                $("#category_id_3").val(cid3);
+                $("#select_cname").val(cname);
+                $("#select_name_hidden").val(cname);
+            },'large');
+        }
+        $('body').on('click','#goods_edit',function(){
+            var promotion_type = $(this).data('promotion_type');
+            var promotion_name = $(this).data('promotion_name');
+            if(promotion_name === ''){
+                promotion_name = '活动';
+            }
+            var goods_id = $(this).data('goods_id');
+//             if(!promotion_type){
+//                 window.location.href = __URL('PLATFORM_MAIN/goods/addgoods?goods_id='+goods_id);
+//             }else{
+//                 util.message('该商品参加了' + promotion_name + '，不能编辑',"danger");
+//             }
+            // by sgw 这个不判断，进入里面判断
+            window.location.href = __URL('PLATFORM_MAIN/goods/addgoods?goods_id='+goods_id);
+            //'+__URL('PLATFORM_MAIN/goods/addgoods?goods_id='+data["data"][i]["goods_id"])+'
+        })
+        //删除商品02081650907
+        $("body").on('click','.deleteGood',function(){
+            var goodsId = [];
+            if($(this).data('id')&&!isNaN($(this).data('id'))){
+                var promotion_type = $(this).data('promotion_type');
+                var promotion_name = $(this).data('promotion_name');
+                if(promotion_name === ''){
+                    promotion_name = '活动';
+                }
+                if(promotion_type){
+                    util.message('该商品参加了' + promotion_name + '，不能删除',"danger");
+                    return false;
+                }
+                goodsId.push($(this).data('id'));
+            }else{
+                var has_promote = false;
+                $("#selfGoodsList input[type = 'checkbox']:checked").each(function(){
+                    if(!$(this).data('promotion_type')){
+                        if (!isNaN($(this).val())) {
+                            goodsId.push($(this).val());
+                        }
+                    }else{
+                        $(this).attr('checked',false);
+                        has_promote = true;
+                    }
+                });
+            }
+            
+            if(goodsId.length==0){
+                util.message('请选择需要删除的商品','danger');
+                return false;
+            }
+            util.alert('是否删除此商品？',function(){
+                //util.message('删除的商品id='+goodsId)
+                $('#checkAll').prop('checked',false);
+                $.ajax({
+                    type: "post",
+                    url: "{:__URL('PLATFORM_MAIN/goods/deletegoods')}",
+                    data: {"goods_ids": goodsId.toString()},
+                    dataType: "json",
+                    async : true,
+                    success : function(data) {
+                        if (data["code"] > 0) {
+                            util.message(data["message"],'success',LoadingInfo($('#pageIndex').val()));
+                        }else{
+                            util.message(data["message"],'danger',LoadingInfo($('#pageIndex').val()));
+                        }
+                    }
+                })
+
+            })
+
+        })
+        //快速编辑
+        function goodListEdit(){
+
+            //售价
+            $(".goodsEdit").on("click",".show_promotion_price",function(){
+                $(this).siblings(".editSpan").hide();
+                $(this).siblings(".edit_price").show();
+                $(this).siblings(".edit_price").focus();
+                //  $(this).addClass("visible");
+            });
+            $(".goodsEdit").on("blur",".edit_price",function(){
+                var id = $(this).parent().parent().attr("data-goodsid");
+                var price = Number($(this).val());
+                var value = $(this).prev();
+                $(this).siblings(".editSpan").show();
+                $(this).hide();
+                $(this).siblings(".editIcon").removeClass("visible");
+                $.ajax({
+                    type: "post",
+                    data:{
+                        "id":id,
+                        "price":price,
+                        "market_price":0,
+                        "stock":0
+
+                    },
+                    url: "{:__URL('PLATFORM_MAIN/goods/quikly_edit')}",
+                    success: function (data) {
+                        if(data['code']){
+                            util.message(data['message'],'danger');
+                        }else{
+                            value.html("￥"+price+".00");
+                        }
+                    }
+                })
+            })
+
+            //市场价
+            $(".goodsEdit").on("click",".show_price",function(){
+                $(this).siblings(".editSpan").hide();
+                $(this).siblings(".edit_market_price").show();
+                $(this).siblings(".edit_market_price").focus();
+                //  $(this).addClass("visible");
+            });
+            $(".goodsEdit").on("blur",".edit_market_price",function(){
+                var id = $(this).parent().parent().attr("data-goodsid");
+                var market_price = Number($(this).val());
+                var value = $(this).prev();
+                $(this).siblings(".editSpan").show();
+                $(this).hide();
+                $(this).siblings(".editIcon").removeClass("visible");
+                $.ajax({
+                    type: "post",
+                    data:{
+                        "id":id,
+                        "price":0,
+                        "market_price":market_price,
+                        "stock":0
+                    },
+                    url: "{:__URL('PLATFORM_MAIN/goods/quikly_edit')}",
+                    success: function (data) {
+                        if(data['code']){
+                            util.message(data['message'],'danger');
+                        }else{
+                            value.html(market_price);
+                        }
+                    }
+                })
+            })
+
+            //库存
+            $(".goodsEdit").on("click",".show_stock",function(){
+                //如果是电子卡密商品，则不支持修改库存
+                var goods_type = $(this).parent().parent().attr("data-goodsType");
+                if(goods_type == 5) {
+                    util.message('电子卡密商品不支持修改库存','danger');
+                    return false;
+                }
+                $(this).siblings(".editSpan").hide();
+                $(this).siblings(".edit_stock").show();
+                $(this).siblings(".edit_stock").focus();
+                //  $(this).addClass("visible");
+            });
+            $(".goodsEdit").on("blur",".edit_stock",function(){
+                var id = $(this).parent().parent().attr("data-goodsid");
+                var stock = Number($(this).val());
+                var value = $(this).prev();
+                $(this).siblings(".editSpan").show();
+                $(this).hide();
+                $(this).siblings(".editIcon").removeClass("visible");
+                $.ajax({
+                    type: "post",
+                    data:{
+                        "id":id,
+                        "price":0,
+                        "market_price":0,
+                        "stock":stock
+                    },
+                    url: "{:__URL('PLATFORM_MAIN/goods/quikly_edit')}",
+                    success: function (data) {
+                        if(data['code']){
+                            util.message(data['message'],'danger');
+                        }else{
+                            value.html(stock);
+                        }
+                    }
+                })
+            })
+
+
+            //商品名
+            $(".editChange").on("click",function(){
+                $(this).children(".media").find(".line-title").children("a").hide().siblings(".edit_goods_name").show();
+                $(this).children(".media").find(".line-title").children("a").hide().siblings(".edit_goods_name").focus();
+                //  $(this).addClass("visible");
+            });
+            $(".editChange").on("blur",".edit_goods_name",function(){
+                var id = $(this).parent().parent().parent().parent().parent().attr("data-goodsid");
+                var name = $(this).val();
+                $(this).hide();
+                $(this).parents(".media").find(".line-title").children("a").show();
+                $.ajax({
+                    type: "post",
+                    data:{
+                        "id":id,
+                        "goods_name":name,
+                    },
+                    url: "{:__URL('PLATFORM_MAIN/goods/quikly_edit')}",
+                    success: function () {
+                    }
+                })
+                $(this).prev().text(name);
+            })
+        }
+        // 上架
+        $("body").on('click', '.online', function(){
+            var goodsId = [];
+            if($(this).data('id')&&!isNaN($(this).data('id'))){
+                goodsId.push($(this).data('id'));
+            }else{
+                $("#selfGoodsList input[type = 'checkbox']:checked").each(function(){
+                    if (!isNaN($(this).val())) {
+                        goodsId.push($(this).val());
+                    }
+                })
+            }
+            if(goodsId.length==0){
+                util.message('请选择需要上架的商品','danger');
+                return false;
+            }
+            $('#checkAll').prop('checked',false);
+            $.ajax({
+                type: "post",
+                url: "{:__URL('PLATFORM_MAIN/goods/ModifyGoodsOnline')}",
+                data: {"goods_ids": goodsId.toString()},
+                dataType: "json",
+                async : true,
+                success : function(data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"],'success',LoadingInfo($('#pageIndex').val()));
+                    }else if(data["code"] == -2){
+                        util.message('供应商商品已删除，无法上架','danger',LoadingInfo($('#pageIndex').val()));
+                    }else if(data["code"] == -3){
+                        util.message('供应商商品已下架，无法上架','danger',LoadingInfo($('#pageIndex').val()));
+                    }else{
+                        util.message(data["message"],'danger',LoadingInfo($('#pageIndex').val()));
+                    }
+                }
+            })
+        })
+        // 下架
+        $('body').on('click', '.outline', function(){
+            var goodsId = [];
+            if($(this).data('id')&&!isNaN($(this).data('id'))){
+                goodsId.push($(this).data('id'));
+            }else{
+                $("#selfGoodsList input[type = 'checkbox']:checked").each(function(){
+                    if (!isNaN($(this).val())) {
+                        goodsId.push($(this).val());
+                    }
+                })
+            }
+            
+            if(goodsId.length==0){
+                util.message('请选择需要下架的商品','danger');
+                return false;
+            }
+            $('#checkAll').prop('checked',false);
+            $.ajax({
+                type: "post",
+                url: "{:__URL('PLATFORM_MAIN/goods/ModifyGoodsOffline')}",
+                data: {"goods_ids": goodsId.toString()},
+                dataType: "json",
+                async : true,
+                success : function(data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"],'success',LoadingInfo($('#pageIndex').val()));
+                    }else{
+                        util.message(data["message"],'danger',LoadingInfo($('#pageIndex').val()));
+                    }
+                }
+            })
+
+        })
+        //获取商品各种状态的数量
+        function getgoodscount(){
+            $.ajax({
+                type: "post",
+                url: "{:__URL('PLATFORM_MAIN/goods/getgoodscount')}",
+                success: function (data) {
+                    $('.J-all').html('('+data.all+')');
+                    $('.J-online').html('('+data.sale+')');
+                    $('.J-offline').html('('+data.shelf+')');
+                    $('.J-soldout').html('('+data.soldout+')');
+                    $('.J-alarm').html('('+data.alarm+')');
+                }
+            })
+        }
+		//修改标签
+        $('body').on('click', '.labels', function(){
+            var label =  $(this).data('label');
+            var id =  $(this).data('id');
+            $.ajax({
+                type: "post",
+                url: "{:__URL('PLATFORM_MAIN/goods/editLabel')}",
+                data: {"label": label,"goods_id":id},
+                dataType: "json",
+                async : true,
+                success : function(data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"],'success',LoadingInfo($('#pageIndex').val()));
+                    }else{
+                        util.message(data["message"],'danger',LoadingInfo($('#pageIndex').val()));
+                    }
+                }
+            })
+        })
+        //当经过链接的时候再加载二维码
+        $('body').on('mouseover', '.link-pr', function(){
+            if($(this).attr('mark')){
+                return;
+            }
+            var goods_id = $(this).data('goods_id');
+            var wurl = $(this).data('wurl');
+            var wplatform = $(this).data('wplatform');
+            
+            var html = '<div class="link-arrow">' +
+            ' <form class="form-horizontal"> ';
+            if('{$wap_status}' == 1){
+                html += '<div class="form-group"> <label class="col-md-2 control-label">手机端</label> <div class="col-md-10"> <div class="input-group"> <input class="form-control" type="text" disabled value="' + __URLS('SHOP_MAIN' + '{$wap_url["goods_detail"]}') + '?goods_id='+ goods_id +'"> <span class="input-group-btn btn btn-primary bbllrr0 copy" data-clipboard-text="' + __URLS('SHOP_MAIN' + '{$wap_url["goods_detail"]}') + '?goods_id='+ goods_id +'">复制链接</span> </div> </div> </div>';
+            }
+
+            if('{$is_pc_use}' == 1){
+                html += ' <div class="form-group"> <label class="col-md-2 control-label">电脑端</label> <div class="col-md-10"> <div class="input-group"> <input class="form-control" type="text" disabled value="' + __URLS('SHOP_MAIN/goods/goodsinfo') + '?goodsid='+ goods_id +'"> <span class="input-group-btn btn btn-primary bbllrr0 copy" data-clipboard-text="' + __URLS('SHOP_MAIN/goods/goodsinfo') + '?goodsid='+ goods_id +'">复制链接</span> </div> </div> </div> ';
+            }
+            if('{$is_minipro}' == 1){
+                html += ' <div class="form-group"> <label class="col-md-2 control-label">小程序端</label> <div class="col-md-10"> <div class="input-group"> <input class="form-control" type="text" disabled value="' + '{$path_prex}' + '{$mp_url["goods_detail"]["url"]}' +'?'+ '{$mp_url["goods_detail"]["param"]}' +'=' + goods_id + '"> <span class="input-group-btn btn btn-primary bbllrr0 copy" data-clipboard-text="' + '{$path_prex}' + '{$mp_url["goods_detail"]["url"]}'+ '?'+  '{$mp_url["goods_detail"]["param"]}' +'=' + goods_id + '">复制链接</span> </div> </div> </div> ';
+            }
+            if(wurl && wplatform){
+                html += ' <div class="form-group"> <label class="col-md-2 control-label">'+wplatform+'</label> <div class="col-md-10"> <div class="input-group"> <input class="form-control" type="text" disabled value="' +wurl + '"> <span class="input-group-btn btn btn-primary bbllrr0 copy" data-clipboard-text="' +wurl+'">复制链接</span> </div> </div> </div> ';
+            }
+            if('{$wap_status}' == 1) {
+                html += '</form> ' +
+                    '<div class="flex link-flex"> ' +
+                    '<div class="flex-1"> <div class="mb-04"><img src="' + __URL(PLATFORMMAIN + '/goods/getGoodsDetailQr') + '?goods_id=' + goods_id + '&qr_type=1&wap_path=' + '{$wap_url["goods_detail"]}' + '" class="qr-img"></div> <p>(手机端二维码)</p> </div> ';
+            }
+            if('{$is_minipro}' == 1){
+                html += '<div class="flex-1"> <div class="mb-04"><img src="'+ __URL(PLATFORMMAIN + '/goods/getGoodsDetailQr') +'?goods_id='+ goods_id +'&qr_type=2&mp_path=' + '{$mp_url["goods_detail"]["url"]}' + '" class="qr-img"></div> <p>(小程序二维码)</p> </div>';
+            }
+            html += ' </div> </div>';
+            $(this).find('.link-pos').html(html);
+            $(this).attr('mark', true);
+            mark = true;
+        })
+        //添加评论
+        $('body').on('click','#add_evaluate',function(){
+            var goods_id = $(this).data('goods_id');
+            var goods_name = $(this).data('eval-goods_name');
+            var pic = $(this).data('eval-pic');
+            var price = $(this).data('eval-price');
+
+            //弹窗
+            var html = '<form action="" class="form-horizontal padding-15" id="evaluate_goods" onsubmit="return check()" enctype="multipart/form-data" method="post" >';
+            html += '<div class="alert alert-tips alert-dismissible" role="alert">\n' +
+                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>\n' +
+                '<a>&nbsp;评价将会在商品详情中展示，评分也会统计在内。</a>\n' +
+                '</div>'
+            html += '<td>';
+            html += '<div class="media text-left">';
+            html += '<div class="editIcon-pa">';
+            html += '</div>';
+            html += '<div class="media-left"><p><img src="' + pic + '" style="width:60px;height:60px;"></p></div>';
+            html += '<div class="media-body break-word">';
+            html += '<div class="line-2-ellipsis line-title">';
+            html += '<a class="a-goods-title">' + goods_name + '</a>';
+            html += '<p><span class="text-bright">¥ '+ price +'</span></p>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '</td>';
+            html += '<td>';
+            html += '<td><br/></td>'
+            html += '<div class="form-group"><label class="col-md-2 control-label">会员名称</label>' +
+                '<div class="col-sm-8"><input class=" form-control" type="text" id="eval_user_name" name="user_name">';
+            html += '<p class="help-block mb-0">显示在商品评价的名称，不设置则系统默认</p></div></div>' ;
+            html += '</td>';
+
+            html += '<div class="form-group">\n' +
+                '<label class="col-md-2 control-label">会员头像</label>\n' +
+                '<div class="col-md-8">\n' +
+                '<div class="">\n' +
+                '<div class="">\n' +
+                '<div class="picture-list" id="head_pics">\n' +
+                '<a href="javascript:void(0);" class="plus-box" data-toggle="singlePicture"><i class="icon icon-plus"></i></a>\n' +
+                '</div>\n' +
+                '</div>\n' +
+                '</div>\n' +
+                '<input type="text" class="visibility" id="visibility1" name="picture1" required data-visi-type="singlePicture">\n' +
+                '</div>\n' +
+                '</div>';
+            html += '</td>';
+            html += '<td>';
+            html += '<div class="form-group">\n' +
+                '<label class="col-md-2 control-label">评分</label>\n' +
+                '<div class="col-md-8" >\n' +
+                '<label class="radio-inline">\n' +
+                '<input type="radio" name="evaluate" class="evaluate"  value="5" checked="checked"> 好评\n' +
+                '</label>\n' +
+                '<label class="radio-inline">\n' +
+                '<input type="radio" name="evaluate" class="evaluate" value="3" > 中评\n' +
+                '</label>\n' +
+                '<label class="radio-inline">\n' +
+                '<input type="radio" name="evaluate" class="evaluate"  value="1"> 差评\n' +
+                '</label>\n' +
+                '</div>\n' +
+                '</div>'
+            html += '</td>';
+            html += '<td>';
+            html += '<div class="form-group">\n' +
+                '<label class="col-md-2 control-label">备注</label>\n' +
+                '<div class="col-md-8" ><textarea id="eval_note" class="form-control" rows="4" placeholder="输入备注的内容"></textarea>' +
+                '</div>\n' +
+                '</div>'
+            html += '</td>';
+
+            html += '<td>';
+            html += '<div class="form-group">\n' +
+                '<label class="col-md-2 control-label">商品附图</label>\n' +
+                '<div class="col-md-8">\n' +
+                '<div class="">\n' +
+                '<div class="">\n' +
+                '<div class="picture-list" id="goods_pics">\n' +
+                '<a href="javascript:void(0);" class="plus-box" data-toggle="multiPicture"><i class="icon icon-plus"></i></a>\n' +
+                '</div>\n' +
+                '</div>\n' +
+                '</div>\n' +
+                '<input type="text" class="visibility" id="visibility2" name="picture2" required data-visi-type="multiPicture">\n' +
+                '</div>\n' +
+                '</div>';
+            html += '</td>';
+            html += '</form>';
+            //提交文件
+            util.confirm('添加评价',html,function(){
+                var user_name = $("#eval_user_name").val();
+                var evaluate = $(".evaluate:checked").val();
+                var note = $("#eval_note").val();
+                // 头像 - id
+                var user_headimg_id = $("#head_pics").find('i').data('id')
+                //商品附图id
+                var goods_id_arr = "";
+                var goods_obj = $("#goods_pics").children("input[name='upload_img_id']");
+                for (var $i = 0; $i < goods_obj.length; $i++) {
+                    var $checkObj = $(goods_obj[$i]);
+                    if (goods_id_arr == "") {
+                        goods_id_arr = $checkObj.val();
+                    } else {
+                        goods_id_arr += "," + $checkObj.val();
+                    }
+                }
+                $.ajax({
+                    type: "POST",
+                    dataType: "json",
+                    url: "{:__URL('PLATFORM_MAIN/goods/addEvaluate')}",
+                    data:{
+                        "goods_id":goods_id,
+                        "user_name":user_name,
+                        "evaluate":evaluate,
+                        "note":note,
+                        "user_headimg_id":user_headimg_id,
+                        "goods_pics":goods_id_arr,
+                        "goods_name":goods_name,
+                        "goods_price":price,
+                    },
+                    success: function (data) {
+                        if (data.code == 1) {
+                            util.message(data.message, 'success', function(){
+                                location.reload();
+                            });
+                        } else {
+                            util.message(data.message, 'danger');
+                        }
+                    }
+                });
+            })
+
+        });
+        //批量操作
+        $('#batch').change(function () {
+            var data = {};
+            var type = $('#batch').val();
+            var goodsId = [];
+
+            if($(this).data('id')&&!isNaN($(this).data('id'))){
+                goodsId.push($(this).data('id'));
+            }else{
+                $("#selfGoodsList input[type = 'checkbox']:checked").each(function(){
+                    if (!isNaN($(this).val())) {
+                        goodsId.push($(this).val());
+                    }
+                })
+            }
+
+            if(goodsId.length==0){
+                util.message('请选择需要批量修改的商品','danger');
+                $('#default').attr('selected',true);
+                return false;
+            }
+            $('#checkAll').prop('checked',false);
+
+
+           if(type == 1) {
+               //修改售价
+               var text = '批量修改售价';
+                var html = '<div class="form-horizontal padding-15">';
+                html += '<div class="form-group">';
+                html += '<label class="col-md-2 control-label">修改方式</label>';
+                html += '<div class="col-md-10" >';
+                html += '<label class="radio-inline"><input type="radio" name="edit_type" value="1" checked>按公式修改</label>';
+                html += '<label class="radio-inline"><input type="radio" name="edit_type" value="2">统一价格</label>';
+                html += '</div></div>';
+
+                html += '<div class="form-group gongshi">';
+                html += '<label class="col-md-2 control-label">修改内容</label>';
+                html += '<div class="col-md-10">';
+                html += '<div class="flex flex-align-center">';
+                html += '<span class="" >当前售价</span>';
+                html += '<select name="sign" class="form-control ml-10" id="sign" style="width: 60px;">' +
+                   '<option value="1">+</option>' +
+                   '<option value="2">-</option>' +
+                   '<option value="3">*</option>' +
+                   '<option value="4">/</option>' +
+                   '</select>';
+               html += '<div class="input-group"><input type="number" class="form-control ml-10" required name="price1" value="" style="width: 120px;"><div class="input-group-addon">元</div></div>';
+               html += '<span class="ml-10" >=  最终售价</span>';
+               html += '</div>';
+               html += '<div class="" >';
+               html += '<label class="radio-inline"><input type="radio" name="decimal_type" value="1" checked>尾数四舍五入</label>';
+               html += '<label class="radio-inline"><input type="radio" name="decimal_type" value="2">尾数进一</label>';
+               html += '</div>';
+               html += '</div>';
+               html += '</div>';
+
+               html += '<div class="form-group tongyi hide">';
+               html += '<label class="col-md-2 control-label">修改内容</label>';
+               html += '<div class="col-md-10">';
+               html += '<div class="flex flex-align-center">';
+               html += '<span class="">统一价格</span>';
+               html += '<div class="input-group"><input type="number" class="form-control ml-10" required name="price2" value="" style="width: 120px;"><div class="input-group-addon">元</div></div>';
+               html += '</div>';
+               html += '</div>';
+               html += '</div>';
+
+               html += '</div>';
+           }else if(type == 3) {
+               //修改库存
+               var text = '批量修改库存';
+               var html = '<div class="form-horizontal padding-15">';
+               html += '<div class="form-group">';
+               html += '<label class="col-md-2 control-label">修改方式</label>';
+               html += '<div class="col-md-10" >';
+               html += '<label class="radio-inline"><input type="radio" name="edit_type" value="1" checked>按公式修改</label>';
+               html += '<label class="radio-inline"><input type="radio" name="edit_type" value="2">统一库存</label>';
+               html += '</div></div>';
+
+               html += '<div class="form-group gongshi">';
+               html += '<label class="col-md-2 control-label">修改内容</label>';
+               html += '<div class="col-md-10">';
+               html += '<div class="flex flex-align-center">';
+               html += '<span class="" >当前库存</span>';
+               html += '<select name="sign" class="form-control ml-10" id="sign" style="width: 60px;">' +
+                   '<option value="1">+</option>' +
+                   '<option value="2">-</option>' +
+                   '</select>';
+               html += '<div class="input-group"><input type="number" class="form-control ml-10" required name="stock1" value="" style="width: 120px;"><div class="input-group-addon">件</div></div>';
+               html += '<span class="ml-10" >=  最终库存</span>';
+               html += '</div>';
+               html += '</div>';
+               html += '</div>';
+
+               html += '<div class="form-group tongyi hide">';
+               html += '<label class="col-md-2 control-label">修改内容</label>';
+               html += '<div class="col-md-10">';
+               html += '<div class="flex flex-align-center">';
+               html += '<span class="">统一库存</span>';
+               html += '<div class="input-group"><input type="number" class="form-control ml-10" required name="stock2" value="" style="width: 120px;"><div class="input-group-addon">件</div></div>';
+               html += '</div>';
+               html += '</div>';
+               html += '</div>';
+
+               html += '</div>';
+           }
+
+            if(type == 1 || type == 3) {
+                util.confirm(text,html,function(){
+                    if(type == 1) {
+                        //修改价格
+                        var edit_type = $("input[name=edit_type]:checked").val();
+                        var sign = $("#sign").val();
+                        if(edit_type == 1) {
+                            //按公式修改
+                            var price = $("input[name='price1']").val();
+                            if(price == '') {
+                                util.message('价格不能为空', 'danger');
+                                return false;
+                            }
+                        }else{
+                            //统一修改
+                            var price = $("input[name='price2']").val();
+                            if(price == '') {
+                                util.message('价格不能为空', 'danger');
+                                return false;
+                            }
+                        }
+                        var decimal_type = $("input[name=decimal_type]:checked").val();
+
+                        data.type = type;
+                        data.goods_ids = goodsId.toString();
+                        data.edit_type = edit_type;
+                        data.sign = sign;
+                        data.price = price;
+                        data.decimal_type = decimal_type;
+                    }else if(type == 3) {
+                        //修改库存
+                        var edit_type = $("input[name=edit_type]:checked").val();
+                        var sign = $("#sign").val();
+                        if(edit_type == 1) {
+                            //按公式修改
+                            var stock = $("input[name='stock1']").val();
+                            if(stock == '') {
+                                util.message('库存不能为空', 'danger');
+                                return false;
+                            }
+                        }else{
+                            //统一修改
+                            var stock = $("input[name='stock2']").val();
+                            if(stock == '') {
+                                util.message('库存不能为空', 'danger');
+                                return false;
+                            }
+                        }
+
+                        data.type = type;
+                        data.goods_ids = goodsId.toString();
+                        data.edit_type = edit_type;
+                        data.sign = sign;
+                        data.stock = stock;
+                    }
+                    $.ajax({
+                        type: "POST",
+                        dataType: "json",
+                        url: "{:__URL('PLATFORM_MAIN/goods/batchOperation')}",
+                        data:data,
+                        success: function (data) {
+                            if (data.code == 1) {
+                                util.message(data.message, 'success', function(){
+                                    location.reload();
+                                });
+                            } else {
+                                util.message(data.message, 'danger');
+                            }
+                        }
+                    });
+                });
+            }else if(type == 2){
+                util.confirm('批量修改佣金','url:' + __URL(PLATFORMMAIN + '/goods/batchEditDistribution'),function () {
+                    var data_val = {};
+                    //是否参与分销
+                    var distribution_obj = {};
+                    var is_distribution = $('input[name=is_distribution]:checked').val();
+                    var distribution_rule = $('input[name=distribution_rule]').is(':checked') ? 1 : 2;
+                    var recommend_type = $('input[name=recommend_type]:checked').val();
+                    var level_rule = $('input[name=level_rule]').is(':checked') ? 1 : 2;
+                    data_val.is_distribution = is_distribution;
+                    data_val.distribution_rule = distribution_rule;
+                    //分销复购独立设置
+                    var buyagain_distribution_obj = {};
+                    var buyagain = $('input[name=buyagain]').is(':checked') ? 1 : 2; //是否开启复购
+                    var buyagain_level_rule = $('input[name=buyagain_level_rule]').is(':checked') ? 1 : 2; //是否开启等级复购
+                    var buyagain_recommend_type = $('input[name=buyagain_recommend_type]:checked').val(); //复购返佣类型
+                    data_val.buyagain = buyagain;
+                    data_val.buyagain_level_rule = buyagain_level_rule;
+                    data_val.buyagain_recommend_type = buyagain_recommend_type;
+                    if(buyagain == "1" && buyagain_recommend_type && buyagain_level_rule == 2){
+                        if (buyagain_recommend_type == 1) {
+                            var buyagain_first_rebate = $('#buyagain_first_rebate').val() == '' ? '0' : $('#buyagain_first_rebate').val();
+                            var buyagain_second_rebate = $('#buyagain_second_rebate').val() == '' ? '0' : $('#buyagain_second_rebate').val();
+                            var buyagain_third_rebate = $('#buyagain_third_rebate').val() == '' ? '0' : $('#buyagain_third_rebate').val();
+                            var buyagain_first_point = $('#buyagain_first_point').val() == '' ? '0' : $('#buyagain_first_point').val();
+                            var buyagain_second_point = $('#buyagain_second_point').val() == '' ? '0' : $('#buyagain_second_point').val();
+                            var buyagain_third_point = $('#buyagain_third_point').val() == '' ? '0' : $('#buyagain_third_point').val();
+                        } else {
+                            var buyagain_first_rebate1 = $('#buyagain_first_rebate1').val() == '' ? '0' : $('#buyagain_first_rebate1').val();
+                            var buyagain_second_rebate1 = $('#buyagain_second_rebate1').val() == '' ? '0' : $('#buyagain_second_rebate1').val();
+                            var buyagain_third_rebate1 = $('#buyagain_third_rebate1').val() == '' ? '0' : $('#buyagain_third_rebate1').val();
+                            var buyagain_first_point1 = $('#buyagain_first_point1').val() == '' ? '0' : $('#buyagain_first_point1').val();
+                            var buyagain_second_point1 = $('#buyagain_second_point1').val() == '' ? '0' : $('#buyagain_second_point1').val();
+                            var buyagain_third_point1 = $('#buyagain_third_point1').val() == '' ? '0' : $('#buyagain_third_point1').val();
+                        }
+                        buyagain_distribution_obj.buyagain_recommend_type = buyagain_recommend_type;
+                        buyagain_distribution_obj.buyagain_level_rule = buyagain_level_rule;
+                        buyagain_distribution_obj.buyagain_first_rebate = buyagain_first_rebate;
+                        buyagain_distribution_obj.buyagain_second_rebate = buyagain_second_rebate;
+                        buyagain_distribution_obj.buyagain_third_rebate = buyagain_third_rebate;
+                        buyagain_distribution_obj.buyagain_first_point = buyagain_first_point;
+                        buyagain_distribution_obj.buyagain_second_point = buyagain_second_point;
+                        buyagain_distribution_obj.buyagain_third_point = buyagain_third_point;
+                        buyagain_distribution_obj.buyagain_first_rebate1 = buyagain_first_rebate1;
+                        buyagain_distribution_obj.buyagain_second_rebate1 = buyagain_second_rebate1;
+                        buyagain_distribution_obj.buyagain_third_rebate1 = buyagain_third_rebate1;
+                        buyagain_distribution_obj.buyagain_first_point1 = buyagain_first_point1;
+                        buyagain_distribution_obj.buyagain_second_point1 = buyagain_second_point1;
+                        buyagain_distribution_obj.buyagain_third_point1 = buyagain_third_point1;
+                        data_val.buyagain_distribution_val = JSON.stringify(buyagain_distribution_obj);
+                    }else if(buyagain == "1" && buyagain_recommend_type && buyagain_level_rule == 1){
+                        var buyagain_first_rebate = [];
+                        var buyagain_second_rebate = [];
+                        var buyagain_third_rebate = [];
+                        var buyagain_first_point = [];
+                        var buyagain_second_point = [];
+                        var buyagain_third_point = [];
+                        var buyagain_first_rebate1 = [];
+                        var buyagain_second_rebate1 = [];
+                        var buyagain_third_rebate1 = [];
+                        var buyagain_first_point1 = [];
+                        var buyagain_second_point1 = [];
+                        var buyagain_third_point1 = [];
+                        var levelids = $("#level_ids").val();
+                        var arr = levelids.split(',');
+                        if (buyagain_recommend_type == 1) {
+                            for (var jj = 0; jj < arr.length; jj++) {
+                                if ($('#buyagain_level_first_rebate_' + arr[jj]).val() == '') {
+                                    buyagain_first_rebate.push('0');
+                                } else {
+                                    buyagain_first_rebate.push($('#buyagain_level_first_rebate_' + arr[jj]).val());
+                                }
+                                if ($('#buyagain_level_second_rebate_' + arr[jj]).val() == '') {
+                                    buyagain_second_rebate.push('0');
+                                } else {
+                                    buyagain_second_rebate.push($('#buyagain_level_second_rebate_' + arr[jj]).val());
+                                }
+                                if ($('#buyagain_level_third_rebate_' + arr[jj]).val() == '') {
+                                    buyagain_third_rebate.push('0');
+                                } else {
+                                    buyagain_third_rebate.push($('#buyagain_level_third_rebate_' + arr[jj]).val());
+                                }
+                                if ($('#buyagain_level_first_point_' + arr[jj]).val() == '') {
+                                    buyagain_first_point.push('0');
+                                } else {
+                                    buyagain_first_point.push($('#buyagain_level_first_point_' + arr[jj]).val());
+                                }
+                                if ($('#buyagain_level_second_point_' + arr[jj]).val() == '') {
+                                    buyagain_second_point.push('0');
+                                } else {
+                                    buyagain_second_point.push($('#buyagain_level_second_point_' + arr[jj]).val());
+                                }
+                                if ($('#buyagain_level_third_point_' + arr[jj]).val() == '') {
+                                    buyagain_third_point.push('0');
+                                } else {
+                                    buyagain_third_point.push($('#buyagain_level_third_point_' + arr[jj]).val());
+                                }
+
+                            }
+                        } else {
+                            for (var g = 0; g < arr.length; g++) {
+
+                                if ($('#buyagain_level_first_rebate1_' + arr[g]).val() == "") {
+                                    buyagain_first_rebate1.push('0');
+                                } else {
+                                    buyagain_first_rebate1.push($('#buyagain_level_first_rebate1_' + arr[g]).val());
+                                }
+                                if ($('#buyagain_level_second_rebate1_' + arr[g]).val() == '') {
+                                    buyagain_second_rebate1.push('0');
+                                } else {
+                                    buyagain_second_rebate1.push($('#buyagain_level_second_rebate1_' + arr[g]).val());
+                                }
+                                if ($('#buyagain_level_third_rebate1_' + arr[g]).val() == '') {
+                                    buyagain_third_rebate1.push('0');
+                                } else {
+                                    buyagain_third_rebate1.push($('#buyagain_level_third_rebate1_' + arr[g]).val());
+                                }
+                                if ($('#buyagain_level_first_point1_' + arr[g]).val() == '') {
+                                    buyagain_first_point1.push('0');
+                                } else {
+                                    buyagain_first_point1.push($('#buyagain_level_first_point1_' + arr[g]).val());
+                                }
+                                if ($('#buyagain_level_second_point1_' + arr[g]).val() == '') {
+                                    buyagain_second_point1.push('0');
+                                } else {
+                                    buyagain_second_point1.push($('#buyagain_level_second_point1_' + arr[g]).val());
+                                }
+                                if ($('#buyagain_level_third_point1_' + arr[g]).val() == '') {
+                                    buyagain_third_point1.push('0');
+                                } else {
+                                    buyagain_third_point1.push($('#buyagain_level_third_point1_' + arr[g]).val());
+                                }
+                            }
+                        }
+                        buyagain_distribution_obj.buyagain_recommend_type = buyagain_recommend_type;
+                        buyagain_distribution_obj.buyagain_level_rule = buyagain_level_rule;
+                        buyagain_distribution_obj.level_ids = arr;
+                        buyagain_distribution_obj.buyagain_first_rebate = buyagain_first_rebate;
+                        buyagain_distribution_obj.buyagain_second_rebate = buyagain_second_rebate;
+                        buyagain_distribution_obj.buyagain_third_rebate = buyagain_third_rebate;
+                        buyagain_distribution_obj.buyagain_first_point = buyagain_first_point;
+                        buyagain_distribution_obj.buyagain_second_point = buyagain_second_point;
+                        buyagain_distribution_obj.buyagain_third_point = buyagain_third_point;
+                        buyagain_distribution_obj.buyagain_first_rebate1 = buyagain_first_rebate1;
+                        buyagain_distribution_obj.buyagain_second_rebate1 = buyagain_second_rebate1;
+                        buyagain_distribution_obj.buyagain_third_rebate1 = buyagain_third_rebate1;
+                        buyagain_distribution_obj.buyagain_first_point1 = buyagain_first_point1;
+                        buyagain_distribution_obj.buyagain_second_point1 = buyagain_second_point1;
+                        buyagain_distribution_obj.buyagain_third_point1 = buyagain_third_point1;
+                        data_val.buyagain_distribution_val = JSON.stringify(buyagain_distribution_obj);
+                    }else{
+                        data_val.buyagain_distribution_val = '';
+                    }
+
+                    if (distribution_rule == '1' && recommend_type && level_rule == 2) {
+                        if (recommend_type == 1) {
+                            var first_rebate = $('#first_rebate').val() == '' ? '0' : $('#first_rebate').val();
+                            var second_rebate = $('#second_rebate').val() == '' ? '0' : $('#second_rebate').val();
+                            var third_rebate = $('#third_rebate').val() == '' ? '0' : $('#third_rebate').val();
+                            var first_point = $('#first_point').val() == '' ? '0' : $('#first_point').val();
+                            var second_point = $('#second_point').val() == '' ? '0' : $('#second_point').val();
+                            var third_point = $('#third_point').val() == '' ? '0' : $('#third_point').val();
+                        } else {
+                            var first_rebate1 = $('#first_rebate1').val() == '' ? '0' : $('#first_rebate1').val();
+                            var second_rebate1 = $('#second_rebate1').val() == '' ? '0' : $('#second_rebate1').val();
+                            var third_rebate1 = $('#third_rebate1').val() == '' ? '0' : $('#third_rebate1').val();
+                            var first_point1 = $('#first_point1').val() == '' ? '0' : $('#first_point1').val();
+                            var second_point1 = $('#second_point1').val() == '' ? '0' : $('#second_point1').val();
+                            var third_point1 = $('#third_point1').val() == '' ? '0' : $('#third_point1').val();
+                        }
+                        distribution_obj.recommend_type = recommend_type;
+                        distribution_obj.level_rule = level_rule;
+                        distribution_obj.first_rebate = first_rebate;
+                        distribution_obj.second_rebate = second_rebate;
+                        distribution_obj.third_rebate = third_rebate;
+                        distribution_obj.first_point = first_point;
+                        distribution_obj.second_point = second_point;
+                        distribution_obj.third_point = third_point;
+                        distribution_obj.first_rebate1 = first_rebate1;
+                        distribution_obj.second_rebate1 = second_rebate1;
+                        distribution_obj.third_rebate1 = third_rebate1;
+                        distribution_obj.first_point1 = first_point1;
+                        distribution_obj.second_point1 = second_point1;
+                        distribution_obj.third_point1 = third_point1;
+                        data_val.distribution_val = JSON.stringify(distribution_obj);
+                    } else if (distribution_rule == '1' && recommend_type && level_rule == 1) {
+                        var first_rebate = [];
+                        var second_rebate = [];
+                        var third_rebate = [];
+                        var first_point = [];
+                        var second_point = [];
+                        var third_point = [];
+                        var first_rebate1 = [];
+                        var second_rebate1 = [];
+                        var third_rebate1 = [];
+                        var first_point1 = [];
+                        var second_point1 = [];
+                        var third_point1 = [];
+                        var levelids = $("#level_ids").val();
+                        var arr = levelids.split(',');
+                        if (recommend_type == 1) {
+                            for (var j = 0; j < arr.length; j++) {
+                                if ($('#level_first_rebate_' + arr[j]).val() == '') {
+                                    first_rebate.push('0');
+                                } else {
+                                    first_rebate.push($('#level_first_rebate_' + arr[j]).val());
+                                }
+                                if ($('#level_second_rebate_' + arr[j]).val() == '') {
+                                    second_rebate.push('0');
+                                } else {
+                                    second_rebate.push($('#level_second_rebate_' + arr[j]).val());
+                                }
+                                if ($('#level_third_rebate_' + arr[j]).val() == '') {
+                                    third_rebate.push('0');
+                                } else {
+                                    third_rebate.push($('#level_third_rebate_' + arr[j]).val());
+                                }
+                                if ($('#level_first_point_' + arr[j]).val() == '') {
+                                    first_point.push('0');
+                                } else {
+                                    first_point.push($('#level_first_point_' + arr[j]).val());
+                                }
+                                if ($('#level_second_point_' + arr[j]).val() == '') {
+                                    second_point.push('0');
+                                } else {
+                                    second_point.push($('#level_second_point_' + arr[j]).val());
+                                }
+                                if ($('#level_third_point_' + arr[j]).val() == '') {
+                                    third_point.push('0');
+                                } else {
+                                    third_point.push($('#level_third_point_' + arr[j]).val());
+                                }
+
+                            }
+                        } else {
+                            for (var g = 0; g < arr.length; g++) {
+                                if ($('#level_first_rebate1_' + arr[g]).val() == "") {
+                                    first_rebate1.push('0');
+                                } else {
+                                    first_rebate1.push($('#level_first_rebate1_' + arr[g]).val());
+                                }
+                                if ($('#level_second_rebate1_' + arr[g]).val() == '') {
+                                    second_rebate1.push('0');
+                                } else {
+                                    second_rebate1.push($('#level_second_rebate1_' + arr[g]).val());
+                                }
+                                if ($('#level_third_rebate1_' + arr[g]).val() == '') {
+                                    third_rebate1.push('0');
+                                } else {
+                                    third_rebate1.push($('#level_third_rebate1_' + arr[g]).val());
+                                }
+                                if ($('#level_first_point1_' + arr[g]).val() == '') {
+                                    first_point1.push('0');
+                                } else {
+                                    first_point1.push($('#level_first_point1_' + arr[g]).val());
+                                }
+                                if ($('#level_second_point1_' + arr[g]).val() == '') {
+                                    second_point1.push('0');
+                                } else {
+                                    second_point1.push($('#level_second_point1_' + arr[g]).val());
+                                }
+                                if ($('#level_third_point1_' + arr[g]).val() == '') {
+                                    third_point1.push('0');
+                                } else {
+                                    third_point1.push($('#level_third_point1_' + arr[g]).val());
+                                }
+                            }
+                        }
+                        distribution_obj.recommend_type = recommend_type;
+                        distribution_obj.level_rule = level_rule;
+                        distribution_obj.level_ids = arr;
+                        distribution_obj.first_rebate = first_rebate;
+                        distribution_obj.second_rebate = second_rebate;
+                        distribution_obj.third_rebate = third_rebate;
+                        distribution_obj.first_point = first_point;
+                        distribution_obj.second_point = second_point;
+                        distribution_obj.third_point = third_point;
+                        distribution_obj.first_rebate1 = first_rebate1;
+                        distribution_obj.second_rebate1 = second_rebate1;
+                        distribution_obj.third_rebate1 = third_rebate1;
+                        distribution_obj.first_point1 = first_point1;
+                        distribution_obj.second_point1 = second_point1;
+                        distribution_obj.third_point1 = third_point1;
+                        data_val.distribution_val = JSON.stringify(distribution_obj);
+                    } else {
+                        data_val.distribution_val = '';
+                    }
+
+                    var data = {};
+                    data.distribution_bonus = data_val;
+                    data.type = type;
+                    data.goods_ids = goodsId.toString();
+                    $.ajax({
+                        type: "POST",
+                        dataType: "json",
+                        url: "{:__URL('PLATFORM_MAIN/goods/batchOperation')}",
+                        data:data,
+                        success: function (data) {
+                            if (data.code == 1) {
+                                util.message(data.message, 'success', function(){
+                                    location.reload();
+                                });
+                            } else {
+                                util.message(data.message, 'danger');
+                            }
+                        }
+                    });
+                },'xlarge');
+            }
+            $('#default').attr('selected',true);
+        });
+        //修改售价
+        $('body').on('change',$("input[name='edit_type']"),function () {
+            var edit_type = $("input[name=edit_type]:checked").val();
+            if(edit_type == 1) {
+                $('.gongshi').removeClass("hide");
+                $('.tongyi').addClass("hide");
+                $("input[name='price']").attr('required', 'required')
+            }else {
+                $('.gongshi').addClass("hide");
+                $('.tongyi').removeClass("hide");
+                $("input[name='price']").attr('required', 'required')
+            }
+        });
+        //转为自营商品
+        $("body").on('click', '.change_to_selfgoods', function(){
+            var goods_id = $(this).data('goods_id');
+            util.alert('确定转为自营商品？',function(){
+                $.ajax({
+                    type: "post",
+                    url: "{:__URL('PLATFORM_MAIN/goods/changeToSelfGoods')}",
+                    data: {"goods_id": goods_id},
+                    dataType: "json",
+                    async : true,
+                    success : function(data) {
+                        if (data["code"] > 0) {
+                            util.message(data["message"],'success',LoadingInfo($('#pageIndex').val()));
+                        }else{
+                            util.message(data["message"],'danger',LoadingInfo($('#pageIndex').val()));
+                        }
+                    }
+                })
+            })
+        });
+
+    })
+
+</script>
+{/block}

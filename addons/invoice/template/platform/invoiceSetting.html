@@ -1,0 +1,129 @@
+{block name="main"}
+
+<!-- page -->
+
+<form class="form-horizontal pt-15 form-validate widthFixedForm">
+<!--    电子普通发票-->
+    <div class="form-group">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>电子普通发票</label>
+        <div class="col-md-5">
+            <div class="switch-inline">
+                <input type="checkbox" id="is_pt_show" min="0.1" name="is_pt_show" {if condition="$invoice_info.is_pt_show eq 1"}checked="checked"{/if}>
+                <label for="is_pt_show" class=""></label>
+            </div>
+            <p class="help-block mb-0">开启后会员下单时可选择开具电子普通发票。</p>
+        </div>
+    </div>
+    <div class="form-group pt_tax {if $invoice_info.is_pt_show==0}hide{/if}">
+        <label class="col-md-2 control-label">税点</label>
+        <div class="col-md-5">
+            <div class="input-group w-200">
+                <input type="number" class="form-control number-form-control" name="pt_invoice_tax" id="pt_invoice_tax" value="{$invoice_info.pt_invoice_tax}" min="0.1">
+                <div class="input-group-addon">%</div>
+            </div>
+            <p class="help-block mb-0 w-800">设置后开具增值税发票将会以订单实付金额乘以税点加收会员税费。</p>
+        </div>
+    </div>
+
+<!--    增值税专用发票-->
+    <div class="form-group">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>增值税专用发票</label>
+        <div class="col-md-5">
+            <div class="switch-inline">
+                <input type="checkbox" id="is_zy_show"  name="is_zy_show" {if condition="$invoice_info.is_zy_show eq 1"}checked="checked"{/if}>
+                <label for="is_zy_show" class=""></label>
+            </div>
+            <p class="help-block mb-0">开启后会员下单时可选择开具增值税专用发票。</p>
+        </div>
+    </div>
+    <div class="form-group zy_tax {if $invoice_info.is_zy_show==0}hide{/if}">
+        <label class="col-md-2 control-label">税点</label>
+        <div class="col-md-5">
+            <div class="input-group w-200">
+                <input type="number" class="form-control number-form-control" name="zy_invoice_tax" id="zy_invoice_tax" value="{$invoice_info.zy_invoice_tax}" min="0">
+                <div class="input-group-addon">%</div>
+            </div>
+            <p class="help-block mb-0 w-800">设置后开具增值税发票将会以订单实付金额乘以税点加收会员税费。</p>
+        </div>
+    </div>
+
+<!--    发票退款-->
+    <div class="form-group">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>发票退款</label>
+        <div class="col-md-5">
+            <div class="switch-inline">
+                <input type="checkbox" id="is_refund" name="is_refund" {if condition="$invoice_info.is_refund == 1"}checked="checked"{/if}>
+                <label for="is_refund" class=""></label>
+            </div>
+            <p class="help-block mb-0">开启后退款时将会把税费一起退还，关闭则退款时不退税费。</p>
+        </div>
+    </div>
+
+
+    <div class="form-group">
+        <label class="col-md-2 control-label"></label>
+        <div class="col-md-8">
+            <button class="btn btn-primary" id="add_invoice_config" type="submit">保存</button>
+            <a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+        </div>
+    </div>
+
+</form>
+
+<!-- page end -->
+
+{/block}
+{block name="script"}
+<script>
+    require(['util'],function(util){
+        //开关
+        $("#is_pt_show").change(function () {
+            var pt_invoice = $(this).is(':checked') ? 1 : 0;
+            if(pt_invoice==1){
+                $(".pt_tax").removeClass("hide");
+            }else{
+                $(".pt_tax").addClass("hide");
+            }
+        })
+        $("#is_zy_show").change(function () {
+            var zy_invoice = $(this).is(':checked') ? 1 : 0;
+            if(zy_invoice==1){
+                $(".zy_tax").removeClass("hide");
+            }else{
+                $(".zy_tax").addClass("hide");
+            }
+        })
+        var flag = false;
+        util.validate($('.form-validate'),function(form) {
+            var is_pt_show =  $("#is_pt_show").is(':checked') ? 1 : 0;
+            var is_zy_show =  $("#is_zy_show").is(':checked') ? 1 : 0;
+            var pt_invoice_tax =  $("#pt_invoice_tax").val() ;
+            var zy_invoice_tax =  $("#zy_invoice_tax").val();//0没有税点
+            var is_refund =  $("#is_refund").is(':checked') ? 1 : 0;//1退
+            if(flag){
+                return false;
+            }
+            flag = true;
+            $.ajax({
+                type : "post",
+                url : "{$postInvoiceSettingUrl}",
+                data : {
+                    'is_pt_show' : is_pt_show,
+                    'is_zy_show' : is_zy_show,
+                    'pt_invoice_tax' : pt_invoice_tax,
+                    'zy_invoice_tax' : zy_invoice_tax,
+                    "is_refund" : is_refund
+                },
+                async : true,
+                success : function(data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"],'success',"{:__URL('ADDONS_MAINinvoiceSetting')}");
+                    } else {
+                        util.message(data["message"],'danger');
+                    }
+                }
+            });
+        })
+    })
+</script>
+{/block}

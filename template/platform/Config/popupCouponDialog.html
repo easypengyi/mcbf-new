@@ -1,0 +1,134 @@
+<div class="coupon-diglog" id="coupon-dialog">
+  <div class="coupon-box" style="height: 380px;overflow-y: auto;">
+    <table class="table v-table table-auto-center">
+      <thead>
+        <tr class="order-list-item">
+          <th width="200">优惠券名称</th>
+          <th>门槛</th>
+          <th>面值</th>
+          <th>剩余数量/发放数量</th>
+          <th width="150">操作</th>
+        </tr>
+      </thead>
+      <tbody id="content"></tbody>
+    </table>
+  </div>
+  <nav aria-label="Page navigation" class="clearfix">
+    <ul id="page_coupon" class="pagination pull-right"></ul>
+  </nav>
+  <input type="hidden" id="selectedData" />
+</div>
+<script type="text/html" id="coupon_tpl_content">
+  <%each data as item %>
+  <tr>
+      <td> <%item.coupon_name%> </td>
+      <%if item.coupon_genre == 1 %>
+      <td>无门槛券</td>
+      <td><%item.money%>元</td>
+      <%else if item.coupon_genre == 2 %>
+      <td>满减券</td>
+      <td><%item.money%>元</td>
+      <%else if item.coupon_genre == 3 %>
+      <td>折扣券</td>
+      <td><%item.discount%>折</td>
+      <%/if%>
+      <%if item.count == 0 %>
+      <td>无限</td>
+      <%else %>
+      <td><%item.surplus%>/<%item.count%></td>
+      <%/if%>
+      <td>
+          <a href="javascript:void(0);" class="text-<%if item.isselect == '0'%>primary<%else%>danger<%/if%> curr_btn" isselect="<%item.isselect%>" data-coupon_type_id="<%item.coupon_type_id%>" ><%if item.isselect == '0'%>选择<%else%>取消选择<%/if%></a>
+      </td>
+  </tr>
+  <%/each%>
+</script>
+<script>
+  require(['util', 'tpl'], function (util, tpl) {
+    var url = ''
+    if (typeof PLATFORMMAIN != undefined && PLATFORMMAIN) {
+      url = __URL('/platform/addons/execute/addons/coupontype/controller/coupontype/action/couponTypePromotionList')
+    } else if (typeof ADMINMAIN != undefined && ADMINMAIN) {
+        url = __URL('/admin/addons/execute/addons/coupontype/controller/coupontype/action/couponTypePromotionList')
+    }
+    if (!url) {
+      return false;
+    }
+    
+    var curr_data = $('#selectedData').data() || {};// 选中数据
+    var all_data = [];
+
+    util.initPage(getCouponList, 'page_coupon')
+
+    // 推荐
+    $('#coupon-dialog').on('click', '.curr_btn', function () {
+      var newObj = {};
+      var index = 0;
+      var isselect = $(this).attr('isselect');
+      var curr_id = $(this).data('coupon_type_id');
+      if (curr_id && isselect == '1') {
+        delete curr_data.data['C' + curr_id];
+      }
+      $.each(all_data.data, function (i, e) {
+        if (index == 0) {
+          if (curr_id == e.coupon_type_id) {
+            if (isselect == '1') {
+              // 取消推荐
+              e.isselect = '0';
+            } else {
+              // 推荐
+              e.isselect = '1';
+              newObj = {
+                // coupon_genre:e.coupon_genre,
+                // coupon_name:e.coupon_name,
+                coupon_type_id:e.coupon_type_id,
+                // discount:e.discount,
+                // isselect:e.isselect,
+                // money:e.money,
+                // at_least:e.at_least,
+                isselect:e.isselect
+              };
+              index++;
+              if (newObj) {
+                if (typeof (curr_data.data) === 'undefined') {
+                  curr_data.data = {}
+                }
+                newObj = $.extend(true, {}, newObj);
+                curr_data.data['C' + curr_id] = newObj;
+              }
+            }
+          }
+        }
+      })
+      $('#coupon-dialog #content').html(tpl('coupon_tpl_content', all_data));
+      $('#coupon-dialog #selectedData').data(curr_data);
+    })
+
+    function getCouponList(page) {
+      $.ajax({
+        type: "post",
+        url: url,
+        async: true,
+        data: {
+          "page_index": page,
+        },
+        success: function (data) {
+          data.data.forEach(function (item, index, arr) {
+            item.isselect = '0';
+            for (var i in curr_data.data) {
+              if (item.coupon_type_id == curr_data.data[i].coupon_type_id) {
+                item.isselect = '1';
+              }
+            }
+          })
+          all_data = data;
+          $('#coupon-dialog #content').html(tpl('coupon_tpl_content', all_data));
+          $('#coupon-dialog #selectedData').data(curr_data);
+          $('#page_coupon').paginator('option', {
+            totalCounts: data.total_count
+          });
+        }
+      });
+    }
+  })
+</script>

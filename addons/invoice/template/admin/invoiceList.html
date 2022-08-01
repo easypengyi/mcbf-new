@@ -1,0 +1,521 @@
+{block name="resource"}
+<style>
+    .label-danger a{padding-top:5px;}
+</style>
+{/block}
+{block name="main"}
+<!-- page -->
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">发票类型</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="type"  name="type" >
+                            <option value="">请选择</option>
+                            <option value="1">电子普通发票</option>
+                            <option value="2">增值税专用发票</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">订单号</label>
+                    <div class="v__controls">
+                        <input type="text" id="order_no" name="order_no" class="v__control_input" placeholder="请输入订单号" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">抬头名称</label>
+                    <div class="v__controls">
+                        <input type="text" id="title_name" name="title_name" class="v__control_input" placeholder="请输入抬头名称 / 公司名称" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">税号</label>
+                    <div class="v__controls">
+                        <input type="text" id="taxpayer_no" name="taxpayer_no" class="v__control_input" placeholder="请输入纳税人识别号" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">发票内容</label>
+                    <div class="v__controls">
+                        <input type="text" id="content" name="content" class="v__control_input" placeholder="请输入发票内容" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">订单状态</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="actual_order_status">
+                            <option value="">全部</option>
+<!--                            <option value="0">待付款</option>-->
+                            <option value="1">待发货</option>
+                            <option value="2">待收货</option>
+                            <option value="3">已收货</option>
+                            <option value="4">已完成</option>
+<!--                            <option value="5">已关闭</option>-->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
+                        <a class="btn btn-success ml-15 dataExcel">导出Excel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<!-- page -->
+<div class="mb-20">
+    <a href="javascript:void(0);" class="btn btn-primary" id="batch_inoice">批量开票</a>
+</div>
+<!--开票-->
+
+<ul class="nav nav-tabs v-nav-tabs fs-12">
+    <li role="presentation" {if condition="$status eq 0"} class="active" {/if}><a href="{:__URL('ADDONS_MAINinvoiceList&status=0')}" class="flex-auto-center">未开票<br><span class="J-no"></span></a></li>
+    <li role="presentation" {if condition="$status eq 1"} class="active" {/if}><a href="{:__URL('ADDONS_MAINinvoiceList&status=1')}" class="flex-auto-center">已开票<br><span class="J-yes"></span></a></li>
+    <li role="presentation" {if condition="$status eq 2"} class="active" {/if}><a href="{:__URL('ADDONS_MAINinvoiceList&status=2')}" class="flex-auto-center">待处理<br><span class="J-handle"></span></a></li>
+    <li role="presentation" {if condition="$status eq 3"} class="active" {/if}><a href="{:__URL('ADDONS_MAINinvoiceList&status=3')}" class="flex-auto-center">已作废<br><span class="J-del"></span></a></li>
+</ul>
+
+<table class="table v-table table-auto-center">
+    <thead>
+    <tr class="order-list-item">
+        <!--        <th><input type="checkbox" id="checkAll"></th>-->
+        <th>订单号</th>
+        <th>发票类型</th>
+        <th>开票信息</th>
+        <th>发票内容</th>
+        <th class="col-md-2 operationLeft pr-14">操作</th>
+    </tr>
+    </thead>
+    <tbody id="list">
+
+    </tbody>
+</table>
+<input type="hidden" id="page_index">
+<input type="hidden" id="status" value="{$status}">
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util','jqueryForm'], function (util) {
+        util.initPage(getInvoiceList);
+        function getInvoiceList(page_index){
+            var type = $("#type").val();
+            var order_no = $("#order_no").val();
+            var title_name = $("#title_name").val();
+            var taxpayer_no = $("#taxpayer_no").val();
+            var content = $("#content").val();
+            var status = $("#status").val();
+            var actual_order_status = $("#actual_order_status").val();//订单实际状态
+            $.ajax({
+                type : "post",
+                url : "{$invoiceListUrl}",
+                async : true,
+                data : {
+                    "page_index" : page_index,
+                    "type":type,
+                    "order_no":order_no,
+                    "title_name":title_name,
+                    "taxpayer_no":taxpayer_no,
+                    "content":content,
+                    "status":status,
+                    "actual_order_status":actual_order_status,
+                },
+                success : function(data) {
+                    var html = '';
+                    if (data["data"].length > 0) {
+                        for (var i = 0; i < data["data"].length; i++) {
+                            html += '<tr>';
+                            if(data["data"][i]["status"] >0 && data["data"][i]["actual_order_status"] ==-1){
+                                html += '<td>' +
+                                    '<a href="' + __URL('ADMIN_MAIN/order/orderdetail&order_id=' + data["data"][i]["order_id"]) + '" class="text-primary block mt-04" target="_blank">' + data["data"][i]["order_no"] + '' +
+                                    '<a class="text-bright">待处理</a>' +
+                                    '</td>';
+                            }else{
+                                html += '<td><a href="' + __URL('ADMIN_MAIN/order/orderdetail&order_id=' + data["data"][i]["order_id"]) + '" class="text-primary block mt-04" target="_blank">' + data["data"][i]["order_no"] + '</td>';
+                            }
+                            var type = (data["data"][i]["type"] == 1) ? '电子普通发票': '增值税专用发票';
+                            html += '<td>' + type + '</td>';
+
+                            html += '<td>';
+                            if (data["data"][i]['user_tel']){
+                                html += '<p class="text-left">手机号码：' + data["data"][i]['user_tel'] + '</p>';
+                            }
+                            if (data["data"][i]['user_email']){
+                                html += '<p class="text-left">电子邮箱：' + data["data"][i]['user_email'] + '</p>';
+                            }
+                            <!-- 电子 ：个人 + 公司-->
+                            if (data["data"][i]["type"] == 1){
+                                var title = data["data"][i]["title"] == 1? "个人" : "公司";
+                                html += '<p class="text-left">发票抬头：' + title + '</p>';
+                                html += '<p class="text-left">抬头名称：' + data["data"][i]["title_name"] + '</p>';
+                                if ( data["data"][i]["title"] == 2 ){
+                                    html += '<p class="text-left">纳税人识别号：' + data["data"][i]["taxpayer_no"] + '</p>';
+                                }
+                            } else {<!-- 增值税 -->
+                                html += '<p class="text-left">公司名称：：' + data["data"][i]["company_name"] + '</p>';
+                                html += '<p class="text-left">纳税人识别号：' + data["data"][i]["taxpayer_no"] + '</p>';
+                                html += '<p class="text-left">注册地址：' + data["data"][i]["company_addr"] + '</p>';
+                                html += '<p class="text-left">注册电话：' + data["data"][i]["mobile"] + '</p>';
+                                html += '<p class="text-left">开户银行：' + data["data"][i]["bank"] + '</p>';
+                                html += '<p class="text-left">银行账户：' + data["data"][i]["card_no"] + '</p>';
+                            }
+                            // html += '<p class="text-left">接收手机：' + data["data"][i]["user_tel"] + '</p>';
+                            // html += '<p class="text-left">接收邮箱：' + data["data"][i]["user_email"] + '</p>';
+                            html += '</td>';
+                            html += '<td class="text-center col-md-3">' + data["data"][i]["content"] + '</td>';
+                            if (data["data"][i]["status"] >0 && data["data"][i]["actual_order_status"] ==-1) {
+                                html += '<td class="operationLeft"><a class="btn-operation text-red1" id="delete" href="javascript:void(0);" data-is-again="0" data-id="' + data["data"][i]["id"]+ '" data-type="'+data["data"][i]["type"]+'" data-title="'+data["data"][i]["title"]+'" data-is_upload="'+data["data"][i]["is_upload"]+'">作废</a></td>';
+                            }else if(data["data"][i]["status"] == 1){
+                                html += '<td class="operationLeft"><a class="btn-operation invoice" href="javascript:void(0);" data-is-again="1"  data-id="' + data["data"][i]["id"]+ '" data-type="'+data["data"][i]["type"]+'" data-title="'+data["data"][i]["title"]+'">重新开票</a></td>';
+                            }else if(data["data"][i]["status"] == 0) {
+                                html += '<td class="operationLeft"><a class="btn-operation invoice" href="javascript:void(0);" data-is-again="0" data-id="' + data["data"][i]["id"]+ '" data-type="'+data["data"][i]["type"]+'" data-title="'+data["data"][i]["title"]+'" data-is_upload="'+data["data"][i]["is_upload"]+'">开票</a></td>';
+                            }else {
+                                html += '<td class="operationLeft"><a class="btn-operation invoice" href="javascript:void(0);" data-is-again="0" data-id="' + data["data"][i]["id"]+ '" data-type="'+data["data"][i]["type"]+'" data-title="'+data["data"][i]["title"]+'" data-is_upload="'+data["data"][i]["is_upload"]+'"></a></td>';
+                            }
+                            html += '</tr>';
+                        }
+                    } else {
+                        html += '<tr><td colspan="6" class="h-200">暂无符合条件的数据记录</td></tr>';
+                    }
+                    $('#page').paginator('option', {
+                        totalCounts: data['total_count']  // 动态修改总数
+                    });
+                    $("#list").html(html);
+                    util.tips();
+                }
+            });
+        }
+        //搜索
+        $('.search').on('click',function(){
+            util.initPage(getInvoiceList);
+        });
+
+        /**
+         * 导出发票Excel
+         */
+        $('.dataExcel').on('click',function(){
+            var type = $("#type").val();
+            var order_no = $("#order_no").val();
+            var title_name = $("#title_name").val();
+            var taxpayer_no = $("#taxpayer_no").val();
+            var content = $("#content").val();
+            var status = $("#status").val();
+            var actual_order_status = $("#actual_order_status").val();//订单实际状态
+            window.location.href = __URL("{$invoiceExportExcelUrl}" +
+                "?type=" + type +
+                "&order_no=" + order_no +
+                "&title_name=" + title_name +
+                "&taxpayer_no=" + taxpayer_no +
+                "&content=" + content +
+                "&status=" + status+
+                "&actual_order_status=" + actual_order_status
+            );
+        })
+
+        getinvoicescount();
+        //获取商品各种状态的数量
+        function getinvoicescount(){
+            $.ajax({
+                type: "post",
+                url: "{$getInvoicesCountUrl}",
+                success: function (data) {
+                    $('.J-no').html('('+data.no+')');
+                    $('.J-yes').html('('+data.yes+')');
+                    $('.J-handle').html('('+data.handle+')');
+                    $('.J-del').html('('+data.del+')');
+                }
+            })
+        }
+
+        //开票
+        $('.table').on('click','.invoice',function(){
+/*            var is_upload = $(this).data('is_upload');//发票类型
+            if (is_upload == 2 || is_upload == 3) {
+                util.message('上传中，不能点击', 'danger');return;
+            }*/
+
+            var is_again = $(this).data('is-again');//是否重新开票
+            var t_type = $(this).data('type');//发票类型
+            var t_title = $(this).data('title');//发票抬头
+            var html = '<form action="{$invoiceConfirmImportUrl}" class="form-horizontal padding-15" id="upload_invoice_file" onsubmit="return check()" enctype="multipart/form-data" method="post" >';
+            if (t_type == 1) {<!-- 电子发票-->
+                html += '<div class="form-group"><label class="col-md-3 control-label">发票类型</label><div class="col-sm-5"><p class="form-control-static" id="i_type"></p></div></div>';
+                html += '<div class="form-group"><label class="col-md-3 control-label">发票抬头</label><div class="col-sm-5"><p class="form-control-static"  id="i_titile"></p></div></div>';
+                html += '<div class="form-group"><label class="col-md-3 control-label">抬头内容</label><div class="col-sm-5"><p class="form-control-static"  id="i_title_name"></p></div></div>';
+                if (t_title == 2) {<!--公司-->
+                    html += '<div class="form-group"><label class="col-md-3 control-label">纳税人识别号</label><div class="col-sm-5"><p class="form-control-static"  id="i_taxpayer_no"></p></div></div>';
+                }
+                html += '<div class="form-group"><label class="col-md-3 control-label">发票内容</label><div class="col-sm-5"><p class="form-control-static"  id="i_content"></p></div></div>';
+            } else {<!-- 增值专用发票-->
+                html += '<div class="form-group"><label class="col-md-3 control-label">发票类型</label><div class="col-sm-5"><p class="form-control-static" id="i_type"></p></div></div>';
+                html += '<div class="form-group"><label class="col-md-3 control-label">公司名称</label><div class="col-sm-5"><p class="form-control-static"  id="i_company_name"></p></div></div>';
+                html += '<div class="form-group"><label class="col-md-3 control-label">纳税人识别号</label><div class="col-sm-5"><p class="form-control-static"  id="i_taxpayer_no"></p></div></div>';
+                html += '<div class="form-group"><label class="col-md-3 control-label">注册地址</label><div class="col-sm-5"><p class="form-control-static"  id="i_company_addr"></p></div></div>';
+                html += '<div class="form-group"><label class="col-md-3 control-label">注册电话</label><div class="col-sm-5"><p class="form-control-static"  id="i_mobile"></p></div></div>';
+                html += '<div class="form-group"><label class="col-md-3 control-label">开户银行</label><div class="col-sm-5"><p class="form-control-static"  id="i_bank"></p></div></div>';
+                html += '<div class="form-group"><label class="col-md-3 control-label">银行账户</label><div class="col-sm-5"><p class="form-control-static"  id="i_card_no"></p></div></div>';
+                html += '<div class="form-group"><label class="col-md-3 control-label">发票内容</label><div class="col-sm-5"><p class="form-control-static"  id="i_content"></p></div></div>';
+            }
+            html += '<div class="form-group"><label class="col-md-3 control-label">开票类型</label><div class="col-md-8">';
+            html+='<label class="radio-inline"><input class="type" type="radio" name="type" value="1" {if $a}checked{/if}>上传发票</label>' +
+                '<label class="radio-inline">' + '<input class="type" type="radio" name="type" value="0" {if $a}checked{/if}>不上传发票</label>' +
+                '<p class="help-block mb-0" id="invoice_0">若开取电子发票，则需要上传发票附件，若开取纸质发票可根据实际情况再决定上传发票。</p>' +
+                '</div>';
+            html += '<div class="form-group J-file"><label class="col-md-3 control-label"><span class="text-bright">*</span>发票代码</label>' +
+                '<div class="col-sm-5"><input class=" form-control" type="text" id="tax_code" name="tax_code" required></div></div>';
+            html += '<div class="form-group J-file"><label class="col-md-3 control-label"><span class="text-bright">*</span>发票号码</label>' +
+                '<div class="col-sm-5"><input class=" form-control" type="text"  id="tax_no" name="tax_no" required></div></div>';
+            html += '<div class="form-group J-file"><label class="col-md-3 control-label"><span class="text-bright">*</span>发票文件</label>';
+            html += '<div class="col-md-8"><div class="input-group"><input class="excelPackage form-control" disabled="" type="text" id="file_name"><span class="input-group-btn">' +
+                '<button class="btn btn-info btn-file J-btnwx">上传文件<input class="fileuploads upload_file" type="file" name="image" multiple></button>' +
+                '</span></div>';
+            html += '<p class="help-block mb-0">仅支持<span class="text-bright">pdf</span>格式，上传成功后会员可在订单详情查看该发票文件。</p></div></div>';
+            html += '<input type="hidden" id="invoice_id" name="invoice_id" value="">';
+            html += '</form>';
+            loading($(this).data('id'),is_again);
+            //提交文件
+            util.confirm('开票',html,function(){
+                if (!check()) {
+                    return false;
+                }
+                $("#upload_invoice_file").ajaxSubmit({
+                    type: "post",
+                    dataType: "text",
+                    url: "{$invoiceConfirmImportUrl}",
+                    data:{
+                        "is_again":is_again
+                    },
+                    success: function (file) {
+                        var data = JSON.parse(file);
+                        if (data.code == '1') {
+                            util.message(data.message, 'success', function(){
+                                location.reload();
+                            });
+                        } else {
+                            util.message(data.message, 'danger');
+                        }
+                    }
+                });
+
+            })
+        })
+
+        //作废
+        $("body").on('click', '#delete',function () {
+            var id = $(this).data('id');
+            $.ajax({
+                type: "post",
+                url: "{$updateInvoiceStatusUrl}",
+                data:{"id":id},
+                success: function (data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"], 'success', location.reload());
+                    } else {
+                        flag = true;
+                        util.message(data["message"], 'danger');
+                    }
+                }
+            })
+        });
+
+        //批量开票
+        $("#batch_inoice").click(function () {
+            var html = '';
+            html = '<form action="{$invoiceBatchConfirmImportUrl}" class="form-horizontal padding-15" id="batch_form" onsubmit="return false" enctype="multipart/form-data" method="post" >';
+            html += '<div class="form-group">';
+            html += '<div class="pull-left col-md-3">示例文件：</div>';
+            html += '<div class="pull-left col-md-7">';
+            html += '<p><a href="{:__URL(SHOP_MAIN)}/public/invoice.xls" class="text-primary mb-04">Excel内容模版.xls</a></p>';
+            html += '<p><a href="{:__URL(SHOP_MAIN)}/public/invoice.zip" class="text-primary mb-04">发票文件压缩包.zip</a></p></div>';
+            html += '</div>';
+
+            html += '<div class="form-group ">';
+            html += '<div class="pull-left col-md-3"><span class="text-bright">*</span>Excel文件：</div>';
+            html += '<div class="col-md-9"><div class="input-group"><input class="excelPackage form-control" disabled="" type="text"><span class="input-group-btn">' +
+                '<button class="btn btn-info btn-file J-btnwx">上传文件<input id="excel_file" class="fileuploads" type="file" name="excel" multiple></button>' +
+                '</span></div>';
+            html += '<p class="help-block mb-0">支持xlsx、xls、csv格式文件。</p></div></div>';
+
+            html += '<div class="form-group">';
+            html += '<div class="pull-left col-md-3"><span class="text-bright">*</span>Zip发票文件：</div>';
+            html += '<div class="col-md-9"><div class="input-group"><input class="zipPackage form-control" disabled="" type="text"><span class="input-group-btn">' +
+                '<button class="btn btn-info btn-file J-btnwx">上传文件<input id="zip_file" class="fileuploads" type="file" name="zip" multiple></button>' +
+                '</span></div>';
+            html += '<p class="help-block mb-0">zip解压包发票文件仅支持<span class="text-bright">pdf</span>格式文件，会员可在订单详情查看发票文件。</p></div>';
+            html += '</form>';
+
+            //提交文件
+            util.confirm('批量上传',html,function(){
+                if (!check_excel()) {
+                    return false;
+                }
+                $("#batch_form").ajaxSubmit({
+                    type: "post",
+                    dataType: "text",
+                    url: "{$invoiceBatchConfirmImportUrl}",
+                    success: function (file) {
+                        var data = JSON.parse(file);
+                        if (data.code == '1') {
+                            util.message(data.message, 'success', function(){
+                                location.reload();
+                            });
+                        } else {
+                            util.message(data.message, 'danger');
+                        }
+                    }
+                });
+
+            })
+        })
+
+        // 开票类型切换
+        function selectConfig() {
+            var type = $('body').find("input[name='type']:checked").val();
+            if(type== 0){
+                $('.J-file').hide();
+            }else{
+                $('.J-file').show();
+            }
+        }
+
+        //加载开票数据
+        function loading(id, status){
+            $.ajax({
+                type:"post",
+                url : "{$invoiceListUrl}",
+                async : true,
+                data:{"id":id, "status":status},
+                success : function(data) {
+                    var data = data.data[0];
+                    if (data['is_upload'] == 1){
+                        $("input[name='type'][value='1']").prop('checked',true);
+                        $('.J-file').show();
+                    } else if (data['is_upload'] === 0) {
+                        $("input[name='type'][value='0']").prop('checked',true);
+                        $('.J-file').hide();
+                    }
+                    $("#invoice_id").val(id);//发票id
+
+                    $("input[name='type']").change(function(){
+                        selectConfig();
+                    });
+                    var t1_type = data['type']==1 ? '电子普通发票' : '增值税专用发票';
+                    var t1_title = data['title']==1 ? '个人' : '公司';
+                    $('#i_type').html(t1_type);
+                    $('#i_titile').html(t1_title);
+                    $('#i_title_name').html(data['title_name']);//内容
+                    $('#i_content').html(data['content']);//内容
+                    $('#i_taxpayer_no').html(data['taxpayer_no']);//纳税号
+                    $('#i_company_name').html(data['company_name']);//公司名
+                    $('#i_company_addr').html(data['company_addr']);//公司地址
+                    $('#i_mobile').html(data['mobile']);//电话
+                    $('#i_bank').html(data['bank']);//银行
+                    $('#i_card_no').html(data['card_no']);//账号
+                    $('#tax_code').val(data['tax_code']);//发票代码
+                    $('#tax_no').val(data['tax_no']);//发票号码
+                    $('#file_name').val(__IMG(data['file_path']));
+                }
+            });
+        }
+        //上传文件格式判断
+        $("body").on('change', '.upload_file',function () {
+            var path = $(".upload_file").val(),
+                extStart = path.lastIndexOf('.'),
+                ext = path.substring(extStart, path.length).toUpperCase();
+            if (path === '') {
+                return false;
+            }
+            //判断格式
+            if (ext !== '.PDF') {
+                $(".upload_file").val('');
+                util.message('请上传正确格式的文件', 'danger');
+                return false;
+            }
+            $('.excelPackage').val(path);
+        });
+        // 批量上传 excel,zip格式判断
+        $("body").on('change', '#excel_file',function () {
+            var path = $(this).val(),
+                extStart = path.lastIndexOf('.'),
+                ext = path.substring(extStart, path.length).toUpperCase();
+            if (path === '') {
+                return false;
+            }
+            //判断格式
+            if (ext !== '.XLSX' && ext !== '.XLS' && ext !== '.CSV') {
+                $(this).val('');
+                util.message('请上传正确格式的文件', 'danger');
+                return false;
+            }
+            $('.excelPackage').val(path);
+        });
+        $("body").on('change', '#zip_file',function () {
+            var path = $(this).val(),
+                extStart = path.lastIndexOf('.'),
+                ext = path.substring(extStart, path.length).toUpperCase();
+            if (path === '') {
+                return false;
+            }
+            //判断格式
+            if (ext !== '.ZIP') {
+                $(this).val('');
+                util.message('请上传正确格式的文件', 'danger');
+                return false;
+            }
+            $('.zipPackage').val(path);
+        });
+        //单个上传检测
+        function check() {
+            var xls = $(".upload_file").val();
+            var is_check = $("input[name='type']").is(":checked") ?1:0;//是否选中勾选开票类型
+            var checked_val =  $("input[name='type']:checked").val();//开票类型 1上传 0不上传
+            var tax_code = $("input[name='tax_code']").val();
+            var tax_no = $("input[name='tax_no']").val();
+            if (checked_val== 1 && xls.length == 0)
+            {
+                util.message('请上传文件', 'danger');
+                return false;
+            }
+            if (!is_check) {
+                util.message('选择开票类型', 'danger');
+                return false;
+            }
+            if (checked_val == 1 &&(!tax_code || !tax_no))
+            {
+                util.message('发票代码或发票号码不能为空', 'danger');
+                return false;
+            }
+            return true;
+        }
+        //批量上传检测
+        function check_excel() {
+            var xls = $("#excel_file").val();
+            var zip = $("#zip_file").val();
+            if (xls.length == 0)
+            {
+                util.message('请上传Excel文件', 'danger');
+                return false;
+            }
+            if (zip.length == 0)
+            {
+                util.message('请上传Zip文件', 'danger');
+                return false;
+            }
+            return true;
+        }
+    });
+</script>
+{/block}

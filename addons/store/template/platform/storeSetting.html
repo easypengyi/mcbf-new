@@ -1,0 +1,222 @@
+{block name="main"}
+<!-- page -->
+<ul class="nav nav-tabs v-nav-tabs" role="tablist">
+    <li role="presentation" class="active"><a href="#basic" aria-controls="basic"  data-type="basic" role="tab" data-toggle="tab" class="flex-auto-center">基本设置</a></li>
+</ul>
+<div class="tab-content pt-15">
+    <div role="tabpanel" class="tab-pane fade in active" id="basic" >
+        <form class="form-horizontal form-validate widthFixedForm">
+            <div class="form-horizontal pt-15">
+                <div class="form-group">
+                    <label class="col-md-2 control-label"><span class="text-bright">*</span>线下自提</label>
+                    <div class="col-md-5">
+                        <div class="switch-inline">
+                            <input type="checkbox" name="is_use" id="is_use" {if $info.is_use == 1}checked{/if}>
+                                   <label for="is_use" class=""></label>
+                        </div>
+                        <p class="help-block">关闭后，确认订单页将无法选择“线下自提”收货方式</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-2 control-label"><span class="text-bright">*</span>门店库存</label>
+                    <div class="col-md-5">
+                        <div>
+                            <label class="radio-inline">
+                                <input type="radio" name="stock_type" value="1" {if $info.stock_type == 1}checked{/if}> 门店独立库存
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="stock_type" value="2" {if $info.stock_type == 2}checked{/if}> 店铺统一库存
+                            </label>
+                        </div>
+                        <p class="help-block">店铺统一库存则门店无需设置库存，与店铺使用的是同一个库存，门店独立库存则需要店员在店员端设置库存并上架处理，下单后将扣除门店的库存</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2 control-label">收银/核销提成</label>
+                    <div class="col-md-5">
+                        <div class="switch-inline">
+                            <input type="checkbox" name="is_commission" id="is_commission" {if $info.is_commission == 1}checked{/if}>
+                            <label for="is_commission" class=""></label>
+                        </div>
+                        <p class="help-block">开启后，将从收银或核销的订单金额中抽一部分发放给门店或店员作为核销提成</p>
+                    </div>
+                </div>
+                <div class="rules {if $info.is_commission != 1}hide{/if}">
+                    <div class="form-group">
+                    <label class="col-md-2 control-label"><span class="text-bright">*</span>结算对象</label>
+                    <div class="col-md-5">
+                        <div>
+                            <label class="radio-inline">
+                                <input type="radio" name="settlement_type" value="1" {if $info.settlement_type == 1}checked{/if}> 员工
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="settlement_type" value="2" {if $info.settlement_type == 2}checked{/if}> 门店
+                            </label>
+                        </div>
+                            <p class="help-block">店员工：员工收银或核销的订单算自己的业绩提成，提成可自行提现 <br />门店：该门店所有的收银或核销订单提成统一结算给门店，由拥有提现权限的员工提现</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-2 control-label"><span class="text-bright">*</span>收银计算方式</label>
+                        <div class="col-md-5">
+                            <div>
+                                <label class="radio-inline">
+                                    <input type="radio" class="cash_method" value="1" {if $info.cash_method == 1}checked{/if} name="cash_method"> 按比例
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" class="cash_method" value="2" {if $info.cash_method == 2}checked{/if} name="cash_method"> 按固定金额
+                                </label>
+                            </div>
+                        </div>
+                    </div> 
+                    <div class="form-group">
+                        <label class="col-md-2 control-label"></label>
+                        <div class="col-md-5">
+                            <div class="input-group w-200">
+                                <div class="input-group-addon cash_reward_text">{if $info.cash_method== 1}订单金额{else}每单{/if}</div>
+                                <input type="number" name="cash_reward" id="cash_reward" min="0" class="form-control" value="{$info['cash_reward']}">
+                                <div class="input-group-addon cash_reward_pice">{if $info.cash_method== 1}%{else}元{/if}</div>
+                            </div>
+                            <div class="mb-0 help-block">若计算方式在多个地方均有设置则按以下优先级：商品独立设置 > 门店 / 店员独立设置 > 基础设置</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-2 control-label"><span class="text-bright">*</span>核销计算方式</label>
+                        <div class="col-md-5">
+                            <div>
+                                <label class="radio-inline">
+                                    <input type="radio" class="write_off_method" value="1" {if $info.write_off_method == 1}checked{/if} name="write_off_method"> 按比例
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" class="write_off_method" value="2" {if $info.write_off_method == 2}checked{/if} name="write_off_method"> 按固定金额
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-2 control-label"></label>
+                        <div class="col-md-5">
+                            <div class="input-group w-200">
+                                <div class="input-group-addon write_off_reward_text">{if $info.write_off_method== 1}订单金额{else}每单{/if}</div>
+                                <input type="number" name="write_off_reward" id="write_off_reward" min="0" class="form-control" value="{$info['write_off_reward']}">
+                                <div class="input-group-addon write_off_reward_pice">{if $info.write_off_method== 1}%{else}元{/if}</div>
+                            </div>
+                            <div class="mb-0 help-block">若计算方式在多个地方均有设置则按以下优先级：商品独立设置 > 门店 / 店员独立设置 > 基础设置</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2 control-label"></label>
+                    <div class="col-md-8">
+                        <button class="btn btn-primary J-submit" type="submit">保存</button>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+
+
+{/block}
+{block name="script"}
+<script>
+    require(['util'], function (util) {
+        util.copy();
+        $("input[name='is_commission']").click(function () {
+            if($(this).is(':checked')){
+                $(".rules").removeClass("hide");
+            }else{
+                $(".rules").addClass("hide");
+            }
+        })
+        $("input[name='cash_method']").click(function () {
+            if($(this).is(':checked') && $("input[name='cash_method']:checked").val()==1){
+                $(".cash_reward_pice").html('%');
+                $(".cash_reward_text").html('订单金额');
+            }else if($(this).is(':checked') && $("input[name='cash_method']:checked").val()==2){
+                $(".cash_reward_pice").html('元');
+                $(".cash_reward_text").html('每单');
+            }
+        })
+        $("input[name='write_off_method']").click(function () {
+            if($(this).is(':checked') && $("input[name='write_off_method']:checked").val()==1){
+                $(".write_off_reward_pice").html('%');
+                $(".write_off_reward_text").html('订单金额');
+            }else if($(this).is(':checked') && $("input[name='write_off_method']:checked").val()==2){
+                $(".write_off_reward_pice").html('元');
+                $(".write_off_reward_text").html('每单');
+            }
+        })
+        //提交数据
+        var flag = false;
+
+        util.validate($('.form-validate'), function (form) {
+            var is_use = $("input[name='is_use']").is(':checked') ? 1 : 0;
+            var stock_type = $('input[name=stock_type]:checked').val();
+
+            var is_commission = $("input[name='is_commission']:checked").val() ? 1 : 0;
+            var cash_method = $('input[name=cash_method]:checked').val();
+            var write_off_method = $('input[name=write_off_method]:checked').val();
+            var settlement_type = $('input[name=settlement_type]:checked').val();
+            var cash_reward = $('#cash_reward').val();
+            var write_off_reward = $('#write_off_reward').val();
+            var data = {};
+            flag = true;
+            data.is_use = is_use;
+            data.stock_type = stock_type;
+            data.is_commission = is_commission;
+            if(is_commission == 1){
+                if(!settlement_type){
+                    util.message('请选择结算对象', 'danger');
+                    return false;
+                }
+                if(!write_off_method){
+                    util.message('请选择核销计算方式', 'danger');
+                    return false;
+                }
+                if(!cash_method){
+                    util.message('请选择收银计算方式', 'danger');
+                    return false;
+                }
+                if(cash_reward < 0 || cash_reward == ''){
+                    util.message('请填写收银计算佣金金额', 'danger');
+                    return false;
+                }
+                if(write_off_reward < 0 || write_off_reward == ''){
+                    util.message('请填写核销计算佣金金额', 'danger');
+                    return false;
+                }
+                data.settlement_type = settlement_type;
+                data.write_off_method = write_off_method;
+                data.cash_method = cash_method;
+                data.cash_reward = cash_reward;
+                data.write_off_reward = write_off_reward;
+            }
+            $('.J-submit').attr({disabled: "disabled"}).html('提交中...');
+            $.ajax({
+                type: "post",
+                url: '{$storeSetUrl}',
+                data: data,
+                success: function (data) {
+                    if (data['code'] > 0) {
+                        util.message(data["message"], 'success', "{:__URL('ADDONS_MAINstoreSetting')}", function () {
+                            flag = false;
+                        });
+                    } else {
+                        util.message(data["message"], 'danger', function () {
+                            flag = false;
+                        });
+                    }
+                     $('.J-submit').removeAttr('disabled').html('添加');
+                }
+            });
+        });
+
+
+    })
+
+</script>
+{/block}

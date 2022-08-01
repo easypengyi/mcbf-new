@@ -1,0 +1,283 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+<style>
+.platform-list{
+    display: flex;
+    flex-wrap: wrap;
+}
+.platform-list .platform-list-item{
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    background: #f7f8fa;
+    padding: 20px 30px;
+    width: 420px;
+    margin: 10px;
+}
+.platform-list .platform-list-item .box{}
+.platform-list .platform-list-item .head{
+    display: flex;
+    align-items: center;
+}
+.platform-list .platform-list-item .head-img{
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.platform-list .platform-list-item .head-title{
+    padding-left: 15px;
+    font-size: 16px;
+    font-weight: 800;
+}
+.platform-list .platform-list-item .content{
+    margin: 20px 0;
+}
+.platform-list .platform-list-item .content .bg{
+    width: 282px;
+    margin: 0 auto;
+    padding: 20px 10px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0px 0px 10px 0px rgb(0 0 0 / 10%);
+    position: relative;
+}
+.platform-list .platform-list-item .content .bg .mask{
+	  position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    background: rgba(0,0,0,.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 16px;
+}
+.platform-list .platform-list-item .content .img-box{
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  justify-content: center;
+	  width: 100%;
+	  height: 0;
+	  position: relative;
+	  padding-bottom: 177.866%;
+}
+.platform-list .platform-list-item .content .img{
+	  width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.platform-list .platform-list-item .foot{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.platform-list .platform-list-item .foot .foot-btn-group{
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .btn-item{
+    width: 124px;
+    height: 44px;
+    line-height: 44px;
+    text-align: center;
+    border-radius: 4px;
+    background: #ddd;
+    color: #fff;
+    margin: 0 10px;
+    cursor: pointer;
+    position: relative;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .btn-item.btn-zx{
+    background: #63A6FF;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .btn-item.btn-zx .btn{
+    color: #fff;
+    display: block;
+    width: 100%;
+    height: 100%;
+    line-height: 30px;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .btn-item.btn-yl>.btn{
+    color: #fff;
+    display: block;
+    width: 100%;
+    height: 100%;
+    line-height: 30px;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .btn-item.btn-yl{
+    background: #01BB02;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .per-qr-mask{
+    display: none; 
+    width: 200px;
+    height: 230px;
+    position: absolute;
+    left: 50%;
+    top: -230px;
+    transform: translateX(-50%);
+    z-index: 1;
+    cursor: initial;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .btn-item.btn-yl:hover .per-qr-mask{
+	 display: block;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .per-qr-mask .per-qr-box{padding: 20px;background: #fff;width: 200px;height: 200px;position: relative;border-radius: 4px;display: flex;flex-direction: column;justify-content: center;align-items: center;box-shadow: 0px 0px 5px 0px rgb(0 0 0 / 10%);}
+.platform-list .platform-list-item .foot .foot-btn-group .per-qr-mask .per-qr-box:after{
+	content: '';
+	position: absolute;
+	width: 0;
+	height: 0;
+	font-size: 0;
+	line-height: 0;
+	border-style: solid;
+	border-width: 15px;
+	border-color: #fff transparent transparent transparent;
+	bottom: -30px;
+	filter: drop-shadow(0px 2px 2px rgb(0 0 0 / 10%));
+}
+.platform-list .platform-list-item .foot .foot-btn-group .per-qr-mask .img{
+    width: 120px;
+    height: 120px;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .per-qr-mask .btn{
+    
+    color: #fff;
+    width: 100px;
+    margin-top: 10px;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .per-qr-mask .btn.btn-copy{
+	background: #01BB02;
+}
+.platform-list .platform-list-item .foot .foot-btn-group .per-qr-mask .btn.btn-open{
+	background: #63A6FF;
+}
+.platform-list .platform-list-item .foot .foot-time{
+    font-size: 12px;
+    color: #999;
+}
+</style>
+{/block}
+{block name="main"}
+	<div class="platform-list">
+		{volist name='list' id='vo'}
+		<div class="platform-list-item">
+			<div class="box">
+				<div class="head">
+					<img src="{$vo.pic}" class="head-img">
+					<div class="head-title">
+						<span>{$vo.title}</span>
+					</div>
+				</div>
+				<div class="content">
+					<div class="bg">
+						{notempty name='vo.url'}
+						<div class="img-box">
+							<img src="{$vo.data.preview_img}"  class="img">
+						</div>
+						{else /}
+						<div class="img-box">
+							<img src="/public/platform/static/images/custom-tpl-default.png"  class="img">
+						</div>
+						<div class="mask">
+							当前版本未包含{$vo.name}
+						</div>
+						{/notempty}
+					</div>
+				</div>
+				{notempty name='vo.url'}
+                {notempty name='vo.custom_url'}
+                <div class="foot">
+					<div class="foot-btn-group">
+						<div class="btn-item btn-zx">
+							<a class="btn" href="{$vo.custom_url}" title="去装修">去装修</a>
+						</div>
+						<div class="btn-item btn-yl">
+							预览
+							<div class="per-qr-mask">
+								<div class="per-qr-box">
+									{if $key=='wap'}
+									<img src="{:__URL('PLATFORM_MAIN/Customtemplate/getWapCode')}" class="img">
+									{elseif $key=='app'}
+                                    <img src="{:__URL('PLATFORM_MAIN/Customtemplate/getAppCode')}" class="img" data-types="pc">
+                                    {elseif $key=='mp'}
+                                    <img src="{$vo.code}" class="img">
+									{/if}
+									{if $key=='pc'}
+									<a class="btn btn-open" href="{$vo.url}" target="_blank" title="直接访问">直接访问</a>
+									{/if}
+									<a class="btn btn-copy copy" data-clipboard-text="{$vo.url}" title="复制链接">复制链接</a>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="foot-time">
+						<span>更新时间 {$vo.data.update_time}</span>
+					</div>
+				</div>
+                {/notempty}
+                {else /}
+				<div class="foot">
+					<div class="foot-btn-group">
+						<div class="btn-item btn-zx">
+							<a class="btn increment" href="javascript:;" title="立即开通" data-id="{$vo.info.id}" data-is_value_add="{$vo.info.is_value_add}" data-up_status="{$vo.info.up_status}">立即开通</a>
+						</div>
+						<div class="btn-item btn-yl">
+							<a class="btn" href="https://tb.53kf.com/code/client/fe6f8c99d694387455de7d72b5a4c85a9/1" target="_blank" title="联系客服">联系客服</a>
+						</div>
+					</div>
+<!--					<div class="foot-time">-->
+<!--						<span>更新时间 2020-12-12 12:12:12</span>-->
+<!--					</div>-->
+				</div>
+				{/notempty}
+			</div>
+		</div>
+		{/volist}
+	</div>
+{/block}
+{block name="script"}
+<script>
+require(['util'], function (util) {
+	util.copy();
+	//应用
+  $('body').on('click','.increment', function () {
+    var addons_id = $(this).data('id');
+    var is_value_add = $(this).data('is_value_add');
+    var up_status = $(this).data('up_status');
+
+    var type = 2;
+    if (is_value_add ==1 && up_status !=2) {
+        type = 1;
+    } else if (up_status == 2) {
+        type = 3;
+    }
+
+    if(type==1){
+        var url=  __URL(PLATFORMMAIN + '/addonslist/increment&addons_id='+addons_id+'&type=1');
+        util.confirm1('增值应用','url:'+url,'.xlarge',function(){
+        })
+    }
+    if(type==2){
+        var url=  __URL(PLATFORMMAIN + '/addonslist/increment&addons_id='+addons_id+'&type=2');
+        util.confirm1('未授权应用','url:'+url,'.xlarge',function(){
+        })
+    }
+    if(type==3){
+        var url=  __URL(PLATFORMMAIN + '/addonslist/increment&addons_id='+addons_id+'&type=3');
+        util.confirm1('即将上线','url:'+url,'.xlarge',function(){
+        })
+    }
+  });
+
+
+})
+</script>
+{/block}

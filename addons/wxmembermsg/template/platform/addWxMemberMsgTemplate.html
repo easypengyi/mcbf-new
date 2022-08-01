@@ -1,0 +1,257 @@
+{block name="main"}
+<!-- page -->
+<form class="form-horizontal form-validate widthFixedForm">
+    <div class="form-group" >
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>模版名称</label>
+        <div class="col-md-5"  >
+            <input type="text" id="template_name" class="form-control" name="template_name" value="{$template_info.wx_template_name}"  required>
+            <div class="mb-0 help-block">只用于区分每个模版的用途，不会在模版消息中展示</div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>模版ID</label>
+        <div class="col-md-5" >
+            <input type="text" id="template_id" class="form-control" name="template_id" value="{$template_info.wx_template_id}"  required>
+
+            <div class="mb-0 help-block">公众号成功添加模版消息或获得的模版ID，在模版消息列表可获取</div>
+        </div>
+    </div>
+
+    <!-- 头部描述 -->
+    <div class="form-group">
+        <label class="col-md-2 control-label">first.DATA（头部描述）</label>
+        <div class="col-md-5">
+            <div class="input-group">
+                <input type="text" id="head_des" name="head_des" style="width:360px;" class="form-control " value="{$template_info['value']['head']['value']}">
+                <div class="input-group-addon">文字颜色</div>
+                <div class="input-group">
+                    <span class="input-group-addon" id="head_des_color"
+                          {notempty name="template_info['value']['head']"}
+                            style="width:35px;border-left:none;background-color:{$template_info['value']['head']['color']}" data-value="{$template_info['value']['head']['color']}"
+                          {else /}
+                            style="width:35px;border-left:none;background-color:#000000;" data-value="#000000"
+                    {/notempty}>
+                    </span>
+                    <span class="input-group-btn"><button class="btn btn-default colorpicker" type="button">选择颜色 ▼</button></span>
+                </div>
+            </div>
+            <div class="mb-0 help-block">可用变量：[会员昵称]，展示在模版消息详细内容上方</div>
+        </div>
+    </div>
+
+    <!-- 详细内容 -->
+    {notempty name="template_info['value']['content']" }
+        {foreach name='$template_info["value"]["content"]' item='key' key='k'}
+            <div class="form-group" id="{$k}" data-key-id="{$k}" >
+                {eq name="k" value="key_default"}
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>详细内容{$k}</label>
+                {else /}
+                <label class="col-md-2 control-label"></label>
+                {/eq}
+                <div class="col-md-5" style="display: flex;">
+                    <div class="w-100" style="width: 150px;margin-right: 7px;">
+                        <input type="text" name="key_name"  class="form-control"   value="{$key.name}" placeholder="请输入键名" required></div>
+                    <div class="w-200">
+                        <input type="text"  name="key_value" class="form-control" value="{$key.value}" required placeholder="请输入键值"></div>
+                    <div class="input-group" style="width:230px">
+                        <div class="input-group-addon">文字颜色</div>
+                        <div class="input-group">
+                            <span class="input-group-addon" name="key_color" style="width:35px;border-left:none;background-color:{$key.color};" data-value="{$key.color}"></span>
+                            <span class="input-group-btn"><button class="btn btn-default colorpicker" type="button">选择颜色 ▼</button></span>
+                        </div>
+                    </div>
+                </div>
+                {neq name="k" value="key_default"}
+                <div class="col-md-1 text-left control-label"><a href="javascript:void(0);" class="text-danger delete-area" >删除</a></div>
+                {/neq}
+            </div>
+        {/foreach}
+    {else /}
+        <div class="form-group" id="key_default" data-key-id="key_default" >
+            <label class="col-md-2 control-label"><span class="text-bright">*</span>详细内容</label>
+            <div class="col-md-5" style="display: flex;">
+                <div class="w-100" style="width: 150px;margin-right: 7px;">
+                    <input type="text" name="key_name"  class="form-control"   value="" placeholder="请输入键名" required></div>
+                <div class="w-200"><input type="text"  name="key_value" class="form-control" value="" required placeholder="请输入键值"></div>
+                <div class="input-group" style="width:230px">
+                    <div class="input-group-addon">文字颜色</div>
+                    <div class="input-group">
+                        <span class="input-group-addon" name="key_color" style="width:35px;border-left:none;background-color:#000000;" data-value="#000000"></span>
+                        <span class="input-group-btn"><button class="btn btn-default colorpicker" type="button">选择颜色 ▼</button></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {/notempty}
+    <div class="form-group">
+        <div class="col-md-2 control-label"></div>
+        <div class="col-md-5">
+            <a href="javascript:void(0);" class="btn btn-primary add-key">添加自定义键</a>
+            <div class="mb-0 help-block">可用变量：[会员昵称]，键名为微信模版消息详细内容的“{{变量名}}”，键值则为自行编辑的描述内容</div>
+        </div>
+    </div>
+
+    <!-- 备注 -->
+    <div class="form-group">
+        <label class="col-md-2 control-label">remark.DATA（备注）</label>
+        <div class="col-md-5">
+            <div class="input-group">
+                <input type="text" style="width:360px;" id="remark" name="remark" class="form-control" value="{$template_info['value']['remark']['value']}">
+                <div class="input-group-addon">文字颜色</div>
+                <div class="input-group">
+                    <span class="input-group-addon" id="remark_color"
+                          {notempty name="template_info['value']['remark']"}
+                            style="width:35px;border-left:none;background-color:{$template_info['value']['remark']['color']}" data-value="{$template_info['value']['remark']['color']}"
+                          {else /}
+                            style="width:35px;border-left:none;background-color:#000000;" data-value="#000000"
+                          {/notempty}>
+                    </span>
+                    <span class="input-group-btn"><button class="btn btn-default colorpicker" type="button">选择颜色 ▼</button></span>
+                </div>
+            </div>
+            <div class="mb-0 help-block">可用变量：[会员昵称]，展示在模版消息详细内容下方</div>
+        </div>
+    </div>
+
+    <!-- 跳转链接 -->
+    <div class="form-group">
+        <label class="col-md-2 control-label">跳转链接</label>
+        <div class="col-md-5">
+            <div class="input-group item">
+                <input type="text" class="form-control item" id="url" value="{$template_info.url}" name="url">
+                <span class="input-group-btn"><a href="javascript:void(0);" class="btn btn-default link_set">选择链接</a></span>
+            </div>
+            <div class="mb-0 help-block">点击模版消息时跳转的页面</div>
+
+        </div>
+    </div>
+
+    <div class="form-group"></div>
+    <div class="form-group">
+        <label class="col-md-2 control-label"></label>
+        <div class="col-md-8">
+            <button class="btn btn-primary" type="submit">保存</button>
+            <a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+        </div>
+    </div>
+    <input type="hidden" id="voucher_package_id" name="voucher_package_id"/>
+</form>
+<input type="hidden" id="real_ip" value="{$real_ip}">
+<input type="hidden" id="key_count" value="{$template_info.key_count}">
+<input type="hidden" id="is_edit" value="{$is_edit}">
+<input type="hidden" id="save_id" value="{$template_info['id']}">
+<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util', 'tpl'], function (util, tpl) {
+        // 颜色
+        $(".colorpicker").each(function () {
+            var elm = this;
+            util.colorpicker(elm, function (color) {
+                $(elm).parent().prev().attr('data-value', color.toHexString());
+                $(elm).parent().prev().css("background-color", color.toHexString());
+            });
+        });
+
+        // 添加自定义键
+        var new_index = $("#key_count").val() ? $("#key_count").val() : 1;
+        $(".add-key").click(function () {
+            var html = '<div class="form-group" id='+"key_" + new_index+'  data-key-id='+"key_" + new_index+'>\n' +
+                '            <label class="col-md-2 control-label"></label>\n' +
+                '            <div class="col-md-5" style="display: flex;">\n' +
+                '                <div class="w-100" style="width: 150px;margin-right: 7px;">\n' +
+                '                    <input type="text" name="key_name"  class="form-control"   value="" placeholder="请输入键名" required></div>\n' +
+                '                <div class="w-200"><input type="text"  name="key_value" class="form-control" value="" required placeholder="请输入键值"></div>\n' +
+                '                <div class="input-group" style="width:230px">\n' +
+                '                    <div class="input-group-addon">文字颜色</div>\n' +
+                '                    <div class="input-group">\n' +
+                '                        <span class="input-group-addon" name="key_color" style="width:35px;border-left:none;background-color:#000000;" data-value="#000000"></span>\n' +
+                '                        <span class="input-group-btn"><button class="btn btn-default colorpicker" type="button">选择颜色 ▼</button></span>\n' +
+                '                    </div>\n' +
+                '                </div>\n' +
+                '            </div>\n' +
+                '            <div class="col-md-1 text-left control-label"><a href="javascript:void(0);" class="text-danger delete-area" >删除</a></div>\n' +
+                '        </div>';
+                $(this).parent().parent().before(html);
+                new_index++;
+                // 自定义键颜色
+                $(".colorpicker").each(function () {
+                    var elm = this;
+                    util.colorpicker(elm, function (color) {
+                        $(elm).parent().prev().attr('data-value', color.toHexString());
+                        $(elm).parent().prev().css("background-color", color.toHexString());
+                    });
+                });
+        });
+        // 删除
+        $('body').on('click', '.delete-area', function () {
+            $(this).parent().parent().remove();
+        });
+
+        // 选择链接
+        $('.link_set').unbind('click').click(function () {
+            var _this = $(this);
+            var elm = _this.parents('.input-group-btn').parents('.item').find('input');
+            util.linksDialog(function (data) {
+                var real_ip = $("#real_ip").val();
+                elm.val(real_ip + '/wap' + data.params);
+            });
+        });
+        //提交数据
+        var flag = false;
+        util.validate($('.form-validate'), function (form) {
+            var is_edit             = $("#is_edit").val();
+            var save_id             = $("#save_id").val();
+            var template_name       = $("#template_name").val();
+            var template_id         = $("#template_id").val();
+            var head_des            = $("#head_des").val();
+            var head_des_color      = $("#head_des_color").data('value');
+            var remark              = $("#remark").val();
+            var remark_color        = $("#remark_color").data('value');
+            var url                 = $("#url").val();
+
+            var new_template_detail = {};
+            new_template_detail['save_id']              = save_id;
+            new_template_detail['is_edit']              = is_edit;
+            new_template_detail['template_name']        = template_name;
+            new_template_detail['template_id']          = template_id;
+            new_template_detail['head_des']             = head_des;
+            new_template_detail['head_des_color']       = head_des_color;
+            new_template_detail['remark']               = remark;
+            new_template_detail['remark_color']         = remark_color;
+            new_template_detail['url']                  = url;
+            new_template_detail['key'] = {};
+            //循环开始
+            $("div[id^=key_]").each(function (i,e) {
+                var curr_template_id        = $(this).attr("data-key-id");
+                var key_name                = $(this).find("input[name=key_name]").val();
+                var key_value               = $(this).find("input[name=key_value]").val();
+                var key_color               = $(this).find("span[name=key_color]").data('value');
+                new_template_detail['key'][curr_template_id] = {};
+                new_template_detail['key'][curr_template_id]['key_id']          = curr_template_id;
+                new_template_detail['key'][curr_template_id]['name']            = key_name;
+                new_template_detail['key'][curr_template_id]['value']           = key_value;
+                new_template_detail['key'][curr_template_id]['color']           = key_color;
+            });
+            console.log(new_template_detail)
+            // 提交数据
+            $.ajax({
+                url: "{$addWxMemberMsgTemplateUrl}",
+                type: "POST",
+                dataType: 'json',
+                data: {"data": JSON.stringify(new_template_detail)},
+                success: function (res) {
+                    if (res.code > 0) {
+                        util.message(res.message,"success", function () {
+                            window.location.href =  __URL('ADDONS_MAINwxMemberMsgList');
+                        })
+                    } else {
+                        util.message(res.message, "danger");
+                    }
+                }
+            });
+        });
+    })
+</script>
+{/block}

@@ -1,0 +1,472 @@
+{block name="main"}
+
+        <!-- page -->
+<ul class="nav nav-tabs v-nav-tabs" role="tablist">
+    <li role="presentation" class="active"><a href="#basic" aria-controls="basic"  data-type="basic" role="tab" data-toggle="tab" class="flex-auto-center">基础设置</a></li>
+    <li role="presentation"><a href="#message_push" aria-controls="message_push" data-type="message_push" role="tab" data-toggle="tab" class="flex-auto-center">推送通知</a></li>
+</ul>
+
+<div class="tab-content pt-15">
+    <div role="tabpanel" class="tab-pane fade in active" id="basic" >
+        <form class="form-horizontal form-validate1 widthFixedForm">
+            {if $has_coupon == 0}
+            <div class="form-group">
+                <label class="col-md-2 control-label">优惠券</label>
+                <div class="col-md-5">
+                    <p class="form-control-static">优惠券应用未开启，前往<a href="{:__URL('ADDONS_MAINcouponSetting')}" target="_blank" class="text-primary" >开启</a></p>
+                </div>
+            </div>
+            {else}
+            <div class="form-group">
+                <label class="col-md-2 control-label">优惠券</label>
+                <div class="col-md-5">
+                    <a href="javascript:void(0);" class="btn btn-primary add-coupon">添加优惠券</a>
+                </div>
+            </div>
+            <div id="coupon-area">
+
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <div class="mb-0 help-block">请确保赠送的优惠券库存充足，否则有可能会导致部分会员赠送失败</div>
+                </div>
+            </div>
+            {/if}
+
+            {if $has_gift == 0}
+            <div class="form-group">
+                <label class="col-md-2 control-label">礼品券</label>
+                <div class="col-md-5">
+                    <p class="form-control-static">礼品券应用未开启，前往<a href="{:__URL('ADDONS_MAINgiftvoucherSetting')}" target="_blank" class="text-primary" >开启</a></p>
+                </div>
+            </div>
+            {else}
+            <div class="form-group">
+                <label class="col-md-2 control-label">礼品券</label>
+                <div class="col-md-5">
+                    <a href="javascript:void(0);" class="btn btn-primary add-gift">添加礼品券</a>
+                </div>
+            </div>
+            <div id="gift-area">
+
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <div class="mb-0 help-block">请确保赠送的礼品券库存充足，否则有可能会导致部分会员赠送失败</div>
+                </div>
+            </div>
+            {/if}
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>赠送方式</label>
+                <div class="col-md-5">
+                    <label class="radio-inline"><input class="type" type="radio" name="type" value="1">按会员等级赠送</label>
+                    <label class="radio-inline"><input class="type" type="radio" name="type" value="2">按会员标签赠送</label>
+                    {eq name="distribution" value="1"}
+                    <label class="radio-inline"><input class="type" type="radio" name="type" value="3">按分销商等级赠送</label>
+                    {/eq}
+                    <label class="radio-inline"><input class="type" type="radio" name="type" value="4">按会员ID赠送</label>
+                    <label class="radio-inline"><input class="type" type="radio" name="type" value="5" checked>赠送所有会员</label>
+                </div>
+            </div>
+            <!-- 会员等级 -->
+            <div class="sub_type form-group hide" id="user_level">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>会员等级</label>
+                <div class="col-md-5">
+                    <div>
+                        {volist name="list.user_level" id="vo"}
+                        <label class="checkbox-inline">
+                            <input type="checkbox" name="user_level"  class="user_level" value="{$vo.level_id}">
+                            {$vo.level_name}
+                        </label>
+                        {/volist}
+                    </div>
+                </div>
+            </div>
+            <!-- 会员标签 -->
+            <div class="sub_type form-group hide" id="user_group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>会员标签</label>
+                <div class="col-md-5">
+                    <div>
+                        {volist name="list.user_group" id="vo"}
+                        <label class="checkbox-inline">
+                            <input type="checkbox" name="user_group"  class="user_group" value="{$vo.group_id}">
+                            {$vo.group_name}
+                        </label>
+                        {/volist}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分销商等级 -->
+            {if $distribution}
+            <div class="sub_type form-group hide" id="dis_level">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>分销商等级</label>
+                <div class="col-md-5">
+                    <div>
+                        {volist name="list.dis_level" id="vo"}
+                        <label class="checkbox-inline">
+                            <input type="checkbox" name="dis_level"  class="dis_level" value="{$vo.id}">
+                            {$vo.level_name}
+                        </label>
+                        {/volist}
+                    </div>
+                </div>
+            </div>
+            {/if}
+            <!-- 会员ID -->
+            <div class="sub_type form-group hide" id="user_ids">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>会员ID</label>
+                <div class="col-md-8">
+            <textarea onkeyup="javascript:this.value=this.value.replace(/，/ig,',');" class="form-control user_ids" name="user_ids" rows="8"
+                      placeholder="多个会员ID用英文逗号隔开。如： 01,02"></textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-8">
+                    <button class="btn btn-primary basic_set" type="submit">确定送券</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div role="tabpanel" class="tab-pane fade" id="message_push" >
+            <form class="form-horizontal form-validate2 widthFixedForm">
+                <div id="message_push_tpl">
+
+                </div>
+
+                <div class="form-group">
+                    <label class="col-md-2 control-label"></label>
+                    <div class="col-md-8">
+                        <button class="btn btn-primary basic_set" type="submit">保存</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+</div>
+        <!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util', 'insertContent'],function(util){
+        LoadingInfo(0);
+        function LoadingInfo(order) {
+            $.ajax({
+                type:"post",
+                url:"{$messagePushUrl}",
+                data:{},
+                async:true,
+                success:function (data) {
+                    var html = '';
+                    if(data[0]['is_enable']==1){
+                        html += '<div class="form-group"><label class="col-md-2 control-label">站内通知</label><div class="col-md-5"><div class="switch-inline"><input type="checkbox" id="station_is_enable" name="station_is_enable" checked ><label for="station_is_enable" class=""></label></div>';
+                    }else{
+                        html += '<div class="form-group"><label class="col-md-2 control-label">站内通知</label><div class="col-md-5"><div class="switch-inline"><input type="checkbox" name="station_is_enable" id="station_is_enable" ><label for="station_is_enable" class=""></label></div>';
+                    }
+                    html += '<input type="hidden" id="station_template_id" name="station_template_id" value="'+ data[0]['template_id'] + '">';
+                    html += '<p class="help-block">优惠券赠送成功后将通过站内通知推送，目前仅支持小程序与移动端</p></div></div>';
+                    html += '<div class="form-group">'+
+                        '<label class="col-md-2 control-label"></label>'+
+                        '<div class="col-md-5">'+
+                        '<div class="flex">'+
+                        '<textarea  class="form-control bbrr0" rows="10" id="station_template_content" name="station_template_content">'+data[0]['template_content']+'</textarea>'+
+                        '<div class="variate-choice station-variate-choice"><p>可选变量</p><div class="variate-choice-item">';
+                    for (var i = 0; i < data[0]['sign'].length; i++) {
+                        html += '<a class="text-primary block variate-choice-code station-variate-choice-code" href="javascript:void(0);" data-code="'+data[0]['sign'][i]['replace_name']+'">['+data[0]['sign'][i]['item_name']+']</a>';
+                    }
+                    html += '</div></div></div></div></div>';
+
+                    html += '<div class="form-group"><label class="col-md-2 control-label">短信</label><div class="col-md-5"><p class="form-control-static">短信通知请前往“系统 > 短信通知”处开启，点击”<a href="{:__URL(\'PLATFORM_MAIN/config/sysconfig\')}" target="_blank" class="text-primary" >前往开启</a></p></div>';
+                    html += '</div>';
+
+                    if(data[1]['is_enable']==1){
+                        html += '<div class="form-group"><label class="col-md-2 control-label">公众号客服消息</label><div class="col-md-5"><div class="switch-inline"><input type="checkbox" id="wx_is_enable" name="wx_is_enable" checked ><label for="wx_is_enable" class=""></label></div>';
+                    }else{
+                        html += '<div class="form-group"><label class="col-md-2 control-label">公众号客服消息</label><div class="col-md-5"><div class="switch-inline"><input type="checkbox" id="wx_is_enable" name="wx_is_enable" ><label for="wx_is_enable" class=""></label></div>';
+                    }
+                    html += '<input type="hidden" id="wx_template_id" name="wx_template_id" value="'+ data[1]['template_id'] + '">';
+                    html += '<p class="help-block">优惠券赠送成功后将通过该方式推送</p></div></div>';
+                    html += '<div class="form-group">'+
+                        '<label class="col-md-2 control-label"></label>'+
+                        '<div class="col-md-5">'+
+                        '<div class="flex">'+
+                        '<textarea  class="form-control bbrr0" rows="10" id="wx_template_content" name="wx_template_content">'+data[1]['template_content']+'</textarea>'+
+                        '<div class="variate-choice wx-variate-choice"><p>可选变量</p><div class="variate-choice-item">';
+                    for (var i = 0; i < data[1]['sign'].length; i++) {
+                        html += '<a class="text-primary block variate-choice-code wx-variate-choice-code" href="javascript:void(0);" data-code="'+data[1]['sign'][i]['replace_name']+'">['+data[1]['sign'][i]['item_name']+']</a>';
+                    }
+                    html += '</div></div></div></div></div>';
+
+                    $("#message_push_tpl").html(html);
+                }
+            });
+        }
+
+        $('body').on('click','.station-variate-choice-code',function(){
+            var code = $(this).data('code');
+            var contents = $(this).parents('.station-variate-choice').siblings('#station_template_content');
+            contents.insertContent(code);
+        });
+        $('body').on('click','.wx-variate-choice-code',function(){
+            var code = $(this).data('code');
+            var contents = $(this).parents('.wx-variate-choice').siblings('#wx_template_content');
+            contents.insertContent(code);
+        });
+
+        //选择推送方式交互
+        $('input[name=type]').click(function () {
+            var type = $("input[name='type']:checked").val();
+            switch(type) {
+                case '1':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_level").removeClass('hide');
+                    break;
+                case '2':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_group").removeClass('hide');
+                    break;
+                case '3':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#dis_level").removeClass('hide');
+                    break;
+                case '4':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_ids").removeClass('hide');
+                    break;
+                case '5':
+                    $("div[class^='sub_type']").addClass('hide');
+                    break;
+                default:
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_level").removeClass('hide');
+            }
+        });
+        util.validate($('.form-validate1'), function (form) {
+            //优惠券
+            var obj = $('.coupon');
+            var coupon_arr = [];
+            for (var i=1;i<=obj.length;i++) {
+                var coupon_id = $('.coupon-list'+i).data('id');
+                var coupon_num = $('#coupon_num'+i).val();
+                if(coupon_num == '') {
+                    util.message('优惠券赠送数量不能为空', 'danger');
+                    return false;
+                }
+                coupon_arr.push(coupon_id+','+coupon_num);
+            }
+            //礼品券
+            var obj2 = $('.gift');
+            var gift_arr = [];
+            for (var i=1;i<=obj2.length;i++) {
+                var gift_id = $('.gift-list'+i).data('id');
+                var gift_num = $('#gift_num'+i).val();
+                if(gift_num == '') {
+                    util.message('礼品券赠送数量不能为空', 'danger');
+                    return false;
+                }
+                gift_arr.push(gift_id+','+gift_num);
+            }
+
+            if(coupon_arr.length == 0 && gift_arr.length == 0) {
+                util.message('至少选择一种券', 'danger');
+                return false;
+            }
+
+            var type = $("input[name='type']:checked").val();
+            var sub_type = [];
+            switch(type) {
+                case '1':
+                    if (!$('input[name="user_level"]').is(":checked")){
+                        util.message("至少选择一项会员等级！",'danger');
+                        return;
+                    }
+                    $('input[name="user_level"]:checked').each(function(){
+                        sub_type.push(parseInt($(this).val()));
+                    });
+                    break;
+                case '2':
+                    if (!$('input[name="user_group"]').is(":checked")){
+                        util.message("至少选择一项会员标签！",'danger');
+                        return;
+                    }
+                    $('input[name="user_group"]:checked').each(function(){
+                        sub_type.push(parseInt($(this).val()));
+                    });
+                    break;
+                case '3':
+                    if (!$('input[name="dis_level"]').is(":checked")){
+                        util.message("至少选择一项分销商等级！",'danger');
+                        return;
+                    }
+                    $('input[name="dis_level"]:checked').each(function(){
+                        sub_type.push(parseInt($(this).val()));
+                    });
+                    break;
+                case '4':
+                    var str = $(".user_ids").val();
+                    var reg         = /(,|，)+$/gi;
+                    var user_ids    = str.replace(reg,"");
+                    if (user_ids.length == 0) {
+                        util.message("会员ID不能为空！",'danger');
+                        return;
+                    }
+                    sub_type =  user_ids.split(",");
+                    if (isRepeat(sub_type)) {
+                        util.message("会员ID有重复！",'danger');
+                        return;
+                    }
+                    break;
+                case '5':
+                    sub_type.push('all');
+                    break;
+            }
+
+            $.ajax({
+                type: "post",
+                url: "{$saveBasicSettingUrl}",
+                data: {
+                    'coupon_arr':coupon_arr,
+                    'gift_arr':gift_arr,
+                    'type':type,
+                    'sub_type':sub_type,
+                },
+                async: true,
+                success: function (data) {
+                    if (data["code"] > 0) {
+                        util.message(data['message'], 'success');
+                        location.reload();
+                    } else {
+                        util.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+        //是否重复
+        function isRepeat(arr){
+            var hash = {};
+            for(var i in arr) {
+                if(hash[arr[i]])
+                    return true;
+                hash[arr[i]] = true;
+            }
+            return false;
+        }
+        util.validate($('.form-validate2'), function (form) {
+            var station = [];
+            var station_template_id = $('#station_template_id').val();
+            var station_is_enable = $("#station_is_enable").is(':checked')?1:0;
+            var station_template_content = $('#station_template_content').val();
+            if(station_is_enable == 1) {
+                if(station_template_content == '') {
+                    util.message('请填写模版内容','danger');
+                    $('#station_template_content').focus();
+                    return false;
+                }
+            }
+            station.push(station_template_id);
+            station.push(station_is_enable);
+            station.push(station_template_content);
+
+            var wx = [];
+            var wx_template_id = $('#wx_template_id').val();
+            var wx_is_enable = $("#wx_is_enable").is(':checked')?1:0;
+            var wx_template_content = $('#wx_template_content').val();
+            if(wx_is_enable == 1) {
+                if(wx_template_content == '') {
+                    util.message('请填写模版内容','danger');
+                    $('#wx_template_content').focus();
+                    return false;
+                }
+            }
+            wx.push(wx_template_id);
+            wx.push(wx_is_enable);
+            wx.push(wx_template_content);
+
+
+            var data = {};
+            var list = [];
+            list.push(station);
+            list.push(wx);
+            data.list = list;
+            $.ajax({
+                type: "post",
+                url: "{$saveMessagePushUrl}",
+                data: data,
+                async: true,
+                success: function (data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"], 'success',"{:__URL('ADDONS_MAINappointgivecouponBaseSetting')}");
+                    } else {
+                        util.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+
+        //添加优惠券
+        $('.add-coupon').click(function () {
+            var url= "{:__URL('ADDONS_MAINaddCoupon')}";
+            util.confirm('添加优惠券','url:'+url,function(){
+                var html = '';
+                var sort = 0;
+                this.$content.find('input[type=checkbox]:checked').each(function () {
+                    sort++;
+                    var id = $(this).data('id');
+                    html += '<div class="form-group coupon coupon-list'+sort+'" data-id="'+id+'">';
+                    html += '<label class="col-md-2 control-label"></label>';
+                    html += '<div class="col-md-5" style="display: flex;">';
+                    html += '<div class="input-group w-400">';
+                    html += '<span class="input-group-addon w-200">' + $(this).data('name') + '</span>';
+                    html += '<input type="number" class="form-control" min="1" name="coupon_num" id="coupon_num'+sort+'" value="" required max="10">';
+                    html += '<span class="input-group-addon">张</span>';
+                    html += '</div>';
+                    html += '<div class="col-md-3 control-label " style="display: flex;">';
+                    html += '<a href="javascript:void(0);" class="text-danger delete-coupon" >删除</a>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                $('#coupon-area').html(html);
+            },'large')
+        });
+        //删除优惠券
+        $('body').on('click','.delete-coupon',function () {
+            $(this).parent().parent().parent().remove();
+        });
+
+        //添加礼品券
+        $('.add-gift').click(function () {
+            var url= "{:__URL('ADDONS_MAINappointAddGift')}";
+            util.confirm('添加礼品券','url:'+url,function(){
+                var html = '';
+                var sort = 0;
+                this.$content.find('input[type=checkbox]:checked').each(function () {
+                    sort++;
+                    var id = $(this).data('id');
+                    html += '<div class="form-group gift gift-list'+sort+'" data-id="'+id+'">';
+                    html += '<label class="col-md-2 control-label"></label>';
+                    html += '<div class="col-md-5" style="display: flex;">';
+                    html += '<div class="input-group w-400">';
+                    html += '<span class="input-group-addon w-200">' + $(this).data('name') + '</span>';
+                    html += '<input type="number" class="form-control" min="1" name="gift_num" id="gift_num'+sort+'" value="" required max="10">';
+                    html += '<span class="input-group-addon">张</span>';
+                    html += '</div>';
+                    html += '<div class="col-md-3 control-label " style="display: flex;">';
+                    html += '<a href="javascript:void(0);" class="text-danger delete-gift" >删除</a>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                $('#gift-area').html(html);
+            },'large')
+        });
+        //删除礼品券
+        $('body').on('click','.delete-gift',function () {
+            $(this).parent().parent().parent().remove();
+        });
+    })
+</script>
+{/block}

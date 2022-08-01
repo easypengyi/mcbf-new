@@ -1,0 +1,325 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+{/block}
+{block name="main"}
+<link rel="stylesheet" href="PLATFORM_STATIC/css/wap_iconfont.css">
+<!-- page -->
+<div class="custom-header">
+    <div class="custom-header-box">
+        <div class="custom-header-list flex">
+<!--             <div class="v-logo-padding"><a class="v-logo-img" href="javascript:void(0);" title=""><img src="/public/platform/images/logo2.png" style="height: 27px;max-width: 400px;"></a></div>-->
+            <div class="custom-header-list-warp flex-center-justify" data-click="custom-head">
+                <i class="icon icon-menu1"></i>
+                <div class="name">当前页面：{$template_name}</div>
+                <i class="icon icon-down-arrow"></i>
+            </div>
+
+            <div class="custom-header-list-box">
+                <div class="box-main">
+                    <div class="box-main-right">
+                        <ul class="title" id="head-port-box">
+                            {foreach name="searchPorts" item="vo" key="k"}
+                                <li role="presentation" {if condition="$k eq 0"}class="active"{/if}><a href="#jump_2" aria-controls="jump_2" role="tab" data-toggle="tab" class="flex-auto-center" data-port="{$vo.value}">{$vo.name}</a></li>
+                            {/foreach}
+                        </ul>
+
+                        <ul class="list">
+                            {volist name="ports_base_template" id="vo" offset="0" length='1'}
+                                 {foreach name="vo" item="vv"}
+                                    {neq name="vv.id" value="$id"}
+                                    <li class="item"><a href="PLATFORM_MAIN/Customtemplate/customTemplate?id={$vv.id}">
+                                        <span>{$vv.template_name}</span>
+                                        {eq name="vv.in_use" value="1"}
+                                        <span class="tag label font-color-red">线上使用</span>
+                                        {/eq}
+                                    </a></li>
+                                    {/neq}
+                                {/foreach}
+                            {/volist}
+                        </ul>
+
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="custom-header-list-warp custom-header-port-group flex-center-justify">
+                <div class="custom-header-port-group-icon">
+                    {foreach name='port_project' item='vo' key='k'}
+                        {if $k== 1}
+                            <img src="{$vo.ico}" title="公众号端"/>
+                            <img src="{$vo.ico1}" title="H5"/>
+                        {else /}
+                            <img src="{$vo.ico}" title="{$vo.name}"/>
+                        {/if}
+                    {/foreach}
+                </div>
+                <a class="custom-header-port-edit" href="javascript:void(0);" data-id="{$id}" data-is_new="{$is_new}" data-ports="{$ports}" data-type="{$type}" data-template_name="{$template_name}" data-type_name="{$type_name}" data-in_use="{$in_use}">编辑</a>
+            </div>
+        </div>
+        <div class="custom-header-operate">
+            <!-- <button class="btn btn-save btn-success" data-type="preview">预览</button> -->
+            <a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+            <a class="btn btn-default btn-save" data-type="recovery">还原</a>
+            {if condition="($in_use neq 1) and ($type neq 6) "}
+            <button class="btn btn-info" id="in_use" data-id="{$id}" data-ports="{$ports}" data-type="{$type}" >设为使用</button>
+            {/if}
+        </div>
+    </div>
+</div>
+<div class="custom-sidebar">
+    <div class="custom-sidebar-title">组件</div>
+    <div class="custom-component-list" id="navs"></div>
+</div>
+<div class="custom-container flex flex-pack-center">
+    <div class="custom-view">
+        <div class="view-title" id="page">Loading...</div>
+        <div class="view-wechat" id="wechat"></div>
+        <div class="view-main" id="view"></div>
+        <div class="view-foot" id="foot">
+            <div class="drag fixed nodelete" data-itemid="copyright" id="copyright"></div>
+            <div class="drag fixed nodelete" data-itemid="tabbar" id="tabbar"></div>
+        </div>
+    </div>
+    <div class="custom-editor">
+        <div class="editor-main" id="editor">
+            <div class="editor-arrow"></div>
+            <div class="editor-inner"></div>
+        </div>
+        <div class="editor-foot flex flex-pack-center">
+            <button class="btn btn-save btn-primary" data-type="save">保存</button>
+        </div>
+    </div>
+    <input type="hidden" id="shopStatus" value="{$shopStatus}">
+</div>
+<!-- page end -->
+{/block}
+{block name="script"}
+{include file='platform/Customtemplate/customEditTemplate'}
+{include file='platform/Customtemplate/customViewTemplate'}
+<script>
+    $('.v-layout').addClass('mobileCustom')
+    require(['custom','tpl','util'],function(modal,tpl,util){
+        $('[data-click="custom-head"]').click(function(){
+            $('.custom-header-list-box').fadeToggle(150);
+        })
+        // 切换端口触发
+        $('#head-port-box a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var port = $(this).data('port');
+            var html = '';
+                html += '<ul class="list">';
+            {foreach name="ports_base_template" item="vo" key="k"}
+                if (port == {$k}) {
+                    {foreach name="vo" item="vv"}
+                        if ({$id} != {$vv['id']}) {
+                            html += '<li class="item"><a href="PLATFORM_MAIN/Customtemplate/customTemplate?id={$vv.id}"><span>{$vv.template_name}</span>';
+                            {eq name="vv.in_use" value="1"}
+                            html += '<span class="tag label font-color-red">线上使用</span>';
+                            {/eq}
+                             html += '</a></li>';
+                        }
+                    {/foreach}
+                }
+            {/foreach}
+                html += '</ul>';
+            $("#head-port-box").after(html);
+        });
+        // 编辑
+        $('.custom-header-port-edit').click(function(){
+            var id = $(this).data('id');
+            var is_new = $(this).data('is_new');
+            var type = $(this).data('type');
+            var template_name = $(this).data('template_name');
+            var type_name = $(this).data('type_name');
+            var ports = $(this).data('ports');
+            var in_use = $(this).data('in_use')// 是否使用中
+            ports = ports.toString();
+            // var arrayPorts = ports.(",");
+            var port_html = '';
+            port_html = '<form class="form-horizontal padding-15" id="usepage-form">' +
+            '<div class="form-group"><label class="col-md-3 control-label"><span class="text-bright">*</span>页面名称</label><div class="col-md-8 form-control-static"><input class="form-control" name="page-name" placeholder="请输入页面名称" value="'+template_name+'"/></div></div>' +
+            '<div class="form-group"><label class="col-md-3 control-label">页面类型</label>' +
+            '<div class="col-md-8 form-control-static">'+type_name+'</div></div>' +
+            '<div class="form-group">' +
+            '<label class="col-md-3 control-label"><span class="text-bright">*</span>应用端口</label><div class="col-md-8"><div>' +
+            '<label class="checkbox-inline">';
+            if(ports.indexOf("1") != -1){
+                port_html += '<input type="checkbox" name="page-port" value="1" checked>公众号、H5</label><label class="checkbox-inline">';
+            }else{
+                port_html += '<input type="checkbox" name="page-port" value="1" >公众号、H5</label><label class="checkbox-inline">';
+            }
+            if(ports.indexOf("2") != -1){
+                port_html += '<input type="checkbox" name="page-port" value="2" checked>小程序</label><label class="checkbox-inline">';
+            }else{
+                port_html += '<input type="checkbox" name="page-port" value="2">小程序</label><label class="checkbox-inline">';
+            }
+            if(ports.indexOf("3") != -1){
+                port_html += '<input type="checkbox" name="page-port" value="3" checked>APP</label><label class="checkbox-inline">';
+            }else{
+                port_html += '<input type="checkbox" name="page-port" value="3">APP</label><label class="checkbox-inline">';
+            }
+              port_html +=  '</div></div></div></form>';
+            util.confirm('编辑页面信息',port_html, function(){
+                var form = this.$content.find('#usepage-form');
+                var ports = form.find('input[name ="page-port"]:checked');
+                var template_name = form.find('input[name ="page-name"]').val();
+                var portArr = []
+                var pagePort = '' // 发布端口
+                $.each(ports,function(){
+                    portArr.push($(this).val())
+                })
+                pagePort = portArr.join(',');
+                if ( pagePort==' '||  pagePort==''){
+                    util.message( '页面至少勾选一个应用端口','danger');return false;
+                }
+                if (template_name == '') {
+                    util.message( '页面名称不能为空','danger');return false;
+                }
+                $.ajax({
+                    type:"post",
+                    url:"{:__URL('PLATFORM_MAIN/Customtemplate/setCustomTemplatePorts')}",
+                    data:{
+                        'id':id,
+                        'is_new':is_new,
+                        'type':type,
+                        'ports':pagePort,
+                        'in_use':in_use,
+                        'template_name':template_name,
+                    },
+                    async:true,
+                    success:function (data) {
+                        if (data["code"] > 0) {
+                            util.message( data["message"],'success');
+                        }else{
+                            util.message( data["message"],'danger');
+                        }
+                    }
+                });
+            },'',function(){
+                // 创建之后的方法，可填充数据
+                // console.log(this.$content)
+            })
+
+        });
+
+        $('.addPage').click(function(){
+            var shopStatus = $('#shopStatus').val();
+            var html = '<form class="form-horizontal padding-15" >';
+            html += '<div class="form-group"><label class="col-md-3 control-label">页面名称</label><div class="col-md-8"><input id="modal_template_name" type="text" class="form-control" /></div></div>';
+            html += '<div class="form-group"><label class="col-md-3 control-label">页面模版</label><div class="col-md-8"><select id="modal_template_type" class="form-control" >' +
+                '<option value="1">商城首页</option>';
+        		if(shopStatus > 0){
+                    html+= '<option value="2">店铺首页</option>';
+            	}
+                html+='<option value="3">商品详情页</option>' +
+                '<option value="4">会员中心</option>' +
+                '<option value="5">分销中心</option>' +
+                '<option value="9">积分商城中心</option>' +
+                '<option value="6">自定义页</option>' +
+                '</select></div></div>';
+            html += '</form>';
+            util.confirm('新增页面', html, function () {
+                var template_type = this.$content.find("#modal_template_type").val();
+                var template_name = this.$content.find("#modal_template_name").val();
+                if(template_name && template_name !== ' '){
+                    $.ajax({
+                        type: 'post',
+                        url: '{:__URL("PLATFORM_MAIN/Customtemplate/createCustomTemplate")}',
+                        data: {
+                            'type': template_type,
+                            'template_name': template_name
+                        },
+                        success: function (res) {
+                            if (res.code > 0) {
+                                util.message(res.message, 'success',__URL("PLATFORM_MAIN/Customtemplate/customtemplate?id=" + res.data.id));
+                            } else {
+                                util.message(res.message, 'error');
+                            }
+                        }
+                    });
+                }else{
+                    util.message('页面名称不能空！');
+                    return false
+                }
+
+            })
+        });
+        // 设为使用
+        $('body').on('click','#in_use',function(){
+            var id = $(this).data('id');
+            // var is_new = 1;
+            // var ports = $(this).data('ports');//1h5 2小程序 3app
+            var type = $(this).data('type');//1:商城首页 2:店铺首页  3:商品详情页 4:会员中心 5:分销中心，6:自定义页面,7:底部 8:版权信息 9:积分商城首页 11:弹窗
+            var ports = $(this).data('ports');
+
+            // var html = '<form class="form-horizontal padding-15" id="usepage-form">';
+            //     html += '<div class="form-group">' +
+            //         '<label class="col-md-3 control-label"><span class="text-bright">*</span>发布端口</label><div class="col-md-8"><div>' +
+            //         '<label class="checkbox-inline">';
+            //     {foreach name="port_project" item="vo" key="k"}
+            //         html += '<input type="checkbox" name="page-port" value="{$k}" {if condition="in_array($k,$ports_arr)"}checked{/if}>{$vo.name}</label><label class="checkbox-inline">';
+            //     {/foreach}
+            //     html +='</form>';
+
+            util.confirm('是否使用此模板？','确定使用该模板', function(){
+                // var form = this.$content.find('#usepage-form')
+                // var checkPorts = form.find('input[name ="page-port"]:checked');//1h5 2小程序 3app
+                // var portArr = []
+                // $.each(checkPorts,function(){
+                //     portArr.push($(this).val())
+                // })
+                // ports = portArr.join(',');
+                // if ( ports==' '||  ports==''){
+                //     util.message( '应用端口不能为空','danger');return false;
+                // }
+                $.ajax({
+                    type: "post",
+                    url: __URL("PLATFORM_MAIN/Customtemplate/useCustomTemplate"),
+                    async: true,
+                    data: {
+                        "id": id,
+                        // "is_new": is_new,
+                        "ports": ports,
+                        "type": type
+                    },
+                    success: function (data) {
+                        if (data["code"] > 0) {
+                            util.message(data["message"], 'success');
+                        } else {
+                            util.message(data["message"], 'danger');
+                        }
+                    }
+                })
+            });
+            });
+        modal.init({
+            tpl: tpl,
+            attachurl:'PLATFORM_IMG/custom/default/',
+            type: {$type ?: 1},    //页 面类型
+            id: {$id},
+            data: {$template_data ?: "''"},
+            // tabbar: {$tabbar ?: "''"},
+            wapTabbar:{$waptabbar?:"''"},
+            mpTabbar:{$mptabbar?:"''"},
+            appTabbar:{$apptabbar?:"''"},
+            // copyright:{$copyright ?: "''"},
+            wapCopyright:{$wapcopyright?:"''"},
+            mpCopyright:{$mpcopyright?:"''"},
+            appCopyright:{$appcopyright?:"''"},
+            wechat_set:{$wechat_set ?: "''"},
+            realm_ip:"{$real_ip}",
+            default_version:"{$default_version}",
+            addonsIsUse:{$addonsIsUse ? : "''"},
+            // popupAdv: {$popadv?: "''"},
+            wapPopupAdv:{$wappopadv?:"''"},
+            mpPopupAdv:{$mppopadv?:"''"},
+            appPopupAdv:{$apppopadv?:"''"},
+            shop_id : {$shop_id ?: 0},
+            platform:'h5',
+            portName:'platform',
+            template_version: 1,/*新装修*/
+            addons_info: {$addons_info},/*应用权限*/
+        });
+    })
+</script>
+{/block}

@@ -1,0 +1,194 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+<style>
+.theme-tabs{
+	display: flex;
+	flex-wrap: wrap;
+}
+.theme-tabs .tabs-item{
+    width: 120px;
+    height: 54px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    margin: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.theme-tabs .tabs-item .icon{
+	position: absolute;
+	right: -3px;
+	bottom: -4px;
+	color: #2589ff;
+	display: none;
+}
+.theme-tabs .tabs-item.on{
+    border-color: #2589ff;
+    position: relative;
+}
+.theme-tabs .tabs-item.on .icon{
+	display: block;
+}
+.theme-tabs .tabs-item .color{
+	position: relative;
+	width: 40px;
+	height: 20px;
+	border-radius: 20px;
+	overflow: hidden;
+}
+.theme-tabs .tabs-item .color:after{
+	content: '';
+	display: block;
+	position: absolute;
+	background: #f5f5f5;
+	width: 20px;
+	height: 20px;
+	right: 0;
+}
+.theme-tabs .tabs-item .color:before{
+	content: '';
+	display: block;
+	position: absolute;
+	background: #ebedf0;
+	width: 20px;
+	height: 20px;
+	left: 0;
+}
+.theme-tabs .tabs-item .text{
+    margin-left: 10px;
+    font-size: 12px;
+    color: #666;
+}
+.theme-tabs .tabs-item.default .color:after{
+	background: #cee4f5;
+}
+.theme-tabs .tabs-item.default .color:before{
+	background: #2c9cf0;
+}
+.theme-tabs .tabs-item.style1 .color:after{
+	background: #cacdf6;
+}
+.theme-tabs .tabs-item.style1 .color:before{
+	background: #8a90ec;
+}
+.theme-tabs .tabs-item.style2 .color:after{
+	background: #ffd18c;
+}
+.theme-tabs .tabs-item.style2 .color:before{
+	background: #ff9900;
+}
+.theme-tabs .tabs-item.style3 .color:after{
+	background: #ffba8c;
+}
+.theme-tabs .tabs-item.style3 .color:before{
+	background: #ff6500;
+}
+.theme-tabs .tabs-item.style4 .color:after{
+	background: #ff8cc2;
+}
+.theme-tabs .tabs-item.style4 .color:before{
+	background: #ff0077;
+}
+.theme-tabs .tabs-item.style5 .color:after{
+	background: #f7abb5;
+}
+.theme-tabs .tabs-item.style5 .color:before{
+	background: #ed445b;
+}
+.theme-tabs .tabs-item.style6 .color:after{
+	background: #f08cd7;
+}
+.theme-tabs .tabs-item.style6 .color:before{
+	background: #dd00a7;
+}
+.theme-tabs .tabs-item.style7 .color:after{
+	background: #d9e9b5;
+}
+.theme-tabs .tabs-item.style7 .color:before{
+	background: #abce5b;
+}
+.theme-tabs .tabs-item.style8 .color:after{
+	background: #c7d3d9;
+}
+.theme-tabs .tabs-item.style8 .color:before{
+	background: #829daa;
+}
+.theme-tabs .tabs-item.style9 .color:after{
+	background: #c6d7fb;
+}
+.theme-tabs .tabs-item.style9 .color:before{
+	background: #80a6f7;
+}
+.theme-tabs .tabs-item.style10 .color:after{
+	background: #b8e3f4;
+}
+.theme-tabs .tabs-item.style10 .color:before{
+	background: #61c1e6;
+}
+.theme-imgs{
+	margin: 20px 0 20px;
+}
+.theme-imgs .img{
+	width: 928px;
+  height: 396.02px;
+}
+.theme-foot{
+	margin: 10px;
+}
+</style>
+{/block}
+{block name="main"}
+<div class="theme-tabs">
+    {foreach name="theme_data" item="vo" key="k"}
+    <div class="tabs-item {$k} {eq name="k" value="theme_color"}on{/eq} " data-type="{$k}">
+    <div class="color"></div>
+        <div class="text">{$vo.name}</div>
+        <i class="icon icon-success"></i>
+    </div>
+    {/foreach}
+</div>
+<div class="theme-imgs">
+	<img class="img" src="/public/platform/static/images/pc-theme/default.png"/>
+</div>
+<div class="theme-foot">
+	<a class="btn btn-primary J-submit">保存</a>
+</div>
+{/block}
+{block name="script"}
+<script>
+require(['util'], function (util) {
+	var curr_theme = "{$theme_color}";// 当前主题色
+	toggleTheme()
+	$('.theme-tabs').on('click','.tabs-item',function(){
+		curr_theme = $(this).data('type');
+		toggleTheme()
+	})
+	function toggleTheme(){
+		$('.theme-tabs .tabs-item').each(function(i,e){
+			if($(e).data('type')==curr_theme){
+				$(e).addClass('on')
+			}else{
+				$(e).removeClass('on')
+			}
+		})
+		$('.theme-imgs .img').attr('src','/public/platform/static/images/pc-theme/'+curr_theme+'.png')
+	}
+	// 保存
+	$('.J-submit').click(function(){
+        $.ajax({
+            type:"post",
+            url:"{:__URL('PLATFORM_MAIN/Customtemplate/savePcTheme')}",
+            data:{'style':curr_theme},
+            success: function (data) {
+                if (data["code"] > 0) {
+                    util.message( data["message"],'success');
+                }else{
+                    util.message( data["message"],'danger');
+                }
+            }
+        })
+	})
+})
+</script>
+{/block}

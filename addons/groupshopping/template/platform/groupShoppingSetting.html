@@ -1,0 +1,1608 @@
+    {block name="main"}
+
+        <form class="form-horizontal pt-15 form-validate widthFixedForm">
+            <div class="form-group">
+                <label class="col-md-2 control-label">拼团</label>
+                <div class="col-md-5">
+                    <div class="switch-inline">
+                        <input type="checkbox" id="is_group_shopping" {if $addons_data.is_use==1}checked{/if} >
+                        <label for="is_group_shopping" class=""></label>
+                    </div>
+                    <div class="mb-0 help-block">关闭后所有拼团活动均不生效</div>
+                </div>
+                
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>支付限时</label>
+                <div class="col-md-5">
+                    <div class="input-group w-200">
+                        <input class="form-control" type="number" name="pay_time_limit" value="{$addons_data.pay_time_limit}" required>
+                        <div class="input-group-addon">分钟</div>
+                    </div>
+                    <div class="mb-0 help-block">超出这个时间未完成支付则订单关闭</div>
+                </div>
+                
+            </div>
+            {if $has_distribution}
+            <div class="form-group">
+                <label class="col-md-2 control-label">是否参与分销</label>
+                <div class="col-md-8" >
+                    <label class="radio-inline">
+                        <input type="radio" name="is_distribution" class="is_distribution"  value="1" {if $is_distribution==1}checked{/if}> 参与
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="is_distribution" class="is_distribution" value="2"  {if $is_distribution!=1}checked{/if}> 不参与
+                    </label>
+                    <div class="help-block mb-0">
+                        开启分销后该商品默认开启参与分销。关闭则不参与分销，该商品不产生分销佣金。
+                    </div>
+                </div>
+            </div>
+            <div class="form-group distribution_rules {if $bonus_val.is_distribution}{if $bonus_val.is_distribution!=1}hide{/if}{else}hide{/if}">
+                <label class="col-md-2 control-label">独立分销佣金规则</label>
+                <input type="hidden" id="d_rule" value="{$bonus_val.distribution_rule}" name="d_rule">
+                <div class="col-md-8" >
+                    <div class="switch-inline">
+                        <input type="checkbox" name="distribution_rule" id="distribution_rule"  {if $bonus_val.distribution_rule}{if $bonus_val.distribution_rule==1}checked{/if}{/if}>
+                        <label for="distribution_rule" class=""></label>
+                    </div>
+                    <div class="mb-0 help-block">
+                        不开启则使用默认佣金设置规则；开启则该商品使用独立佣金比例规则，不受分销商等级比例限制。
+                    </div>
+                </div>
+            </div>
+            <div class="form-group {if $bonus_val.is_distribution==1 && $bonus_val.distribution_rule && $bonus_val.distribution_rule==1}{else}hide{/if}" id="level_rules">
+                <label class="col-md-2 control-label">开启等级返佣</label>
+                <input type="hidden" id="l_rule" value="{$bonus_val.level_rule}" name="l_rule">
+                <div class="col-md-8" >
+                    <div class="switch-inline">
+                        <input type="checkbox" name="level_rule" id="level_rule" {if $distribution_rule_val && $distribution_rule_val.level_rule==1}checked{/if}>
+                        <label for="level_rule" class=""></label>
+                    </div>
+                    <div class="mb-0 help-block">
+                        不开启则使用默认佣金设置规则；开启则该商品使用独立等级返佣规则，不受分销商等级返佣限制。
+                    </div>
+                </div>
+            </div>
+            <div class="form-group {if $bonus_val.is_distribution==1 && $bonus_val.distribution_rule && $bonus_val.distribution_rule==1 }{else}hide{/if}" id="recommend_type">
+                <label class="col-md-2 control-label">返佣类型</label>
+                <div class="col-md-8" >
+                    <label class="radio-inline">
+                        <input type="radio" name="recommend_type" class="recommend_type"  value="1" {if $distribution_rule_val && $distribution_rule_val.recommend_type && $distribution_rule_val.recommend_type==1}checked{/if}> 比例返佣
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="recommend_type" class="recommend_type" value="2" {if $distribution_rule_val && $distribution_rule_val.recommend_type && $distribution_rule_val.recommend_type==2}checked{/if} > 固定返佣
+                    </label>
+                </div>
+            </div>
+            <div class="form-group {if $bonus_val.is_distribution==1 && $bonus_val.distribution_rule && $bonus_val.distribution_rule==1  && $distribution_rule_val && $distribution_rule_val.recommend_type && $distribution_rule_val.recommend_type==1 && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{else}hide{/if}" id="distribution_input">
+                <label class="col-md-2"></label>
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <div class="input-group-addon">一级返佣</div>
+                        <input type="number" name="first_rebate" id="first_rebate" class="form-control rebate" min="0"  value="{if $distribution_rule_val && $distribution_rule_val.first_rebate && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.first_rebate}{$distribution_rule_val.first_rebate}{else}0{/if}{else}0{/if}"  style="min-width: 74px">
+                        <div class="input-group-addon">%,二级返佣</div>
+                        <input type="number" name="second_rebate" id="second_rebate" class="form-control rebate" min="0"   value="{if $distribution_rule_val && $distribution_rule_val.second_rebate && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.second_rebate}{$distribution_rule_val.second_rebate}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                        <div class="input-group-addon">%,三级返佣</div>
+                        <input type="number" name="third_rebate" id="third_rebate" class="form-control rebate" min="0" value="{if $distribution_rule_val && $distribution_rule_val.third_rebate && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.third_rebate}{$distribution_rule_val.third_rebate}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                        <div class="input-group-addon">%</div>
+                    </div>
+                    <br>
+                    <div class="input-group">
+                        <div class="input-group-addon">一级返积分</div>
+                        <input type="number" name="first_point" id="first_point" class="form-control rebate" min="0"  value="{if $distribution_rule_val && $distribution_rule_val.first_point && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.first_point}{$distribution_rule_val.first_point}{else}0{/if}{else}0{/if}"  style="min-width: 74px">
+                        <div class="input-group-addon">%,二级返积分</div>
+                        <input type="number" name="second_point" id="second_point" class="form-control rebate" min="0"   value="{if $distribution_rule_val && $distribution_rule_val.second_point && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.second_point}{$distribution_rule_val.second_point}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                        <div class="input-group-addon">%,三级返积分</div>
+                        <input type="number" name="third_point" id="third_point" class="form-control rebate" min="0" value="{if $distribution_rule_val && $distribution_rule_val.third_point && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.third_point}{$distribution_rule_val.third_point}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                        <div class="input-group-addon">%</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group {if $bonus_val.is_distribution==1 && $bonus_val.distribution_rule && $bonus_val.distribution_rule==1  && $distribution_rule_val && $distribution_rule_val.recommend_type && $distribution_rule_val.recommend_type==2 && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{else}hide{/if}" id="distribution_input1">
+                <label class="col-md-2"></label>
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <div class="input-group-addon">一级返佣金</div>
+                        <input type="number" name="first_rebate1" id="first_rebate1" class="form-control rebate" min="0"  value="{if $distribution_rule_val && $distribution_rule_val.first_rebate1 && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.first_rebate1}{$distribution_rule_val.first_rebate1}{else}0{/if}{else}0{/if}"  style="min-width: 74px">
+                        <div class="input-group-addon">元,二级返佣金</div>
+                        <input type="number" name="second_rebate1" id="second_rebate1" class="form-control rebate" min="0"   value="{if $distribution_rule_val && $distribution_rule_val.second_rebate1 && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.second_rebate1}{$distribution_rule_val.second_rebate1}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                        <div class="input-group-addon">元,三级返佣金</div>
+                        <input type="number" name="third_rebate1" id="third_rebate1" class="form-control rebate" min="0" value="{if $distribution_rule_val && $distribution_rule_val.third_rebate1 && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.third_rebate1}{$distribution_rule_val.third_rebate1}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                        <div class="input-group-addon">元</div>
+                    </div>
+                    <br>
+                    <div class="input-group">
+                        <div class="input-group-addon">一级返积分</div>
+                        <input type="number" name="first_point1" id="first_point1" class="form-control rebate" min="0"  value="{if $distribution_rule_val && $distribution_rule_val.first_point1 && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.first_point1}{$distribution_rule_val.first_point1}{else}0{/if}{else}0{/if}"  style="min-width: 74px">
+                        <div class="input-group-addon">积分,二级返积分</div>
+                        <input type="number" name="second_point1" id="second_point1" class="form-control rebate" min="0"   value="{if $distribution_rule_val && $distribution_rule_val.second_point1 && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.second_point1}{$distribution_rule_val.second_point1}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                        <div class="input-group-addon">积分,三级返积分</div>
+                        <input type="number" name="third_point1" id="third_point1" class="form-control rebate" min="0" value="{if $distribution_rule_val && $distribution_rule_val.third_point1 && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==2}{if $distribution_rule_val.third_point1}{$distribution_rule_val.third_point1}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                        <div class="input-group-addon">积分</div>
+                    </div>
+                </div>
+            </div>
+            <div class="{if $bonus_val.is_distribution==1 && $bonus_val.distribution_rule && $bonus_val.distribution_rule==1  && $distribution_rule_val && $distribution_rule_val.recommend_type && $distribution_rule_val.recommend_type==1 && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==1}{else}hide{/if}" id="distribution_input2">
+                {if $level_list}
+                {foreach $level_list as $k=>$v}
+                <div class="form-group">
+                    <label class="col-md-2"></label>
+                    <div class="col-md-5">
+                        <div class="input-group">
+                            <div class="input-group-addon">{$v['level_name']}一级返佣</div>
+                            <input type="number" name="level_first_rebate_{$v['id']}" id="level_first_rebate_{$v['id']}" class="form-control rebate" min="0"  value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.first_rebate[$k1]}{$distribution_rule_val.first_rebate[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}"  style="min-width: 74px">
+                            <div class="input-group-addon">%,{$v['level_name']}二级返佣</div>
+                            <input type="number" name="level_second_rebate_{$v['id']}" id="level_second_rebate_{$v['id']}" class="form-control rebate" min="0"   value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.second_rebate[$k1]}{$distribution_rule_val.second_rebate[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                            <div class="input-group-addon">%,{$v['level_name']}三级返佣</div>
+                            <input type="number" name="level_third_rebate_{$v['id']}" id="level_third_rebate_{$v['id']}" class="form-control rebate" min="0" value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.third_rebate[$k1]}{$distribution_rule_val.third_rebate[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                            <div class="input-group-addon">%</div>
+                        </div>
+                        <br>
+                        <div class="input-group">
+                            <div class="input-group-addon">{$v['level_name']}一级返积分</div>
+                            <input type="number" name="level_first_point_{$v['id']}" id="level_first_point_{$v['id']}" class="form-control rebate" min="0"  value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.first_point[$k1]}{$distribution_rule_val.first_point[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}"  style="min-width: 74px">
+                            <div class="input-group-addon">%,{$v['level_name']}二级返积分</div>
+                            <input type="number" name="level_second_point_{$v['id']}" id="level_second_point_{$v['id']}" class="form-control rebate" min="0"   value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.second_point[$k1]}{$distribution_rule_val.second_point[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                            <div class="input-group-addon">%,{$v['level_name']}三级返积分</div>
+                            <input type="number" name="level_third_point_{$v['id']}" id="level_third_point_{$v['id']}" class="form-control rebate" min="0" value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.third_point[$k1]}{$distribution_rule_val.third_point[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                            <div class="input-group-addon">%</div>
+                        </div>
+                    </div>
+                </div>
+                {/foreach}
+                {/if}
+            </div>
+            <div class="{if $bonus_val.is_distribution==1 && $bonus_val.distribution_rule && $bonus_val.distribution_rule==1  && $distribution_rule_val && $distribution_rule_val.recommend_type && $distribution_rule_val.recommend_type==2 && $distribution_rule_val.level_rule && $distribution_rule_val.level_rule==1}{else}hide{/if}" id="distribution_input3">
+                {if $level_list}
+                {foreach $level_list as $k=>$v}
+                <div class="form-group">
+                    <label class="col-md-2"></label>
+                    <div class="col-md-5">
+                        <div class="input-group">
+                            <div class="input-group-addon">{$v['level_name']}一级返佣金</div>
+                            <input type="number" name="level_first_rebate1_{$v['id']}" id="level_first_rebate1_{$v['id']}" class="form-control rebate" min="0"  value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.first_rebate1[$k1]}{$distribution_rule_val.first_rebate1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}"  style="min-width: 74px">
+                            <div class="input-group-addon">元,{$v['level_name']}二级返佣金</div>
+                            <input type="number" name="level_second_rebate1_{$v['id']}" id="level_second_rebate1_{$v['id']}" class="form-control rebate" min="0"   value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.second_rebate1[$k1]}{$distribution_rule_val.second_rebate1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                            <div class="input-group-addon">元,{$v['level_name']}三级返佣金</div>
+                            <input type="number" name="level_third_rebate1_{$v['id']}" id="level_third_rebate1_{$v['id']}" class="form-control rebate" min="0" value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.third_rebate1[$k1]}{$distribution_rule_val.third_rebate1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                            <div class="input-group-addon">元</div>
+                        </div>
+                        <br>
+                        <div class="input-group">
+                            <div class="input-group-addon">{$v['level_name']}一级返积分</div>
+                            <input type="number" name="level_first_point1_{$v['id']}" id="level_first_point1_{$v['id']}" class="form-control rebate" min="0"  value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.first_point1[$k1]}{$distribution_rule_val.first_point1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}"  style="min-width: 74px">
+                            <div class="input-group-addon">积分,{$v['level_name']}二级返积分</div>
+                            <input type="number" name="level_second_point1_{$v['id']}" id="level_second_point1_{$v['id']}" class="form-control rebate" min="0"   value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.second_point1[$k1]}{$distribution_rule_val.second_point1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                            <div class="input-group-addon">积分,{$v['level_name']}三级返积分</div>
+                            <input type="number" name="level_third_point1_{$v['id']}" id="level_third_point1_{$v['id']}" class="form-control rebate" min="0" value="{if $distribution_rule_val && $distribution_rule_val.level_ids}{foreach $distribution_rule_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $distribution_rule_val.third_point1[$k1]}{$distribution_rule_val.third_point1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                            <div class="input-group-addon">积分</div>
+                        </div>
+                    </div>
+                </div>
+                {/foreach}
+                {/if}
+            </div> 
+            <!-- 复购设置 -->
+            <div id="buyagain_rules " class="buyagain_rules {if $bonus_val.is_distribution}{if $bonus_val.is_distribution==2}hide{/if}{else}hide{/if}" >
+                <div class="form-group " >
+                    <label class="col-md-2 control-label">复购返佣</label>
+                    <div class="col-md-5">
+                        <div class="switch-inline">
+                            <input type="checkbox" id="buyagain-switch" value="1" name="buyagain" {if $bonus_val.buyagain}{if $bonus_val.buyagain==1}checked{/if}{/if}>
+                            <label for="buyagain-switch"></label>
+                        </div>
+                        <div class="mb-0 help-block">开启后分销商下线再次购买商城商品时则按照复购返佣规则计算佣金</div>
+                    </div>
+                </div>
+                <div class="buyagain_commission {if $bonus_val.is_distribution==1 && $bonus_val.buyagain && $bonus_val.buyagain==1 }{else}hide{/if}" >
+                    <div class="form-group " id="buyagain_level_rules">
+                        <label class="col-md-2 control-label">开启等级返佣</label>
+                        <input type="hidden" id="buyagain_l_rule"  name="buyagain_l_rule">
+                        <div class="col-md-8" >
+                            <div class="switch-inline">
+                                <input type="checkbox" name="buyagain_level_rule" id="buyagain_level_rule" {if $bonus_val.buyagain_level_rule}{if $bonus_val.buyagain_level_rule==1}checked{/if}{/if}>
+                                <label for="buyagain_level_rule" class=""></label>
+                            </div>
+                            <div class="mb-0 help-block">
+                                不开启则使用默认佣金设置规则；开启则该商品使用独立等级返佣规则，不受分销商等级返佣限制。
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group " id="buyagain_recommend_type">
+                        <label class="col-md-2 control-label">返佣类型</label>
+                        <div class="col-md-8" >
+                            <label class="radio-inline">
+                                <input type="radio" name="buyagain_recommend_type" checked  class="buyagain_recommend_type"  value="1" {if $bonus_val.buyagain_recommend_type}{if $bonus_val.buyagain_recommend_type==1}checked{/if}{/if}> 比例返佣
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="buyagain_recommend_type" class="buyagain_recommend_type" value="2" {if $bonus_val.buyagain_recommend_type}{if $bonus_val.buyagain_recommend_type==2}checked{/if}{/if} > 固定返佣
+                            </label>
+                        </div>
+                    </div>
+    
+                    <div class="form-group {if ($bonus_val.buyagain==1 && $buyagain_distribution_val && $bonus_val.buyagain_recommend_type && $bonus_val.buyagain_recommend_type==1 && $bonus_val.buyagain_level_rule && $bonus_val.buyagain_level_rule==2)||($bonus_val.buyagain==1 && $buyagain_distribution_val=='' && $bonus_val.buyagain_recommend_type && $bonus_val.buyagain_recommend_type==1 && $bonus_val.buyagain_level_rule && $bonus_val.buyagain_level_rule==2)}{else}hide{/if}" id="buyagain_distribution_input">
+                        <label class="col-md-2"></label>
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <div class="input-group-addon">一级返佣</div>
+                                <input type="number" name="buyagain_first_rebate" id="buyagain_first_rebate" class="form-control rebate" min="0"  value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_first_rebate && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_first_rebate}{$buyagain_distribution_val.buyagain_first_rebate}{else}0{/if}{else}0{/if}"  style="min-width: 74px">
+                                <div class="input-group-addon">%,二级返佣</div>
+                                <input type="number" name="buyagain_second_rebate" id="buyagain_second_rebate" class="form-control rebate" min="0"   value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_second_rebate && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_second_rebate}{$buyagain_distribution_val.buyagain_second_rebate}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                                <div class="input-group-addon">%,三级返佣</div>
+                                <input type="number" name="buyagain_third_rebate" id="buyagain_third_rebate" class="form-control rebate" min="0" value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_third_rebate && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_third_rebate}{$buyagain_distribution_val.buyagain_third_rebate}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                                <div class="input-group-addon">%</div>
+                            </div>
+                            <br>
+                            <div class="input-group">
+                                <div class="input-group-addon">一级返积分</div>
+                                <input type="number" name="buyagain_first_point" id="buyagain_first_point" class="form-control rebate" min="0"  value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_first_point && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_first_point}{$buyagain_distribution_val.buyagain_first_point}{else}0{/if}{else}0{/if}"  style="min-width: 74px">
+                                <div class="input-group-addon">%,二级返积分</div>
+                                <input type="number" name="buyagain_second_point" id="buyagain_second_point" class="form-control rebate" min="0"   value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_second_point && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_second_point}{$buyagain_distribution_val.buyagain_second_point}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                                <div class="input-group-addon">%,三级返积分</div>
+                                <input type="number" name="buyagain_third_point" id="buyagain_third_point" class="form-control rebate" min="0" value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_third_point && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_third_point}{$buyagain_distribution_val.buyagain_third_point}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                                <div class="input-group-addon">%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group {if $bonus_val.buyagain==1 && $buyagain_distribution_val && $bonus_val.buyagain_recommend_type && $bonus_val.buyagain_recommend_type==2 && $bonus_val.buyagain_level_rule && $bonus_val.buyagain_level_rule==2}{else}hide{/if}" id="buyagain_distribution_input1">
+                        <label class="col-md-2"></label>
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <div class="input-group-addon">一级返佣金</div>
+                                <input type="number" name="buyagain_first_rebate1" id="buyagain_first_rebate1" class="form-control rebate" min="0"  value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_first_rebate1 && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_first_rebate1}{$buyagain_distribution_val.buyagain_first_rebate1}{else}0{/if}{else}0{/if}"  style="min-width: 74px">
+                                <div class="input-group-addon">元,二级返佣金</div>
+                                <input type="number" name="buyagain_second_rebate1" id="buyagain_second_rebate1" class="form-control rebate" min="0"   value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_second_rebate1 && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_second_rebate1}{$buyagain_distribution_val.buyagain_second_rebate1}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                                <div class="input-group-addon">元,三级返佣金</div>
+                                <input type="number" name="buyagain_third_rebate1" id="buyagain_third_rebate1" class="form-control rebate" min="0" value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_third_rebate1 && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_third_rebate1}{$buyagain_distribution_val.buyagain_third_rebate1}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                                <div class="input-group-addon">元</div>
+                            </div>
+                            <br>
+                            <div class="input-group">
+                                <div class="input-group-addon">一级返积分</div>
+                                <input type="number" name="buyagain_first_point1" id="buyagain_first_point1" class="form-control rebate" min="0"  value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_first_point1 && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_first_point1}{$buyagain_distribution_val.buyagain_first_point1}{else}0{/if}{else}0{/if}"  style="min-width: 74px">
+                                <div class="input-group-addon">积分,二级返积分</div>
+                                <input type="number" name="buyagain_second_point1" id="buyagain_second_point1" class="form-control rebate" min="0"   value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_second_point1 && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_second_point1}{$buyagain_distribution_val.buyagain_second_point1}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                                <div class="input-group-addon">积分,三级返积分</div>
+                                <input type="number" name="buyagain_third_point1" id="buyagain_third_point1" class="form-control rebate" min="0" value="{if $buyagain_distribution_val && $buyagain_distribution_val.buyagain_third_point1 && $buyagain_distribution_val.buyagain_level_rule && $buyagain_distribution_val.buyagain_level_rule==2}{if $buyagain_distribution_val.buyagain_third_point1}{$buyagain_distribution_val.buyagain_third_point1}{else}0{/if}{else}0{/if}" style="min-width: 74px">
+                                <div class="input-group-addon">积分</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="{if $bonus_val.buyagain==1 && $buyagain_distribution_val && $bonus_val.buyagain_recommend_type && $bonus_val.buyagain_recommend_type==1 && $bonus_val.buyagain_level_rule && $bonus_val.buyagain_level_rule==1}{else}hide{/if}" id="buyagain_distribution_input2">
+                        {if $level_list}
+                        {foreach $level_list as $k=>$v}
+                        <div class="form-group">
+                            <label class="col-md-2"></label>
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <div class="input-group-addon">{$v['level_name']}一级返佣</div>
+                                    <input type="number" name="buyagain_level_first_rebate_{$v['id']}" id="buyagain_level_first_rebate_{$v['id']}" class="form-control rebate" min="0"  value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_first_rebate[$k1]}{$buyagain_distribution_val.buyagain_first_rebate[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}"  style="min-width: 74px">
+                                    <div class="input-group-addon">%,{$v['level_name']}二级返佣</div>
+                                    <input type="number" name="buyagain_level_second_rebate_{$v['id']}" id="buyagain_level_second_rebate_{$v['id']}" class="form-control rebate" min="0"   value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_second_rebate[$k1]}{$buyagain_distribution_val.buyagain_second_rebate[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                                    <div class="input-group-addon">%,{$v['level_name']}三级返佣</div>
+                                    <input type="number" name="buyagain_level_third_rebate_{$v['id']}" id="buyagain_level_third_rebate_{$v['id']}" class="form-control rebate" min="0" value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_third_rebate[$k1]}{$buyagain_distribution_val.buyagain_third_rebate[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                                    <div class="input-group-addon">%</div>
+                                </div>
+                                <br>
+                                <div class="input-group">
+                                    <div class="input-group-addon">{$v['level_name']}一级返积分</div>
+                                    <input type="number" name="buyagain_level_first_point_{$v['id']}" id="buyagain_level_first_point_{$v['id']}" class="form-control rebate" min="0"  value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_first_point[$k1]}{$buyagain_distribution_val.buyagain_first_point[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}"  style="min-width: 74px">
+                                    <div class="input-group-addon">%,{$v['level_name']}二级返积分</div>
+                                    <input type="number" name="buyagain_level_second_point_{$v['id']}" id="buyagain_buyagain_level_second_point_{$v['id']}" class="form-control rebate" min="0"   value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_second_point[$k1]}{$buyagain_distribution_val.buyagain_second_point[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                                    <div class="input-group-addon">%,{$v['level_name']}三级返积分</div>
+                                    <input type="number" name="buyagain_level_third_point_{$v['id']}" id="buyagain_level_third_point_{$v['id']}" class="form-control rebate" min="0" value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_third_point[$k1]}{$buyagain_distribution_val.buyagain_third_point[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                                    <div class="input-group-addon">%</div>
+                                </div>
+                            </div>
+                        </div>
+                        {/foreach}
+                        {/if}
+                    </div>
+                    <div class="{if $bonus_val.buyagain==1 && $buyagain_distribution_val && $bonus_val.buyagain_recommend_type && $bonus_val.buyagain_recommend_type==2 && $bonus_val.buyagain_level_rule && $bonus_val.buyagain_level_rule==1}{else}hide{/if}" id="buyagain_distribution_input3">
+                        {if $level_list}
+                        {foreach $level_list as $k=>$v}
+                        <div class="form-group">
+                            <label class="col-md-2"></label>
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <div class="input-group-addon">{$v['level_name']}一级返佣金</div>
+                                    <input type="number" name="buyagain_level_first_rebate1_{$v['id']}" id="buyagain_level_first_rebate1_{$v['id']}" class="form-control rebate" min="0"  value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_first_rebate1[$k1]}{$buyagain_distribution_val.buyagain_first_rebate1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}"  style="min-width: 74px">
+                                    <div class="input-group-addon">元,{$v['level_name']}二级返佣金</div>
+                                    <input type="number" name="buyagain_level_second_rebate1_{$v['id']}" id="buyagain_level_second_rebate1_{$v['id']}" class="form-control rebate" min="0"   value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_second_rebate1[$k1]}{$buyagain_distribution_val.buyagain_second_rebate1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                                    <div class="input-group-addon">元,{$v['level_name']}三级返佣金</div>
+                                    <input type="number" name="buyagain_level_third_rebate1_{$v['id']}" id="buyagain_level_third_rebate1_{$v['id']}" class="form-control rebate" min="0" value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_third_rebate1[$k1]}{$buyagain_distribution_val.buyagain_third_rebate1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                                    <div class="input-group-addon">元</div>
+                                </div>
+                                <br>
+                                <div class="input-group">
+                                    <div class="input-group-addon">{$v['level_name']}一级返积分</div>
+                                    <input type="number" name="buyagain_level_first_point1_{$v['id']}" id="buyagain_level_first_point1_{$v['id']}" class="form-control rebate" min="0"  value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_first_point1[$k1]}{$buyagain_distribution_val.buyagain_first_point1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}"  style="min-width: 74px">
+                                    <div class="input-group-addon">积分,{$v['level_name']}二级返积分</div>
+                                    <input type="number" name="buyagain_level_second_point1_{$v['id']}" id="buyagain_level_second_point1_{$v['id']}" class="form-control rebate" min="0"   value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_second_point1[$k1]}{$buyagain_distribution_val.buyagain_second_point1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                                    <div class="input-group-addon">积分,{$v['level_name']}三级返积分</div>
+                                    <input type="number" name="buyagain_level_third_point1_{$v['id']}" id="buyagain_level_third_point1_{$v['id']}" class="form-control rebate" min="0" value="{if $buyagain_distribution_val && $buyagain_distribution_val.level_ids}{foreach $buyagain_distribution_val.level_ids as $k1=>$v1}{if $v1==$v['id']}{if $buyagain_distribution_val.buyagain_third_point1[$k1]}{$buyagain_distribution_val.buyagain_third_point1[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px">
+                                    <div class="input-group-addon">积分</div>
+                                </div>
+                            </div>
+                        </div>
+                        {/foreach}
+                        {/if}
+                    </div>
+                </div>
+            </div>
+            <div class="distribution_choose {if $is_distribution !=1 }hide{/if}">
+                <div class="form-group " >
+                    <label class="col-md-2 control-label">独立计算节点</label>
+                    <div class="col-md-8" >
+                        <div class="switch-inline">
+                            <input type="checkbox" name="distribution_bonus_choose" id="distribution_bonus_choose" {if $bonus_val.distribution_bonus_choose==1}checked{/if}>
+                            <label for="distribution_bonus_choose" class=""></label>
+                        </div>
+                        <div class="mb-0 help-block">
+                            开启后，该商品的分销将以该计算节点计算
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group {if $bonus_val.distribution_bonus_choose != 1 }hide{/if} distribution_bonus_calculation" >
+                    <label class="col-md-2 control-label"><span class="text-bright">*</span>分销结算节点</label>
+                    <div class="col-md-5">
+                        <select class="form-control" id="distribution_bonus_calculation" name="distribution_bonus_calculation" >
+                            <option value="1" {if $bonus_val.distribution_bonus_calculation eq 1}selected="selected"{/if}>实付款金额</option>
+                            <option value="2" {if $bonus_val.distribution_bonus_calculation eq 2}selected="selected"{/if}>商品原价</option>
+                            <option value="3" {if $bonus_val.distribution_bonus_calculation eq 3}selected="selected"{/if}>商品售价</option>
+                            <option value="4" {if $bonus_val.distribution_bonus_calculation eq 4}selected="selected"{/if}>商品成本价</option>
+                            <option value="5" {if $bonus_val.distribution_bonus_calculation eq 5}selected="selected"{/if}>商品利润价</option>
+                        </select>
+                        <div class="mb-0 help-block">平台订单（金额计算节点） * 分销 = 个人获得分销</div>
+                    </div>
+                </div>
+            </div>
+            {/if}
+            {if $has_global}
+            <div class="form-group">
+                <label class="col-md-2 control-label">是否参与全球分红</label>
+                <div class="col-md-8" >
+                    <label class="radio-inline">
+                        <input type="radio" name="is_bonus_global" class="is_bonus_global"  value="1"  {if $is_global_bonus==1}checked{/if}> 参与
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="is_bonus_global" class="is_bonus_global" value="2"  {if $is_global_bonus!=1}checked{/if}> 不参与
+                    </label>
+                    <div class="mb-0 help-block">
+                        开启全球分红后该商品默认开启参与分红。关闭则不参与分红，该商品不产生分红奖金。
+                    </div>
+                </div>
+            </div>
+            <div class="gloable_all {if $is_global_bonus != 1 }hide{/if}">
+                <div class="form-group  global_bonus_rules" >
+                    <label class="col-md-2 control-label">全球分红独立规则</label>
+                    <div class="col-md-8" >
+                        <div class="switch-inline">
+                            <input type="checkbox" name="global_bonus_rules" id="global_bonus_rules" {if $global_bonus_val}{if $global_bonus_val.global_bonus_rules==1}checked{/if}{/if}>
+                            <label for="global_bonus_rules" class=""></label>
+                        </div>
+                        <div class="mb-0 help-block">
+                            不开启则使用默认分红，开启后必填
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group {if $bonus_val.is_global_bonus==1 && $global_bonus_val}{if $global_bonus_val['global_bonus_rules']==1}{/if}{else}hide{/if}" id="global_bonus_recommend_type">
+                    <label class="col-md-2 control-label">返佣类型</label>
+                    <div class="col-md-8" >
+                        <label class="radio-inline">
+                            <input type="radio" name="global_bonus_recommend_type" class="global_bonus_recommend_type"  value="1" {if $global_bonus_val}{if $global_bonus_val['global_bonus_recommend_type']==1}checked{/if}{/if}> 比例返佣
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="global_bonus_recommend_type" class="global_bonus_recommend_type" value="2" {if $global_bonus_val}{if $global_bonus_val['global_bonus_recommend_type']==2}checked{/if}{/if}> 固定返佣
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group {if $bonus_val.is_global_bonus==1 && $global_bonus_val}{if $global_bonus_val['global_bonus_rules']==1 && $global_bonus_val['global_bonus_recommend_type']==1}{else}hide{/if}{else}hide{/if}" id="global_bonus_input">
+                    {if $global_level_list}
+                        {foreach name="global_level_list" item="global_info"}
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">{$global_info['level_name']}</label>
+                            <div class="col-md-8">
+                                <div class="input-group w-200">
+                                    <input type="number" class="form-control" min="0" value="{if $global_bonus_val && $global_bonus_val.level_ids}{foreach $global_bonus_val.level_ids as $k1=>$v1}{if $v1==$global_info['id']}{if $global_bonus_val.global_rebate[$k1]}{$global_bonus_val.global_rebate[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" step="0.01" id="global_level_{$global_info['id']}" step="0.01" id="global_level_{$global_info['id']}" name="global_level_{$global_info['id']}">
+                                    <input class="global_level_id" type="hidden" name="global_level_id" value="{$global_info['id']}">
+                                    <span class="input-group-addon ">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        {/foreach}
+                    {/if}
+                    
+                </div>
+                <div class="form-group {if $bonus_val.is_global_bonus==1 && $global_bonus_val}{if $global_bonus_val['global_bonus_rules']==1 && $global_bonus_val['global_bonus_recommend_type']==2}{else}hide{/if}{else}hide{/if}" id="global_bonus_input1">
+                    {if $global_level_list}
+                        {foreach name="global_level_list" item="global_info"}
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">{$global_info['level_name']}</label>
+                            <div class="col-md-8">
+                                <div class="input-group w-200">
+                                    <input type="number" class="form-control" min="0" value="{if $global_bonus_val && $global_bonus_val.level_ids}{foreach $global_bonus_val.level_ids as $k1=>$v1}{if $v1==$global_info['id']}{if $global_bonus_val.globals_rebate[$k1]}{$global_bonus_val.globals_rebate[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" step="0.01" id="globals_level_{$global_info['id']}" step="0.01" id="globals_level_{$global_info['id']}" name="globals_level_{$global_info['id']}">
+                                    <input class="globals_level_id" type="hidden" name="globals_level_id" value="{$global_info['id']}">
+                                    <span class="input-group-addon ">元</span>
+                                </div>
+                            </div>
+                        </div>
+                        {/foreach}
+                    {/if}
+                </div>
+                <div class="form-group {if $bonus_val.is_global_bonus != 1 }hide{/if}  global_bonus_choose" >
+                    <label class="col-md-2 control-label">独立计算节点</label>
+                    <div class="col-md-8" >
+                        <div class="switch-inline">
+                            <input type="checkbox" name="global_bonus_choose" id="global_bonus_choose" {if $bonus_val.global_bonus_choose==1}checked{/if}>
+                            <label for="global_bonus_choose" class=""></label>
+                        </div>
+                        <div class="mb-0 help-block">
+                            开启后，该商品的全球分红将以该计算节点计算
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group {if $bonus_val.global_bonus_choose!=1}hide{/if}  global_bonus_calculation" >
+                    <label class="col-md-2 control-label"><span class="text-bright">*</span>分红结算节点</label>
+                    <div class="col-md-5">
+                        <select class="form-control" id="global_bonus_calculation" name="global_bonus_calculation" >
+                            <option value="1" {if $bonus_val.global_bonus_calculation eq 1}selected="selected"{/if}>实付款金额</option>
+                            <option value="2" {if $bonus_val.global_bonus_calculation eq 2}selected="selected"{/if}>商品原价</option>
+                            <option value="3" {if $bonus_val.global_bonus_calculation eq 3}selected="selected"{/if}>商品售价</option>
+                            <option value="4" {if $bonus_val.global_bonus_calculation eq 4}selected="selected"{/if}>商品成本价</option>
+                            <option value="5" {if $bonus_val.global_bonus_calculation eq 5}selected="selected"{/if}>商品利润价</option>
+                        </select>
+                        <div class="mb-0 help-block">平台订单（分红金额计算节点） * 分红比例 * 等级占比 / 等级人数 = 个人获得分红</div>
+                    </div>
+                </div>
+                </div>
+            {/if}
+            {if $has_area}
+            <div class="form-group">
+                <label class="col-md-2 control-label">是否参与区域分红</label>
+                <div class="col-md-8" >
+                    <label class="radio-inline">
+                        <input type="radio" name="is_bonus_area" class="is_bonus_area"  value="1" {if $is_area_bonus==1}checked{/if}> 参与
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="is_bonus_area" class="is_bonus_area" value="2" {if $is_area_bonus!=1}checked{/if}> 不参与
+                    </label>
+                    <div class="mb-0 help-block">
+                        开启区域分红后该商品默认开启参与分红。关闭则不参与分红，该商品不产生分红奖金。
+                    </div>
+                </div>
+            </div>
+            <div class="area_all {if $is_area_bonus!=1 }hide{/if}">
+                <div class="form-group  area_bonus_rules" >
+                    <label class="col-md-2 control-label">区域分红独立规则</label>
+                    <div class="col-md-8" >
+                        <div class="switch-inline">
+                            <input type="checkbox" name="area_bonus_rules" id="area_bonus_rules" {if $area_bonus_val}{if $area_bonus_val['area_bonus_rules']==1}checked{/if}{/if}>
+                            <label for="area_bonus_rules" class=""></label>
+                        </div>
+                        <div class="mb-0 help-block">
+                            不开启则使用默认分红，开启后必填
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group {if $is_area_bonus==1 && $area_bonus_val}{if $area_bonus_val['area_bonus_rules']==1}{/if}{else}hide{/if}" id="area_bonus_recommend_type">
+                    <label class="col-md-2 control-label">返佣类型</label>
+                    <div class="col-md-8" >
+                        <label class="radio-inline">
+                            <input type="radio" name="area_bonus_recommend_type" class="area_bonus_recommend_type"  value="1" {if $area_bonus_val}{if $area_bonus_val['area_bonus_recommend_type']==1}checked{/if}{/if}> 比例返佣
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="area_bonus_recommend_type" class="area_bonus_recommend_type" value="2" {if $area_bonus_val}{if $area_bonus_val['area_bonus_recommend_type']==2}checked{/if}{/if}> 固定返佣
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group {if $is_area_bonus==1 && $area_bonus_val}{if $area_bonus_val['area_bonus_rules']==1 && $area_bonus_val['area_bonus_recommend_type']==1}{else}hide{/if}{else}hide{/if}" id="area_bonus_input">
+                    {if $area_level_list}
+                        {foreach name="area_level_list" item="area_info"}
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">{$area_info['level_name']}</label>
+                            <div class="col-md-8">
+                                <div class="input-group ">
+                                    <div class="input-group-addon">省级</div>
+                                    <input type="number" name="province_bonus" value="{if $area_bonus_val && $area_bonus_val.level_ids}{foreach $area_bonus_val.level_ids as $k1=>$v1}{if $v1==$area_info['id']}{if $area_bonus_val.area_rebate_province[$k1]}{$area_bonus_val.area_rebate_province[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" id="province_bonus_level_{$area_info['id']}" class="form-control area_bonus" min="0" style="min-width: 74px"  >
+                                    <div class="input-group-addon">%,市级</div>
+                                    <input type="number" name="city_bonus"  id="city_bonus_level_{$area_info['id']}" class="form-control area_bonus" min="0" value="{if $area_bonus_val && $area_bonus_val.level_ids}{foreach $area_bonus_val.level_ids as $k1=>$v1}{if $v1==$area_info['id']}{if $area_bonus_val.area_rebate_city[$k1]}{$area_bonus_val.area_rebate_city[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px" >
+                                    <div class="input-group-addon">%,区级</div>
+                                    <input type="number" name="district_bonus"  id="district_bonus_level_{$area_info['id']}" class="form-control area_bonus" value="{if $area_bonus_val && $area_bonus_val.level_ids}{foreach $area_bonus_val.level_ids as $k1=>$v1}{if $v1==$area_info['id']}{if $area_bonus_val.area_rebate_district[$k1]}{$area_bonus_val.area_rebate_district[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" min="0" style="min-width: 74px" >
+                                    <div class="input-group-addon">%</div>
+                                    <!-- <input class="level_id" type="hidden" name="level_id" value="{$area_info['id']}"> -->
+                                </div>
+                            </div>
+                        </div>
+                        {/foreach}
+                    {/if}
+                    
+                </div>
+                <div class="form-group {if $is_area_bonus==1 && $area_bonus_val}{if $area_bonus_val['area_bonus_rules']==1 && $area_bonus_val['area_bonus_recommend_type']==2}{else}hide{/if}{else}hide{/if}" id="area_bonus_input1">
+                    {if $area_level_list}
+                        {foreach name="area_level_list" item="area_info"}
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">{$area_info['level_name']}</label>
+                            <div class="col-md-8">
+                                <div class="input-group ">
+                                    <div class="input-group-addon">省级</div>
+                                    <input type="number" name="province_bonus" value="{if $area_bonus_val && $area_bonus_val.level_ids}{foreach $area_bonus_val.level_ids as $k1=>$v1}{if $v1==$area_info['id']}{if $area_bonus_val.areas_rebate_province[$k1]}{$area_bonus_val.areas_rebate_province[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" id="provinces_bonus_level_{$area_info['id']}" class="form-control area_bonus" min="0" style="min-width: 74px"  >
+                                    <div class="input-group-addon">元,市级</div>
+                                    <input type="number" name="city_bonus"  id="citys_bonus_level_{$area_info['id']}" class="form-control area_bonus" min="0" value="{if $area_bonus_val && $area_bonus_val.level_ids}{foreach $area_bonus_val.level_ids as $k1=>$v1}{if $v1==$area_info['id']}{if $area_bonus_val.areas_rebate_city[$k1]}{$area_bonus_val.areas_rebate_city[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" style="min-width: 74px" >
+                                    <div class="input-group-addon">元,区级</div>
+                                    <input type="number" name="district_bonus"  id="districts_bonus_level_{$area_info['id']}" class="form-control area_bonus" value="{if $area_bonus_val && $area_bonus_val.level_ids}{foreach $area_bonus_val.level_ids as $k1=>$v1}{if $v1==$area_info['id']}{if $area_bonus_val.areas_rebate_district[$k1]}{$area_bonus_val.areas_rebate_district[$k1]}{else}0{/if}{/if}{/foreach}{else}0{/if}" min="0" style="min-width: 74px" >
+                                    <div class="input-group-addon">元</div>
+                                    <!-- <input class="level_id" type="hidden" name="level_id" value="{$area_info['id']}"> -->
+                                </div>
+                            </div>
+                        </div>
+                        {/foreach}
+                    {/if}
+                </div>
+                <div class="form-group {if $is_area_bonus==0 }hide{/if} area_bonus_choose" >
+                    <label class="col-md-2 control-label">独立计算节点</label>
+                    <div class="col-md-8" >
+                        <div class="switch-inline">
+                            <input type="checkbox" name="area_bonus_choose" id="area_bonus_choose" {if $bonus_val.area_bonus_choose==1}checked{/if}>
+                            <label for="area_bonus_choose" class=""></label>
+                        </div>
+                        <div class="mb-0 help-block">
+                            开启后，该商品的区域分红将以该计算节点计算
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group {if $bonus_val.area_bonus_choose!=1}hide{/if}  area_bonus_calculation" >
+                    <label class="col-md-2 control-label"><span class="text-bright">*</span>分红结算节点</label>
+                    <div class="col-md-5">
+                        <select class="form-control" id="area_bonus_calculation" name="area_bonus_calculation" >
+                            <option value="1" {if $bonus_val.area_bonus_calculation eq 1}selected="selected"{/if}>实付款金额</option>
+                            <option value="2" {if $bonus_val.area_bonus_calculation eq 2}selected="selected"{/if}>商品原价</option>
+                            <option value="3" {if $bonus_val.area_bonus_calculation eq 3}selected="selected"{/if}>商品售价</option>
+                            <option value="4" {if $bonus_val.area_bonus_calculation eq 4}selected="selected"{/if}>商品成本价</option>
+                            <option value="5" {if $bonus_val.area_bonus_calculation eq 5}selected="selected"{/if}>商品利润价</option>
+                        </select>
+                        <div class="mb-0 help-block">平台订单（分红金额计算节点） * 分红比例 * 等级占比 / 等级人数 = 个人获得分红</div>
+                    </div>
+                </div>
+            </div>
+            {/if}
+            {if $has_team}
+            <div class="form-group">
+                <label class="col-md-2 control-label">是否参与团队分红</label>
+                <div class="col-md-8" >
+                    <label class="radio-inline">
+                        <input type="radio" name="is_bonus_team" class="is_bonus_team"  value="1" {if $is_team_bonus==1}checked{/if}> 参与
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="is_bonus_team" class="is_bonus_team" value="2" {if $is_team_bonus!=1}checked{/if}> 不参与
+                    </label>
+                    <div class="mb-0 help-block">
+                        开启团队分红后该商品默认开启参与分红。关闭则不参与分红，该商品不产生分红奖金。
+                    </div>
+                </div>
+            </div>
+            <div class="team_all {if $is_team_bonus!=1 }hide{/if}" >
+                <div class="form-group J-teambonus_rule ">
+                    <label class="col-md-2 control-label">团队分红独立规则</label>
+                    <!--<input type="hidden" id="teambonus_rule" value="{$goods_info.bonus_rule}" name="b_rule">-->
+                    <div class="col-md-8" >
+                        <div class="switch-inline">
+                            <input type="checkbox" name="teambonus_rule" id="teambonus_rule" {if $teambonus_rule_val.teambonus_rule==1}checked{/if}>
+                            <label for="teambonus_rule" class=""></label>
+                        </div>
+    
+                        <div class="mb-0 help-block">
+                            不开启则使用默认分红，开启后必填。
+                        </div>
+                    </div>
+                </div>
+                <div class="J-teambonus_grade_info hide">
+                    <div class="form-group">
+                        <label class="col-md-2 control-label">团队分红分红类型</label>
+                        <div class="col-md-8" >
+                            <label class="radio-inline">
+                                <input type="radio" name="bonus_type" class="bonus_type"  value="1" {if $teambonus_rule_val.bonus_type==1}checked{/if}> 比例分红
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="bonus_type" class="bonus_type" value="2" {if $teambonus_rule_val.bonus_type!=1}checked{/if}> 固定分红
+                            </label>
+                        </div>
+                    </div>
+                    {foreach name="agent_level_list" item="agent_level_info"}
+                    <div class="form-group">
+                        <label class="col-md-2 control-label">{$agent_level_info['level_name']}</label>
+                        <div class="col-md-8">
+                            <div class="input-group w-200">
+                                <input type="number" class="form-control" min="0" value="{$level_bonus_val[$key]}" step="0.01" id="level_{$agent_level_info['id']}" name="level_{$agent_level_info['id']}">
+                                <input class="level_id" type="hidden" name="level_id" value="{$agent_level_info['id']}">
+                                <span class="input-group-addon J-level_unit">元分红</span>
+                            </div>
+                        </div>
+                    </div>
+                    {/foreach}
+                </div>
+                <div class="form-group {if $is_team_bonus!=1 }hide{/if} team_bonus_choose" >
+                    <label class="col-md-2 control-label">独立计算节点</label>
+                    <div class="col-md-8" >
+                        <div class="switch-inline">
+                            <input type="checkbox" name="team_bonus_choose" id="team_bonus_choose" {if $bonus_val.team_bonus_choose==1}checked{/if}>
+                            <label for="team_bonus_choose" class="" ></label>
+                        </div>
+                        <div class="mb-0 help-block">
+                            开启后，该商品的团队分红将以该计算节点计算
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group {if $bonus_val.team_bonus_choose!=1}hide{/if} team_bonus_calculation" >
+                    <label class="col-md-2 control-label"><span class="text-bright">*</span>分红结算节点</label>
+                    <div class="col-md-5">
+                        <select class="form-control" id="team_bonus_calculation" name="team_bonus_calculation" >
+                            <option value="1" {if $bonus_val.team_bonus_calculation eq 1}selected="selected"{/if}>实付款金额</option>
+                            <option value="2" {if $bonus_val.team_bonus_calculation eq 2}selected="selected"{/if}>商品原价</option>
+                            <option value="3" {if $bonus_val.team_bonus_calculation eq 3}selected="selected"{/if}>商品售价</option>
+                            <option value="4" {if $bonus_val.team_bonus_calculation eq 4}selected="selected"{/if}>商品成本价</option>
+                            <option value="5" {if $bonus_val.team_bonus_calculation eq 5}selected="selected"{/if}>商品利润价</option>
+                        </select>
+                        <div class="mb-0 help-block">平台订单（分红金额计算节点） * 分红比例 * 等级占比 / 等级人数 = 个人获得分红</div>
+                    </div>
+                </div>
+                </div>
+            {/if}
+           
+            <div class="form-group"></div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-8">
+                    <button class="btn btn-primary save" id="save" type="submit">保存</button>
+                    <a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+                </div>
+            </div>
+        </form>
+        <input id="level_ids" type="hidden" name="level_ids" value="{$level_ids}">
+        <input type="hidden" id="default_distribution_rule"  name="default_distribution_rule"  value="{if $goods_info.distribution_rule}{$goods_info.distribution_rule}{else}2{/if}">
+        <input type="hidden" id="default_bonus_rule" name="default_bonus_rule" value="{if $goods_info.bonus_rule}{$goods_info.bonus_rule}{else}2{/if}">
+        <input type="hidden" id="promotion_type" name="promotion_type" value="{if $goods_info.promotion_type}{$goods_info.promotion_type}{else}0{/if}" />
+        <input id="bonus_level_ids" type="hidden" value="" name="bonus_level_ids">
+        <input id="global_level_ids" type="hidden" value="{$global_level_ids}" name="global_level_ids">
+        <input id="area_level_ids" type="hidden" value="{$area_level_ids}" name="area_level_ids">
+        <input id="team_level_ids" type="hidden" value="{$team_level_ids}" name="team_level_ids">
+{/block}
+{block name="script"}
+<script>
+    require(['util'], function (util) {
+        var level_id_input = $('.level_id');
+        var bonus_level_ids = '';
+        for(var i=0; i<level_id_input.length; i++){
+            bonus_level_ids += $(level_id_input[i]).val() + ',';
+        }
+        bonus_level_ids = bonus_level_ids.substr(0, bonus_level_ids.length-1);
+        $('input[name=bonus_level_ids]').val(bonus_level_ids);
+
+        //分销开始
+        //当没有开启分销分红设置的时候，规则隐藏掉
+        var isDistribution=$('input[name=is_distribution]').is(':checked');
+        $("input[name='is_distribution']").on("change", function () {
+            var val = $(this).val();
+            if(val == 1) {
+                // $('#distribution_rule_hidden').show();
+                $(".distribution_rules").removeClass("hide");
+                $("#distribution_rule").removeAttr("checked");
+                $('.buyagain_rules').removeClass('hide');
+                $('.distribution_choose').removeClass('hide');
+            }else{
+                // $('#distribution_rule_hidden').hide();
+                $('#buyagain-switch').removeAttr('checked');
+                $('.buyagain_rules').addClass('hide');
+                $(".distribution_rules").addClass("hide");
+                $("#level_rules").addClass("hide");
+                $("#recommend_type").addClass("hide");
+                $("#distribution_input").addClass("hide");
+                $("#distribution_input2").addClass("hide");
+                $("#distribution_input3").addClass("hide");
+                $('.distribution_choose').addClass('hide');
+            }
+        })
+        $('input[name=distribution_bonus_choose]').change(function () {
+            var bonus_rule = $(this).is(':checked') ? 1 : 2;
+            if (bonus_rule == 1) {
+                $('.distribution_bonus_calculation').removeClass('hide');
+            }else{
+                $('.distribution_bonus_calculation').addClass('hide');
+            }
+        });
+        $("input[name='recommend_type']").click(function () {
+            if ($(this).is(':checked') && $("input[name='recommend_type']:checked").val() == 1) {
+                var level_rule = $("input[name='level_rule']").is(':checked') ? 1 : 2;
+                if (level_rule == 1) {
+                    $('#distribution_input2').removeClass('hide');
+                    $('#distribution_input3').addClass('hide');
+                } else {
+                    $('#distribution_input').removeClass('hide');
+                    $('#distribution_input1').addClass('hide');
+                }
+            } else if ($(this).is(':checked') && $("input[name='recommend_type']:checked").val() == 2) {
+                var level_rule = $("input[name='level_rule']").is(':checked') ? 1 : 2;
+                if (level_rule == 1) {
+                    $('#distribution_input3').removeClass('hide');
+                    $('#distribution_input2').addClass('hide');
+                } else {
+                    $('#distribution_input1').removeClass('hide');
+                    $('#distribution_input').addClass('hide');
+                }
+            }
+        });
+        $('input[name=level_rule]').change(function () {
+            var level_rule = $(this).is(':checked') ? 1 : 2;
+            if (level_rule == 1) {
+                $('#distribution_input').addClass('hide');
+                $('#distribution_input1').addClass('hide');
+                $('.recommend_type').removeAttr('checked');
+                $("input[name=recommend_type]:eq(0)").attr("checked", 'checked');
+                $('#distribution_input2').removeClass('hide');
+                $('#distribution_input input').attr('required', false);
+                $('#distribution_input1 input').attr('required', false);
+            } else {
+                $('#distribution_input2').addClass('hide');
+                $('#distribution_input3').addClass('hide');
+                $('.recommend_type').removeAttr('checked');
+                $('#distribution_input2 input').attr('required', false);
+                $('#distribution_input3 input').attr('required', false);
+                $("input[name=recommend_type]:eq(0)").attr("checked", 'checked');
+                $('#distribution_input').removeClass('hide');
+            }
+        });
+        $('input[name=distribution_rule]').change(function () {
+            var distribution_rule = $(this).is(':checked') ? 1 : 2;
+            if (distribution_rule == 1) {
+                $('#recommend_type').show();
+                
+                $('#level_rules').removeClass('hide');
+                $('#recommend_type').find('input').attr('required', true);
+                $('#recommend_type').removeClass('hide');
+                $("input[name=recommend_type]:eq(0)").attr("checked", 'checked');
+                $('#distribution_input').removeClass('hide');
+            } else {
+                
+                $('#recommend_type').addClass('hide');
+                $('#level_rules').addClass('hide');
+                $('#level_rule').removeAttr('checked');
+                $('#distribution_input').addClass('hide');
+                $('#distribution_input1').addClass('hide');
+                $('#distribution_input2').addClass('hide');
+                $('#distribution_input3').addClass('hide');
+                $('.recommend_type').removeAttr('checked');
+                $('#recommend_type').find('input').attr('required', false);
+                $('#distribution_input input').attr('required', false);
+                $('#distribution_input1 input').attr('required', false);
+                $('#distribution_input2 input').attr('required', false);
+                $('#distribution_input3 input').attr('required', false);
+            }
+        });
+
+        //分销结束
+
+        //区域分红开始
+        //区域分红设置
+        $('input[name=area_bonus_choose]').change(function () {
+            var bonus_rule = $(this).is(':checked') ? 1 : 2;
+            if (bonus_rule == 1) {
+                $('.area_bonus_calculation').removeClass('hide');
+            }else{
+                $('.area_bonus_calculation').addClass('hide');
+            }
+        });
+        $('input[name=area_bonus_rules]').change(function () {
+            var area_bonus_rules = $(this).is(':checked') ? 1 : 2;
+            if (area_bonus_rules == 1) {
+                $('.area_bonus_recommend_type').removeAttr('checked');
+                $("input[name=area_bonus_recommend_type]:eq(0)").attr("checked", 'checked');
+                $('#area_bonus_recommend_type').removeClass('hide');
+                var area_bonus_recommend_type = $("input[name='area_bonus_recommend_type']:checked").val();
+                if(area_bonus_recommend_type == 1){
+                   
+                    $('#area_bonus_input').removeClass('hide');
+                    $('#area_bonus_input1').addClass('hide');
+                }else{
+                    
+                    $('#area_bonus_input1').removeClass('hide');
+                    $('#area_bonus_input').addClass('hide');
+                }
+            }else{
+                $('#area_bonus_recommend_type').addClass('hide');
+                $('#area_bonus_input').addClass('hide');
+                $('#area_bonus_input1').addClass('hide');
+            }
+        });
+        $("input[name='area_bonus_recommend_type']").click(function () {
+            if ($(this).is(':checked') && $("input[name='area_bonus_recommend_type']:checked").val() == 1) {
+                
+                $('#area_bonus_input').removeClass('hide');
+                $('#area_bonus_input1').addClass('hide');
+            } else if ($(this).is(':checked') && $("input[name='area_bonus_recommend_type']:checked").val() == 2) {
+                $('#area_bonus_input1').removeClass('hide');
+                $('#area_bonus_input').addClass('hide');
+            }
+        });
+        //全球分红独立设置
+        $('input[name=global_bonus_choose]').change(function () {
+            var bonus_rule = $(this).is(':checked') ? 1 : 2;
+            if (bonus_rule == 1) {
+                $('.global_bonus_calculation').removeClass('hide');
+            }else{
+                $('.global_bonus_calculation').addClass('hide');
+            }
+        });
+        $('input[name=bonus_rule]').change(function () {
+            var bonus_rule = $(this).is(':checked') ? 1 : 2;
+            if (bonus_rule == 1) {
+                $('#bonus_input').removeClass('hide');
+                if ($('input[name=is_bonus_global]:checked').val() == 1) {
+                    $('.global_bonus').attr('required', true);
+                }
+                if ($('input[name=is_bonus_area]:checked').val() == 1) {
+                    $('.area_bonus').attr('required', true);
+                }
+                if ($('input[name=is_bonus_team]:checked').val() == 1) {
+                    $('.team_bonus').attr('required', true);
+                }
+            } else {
+                $('#bonus_input').addClass('hide');
+                $('#bonus_input input').attr('required', false);
+            }
+        });
+        $('input[name=global_bonus_rules]').change(function () {
+            var global_bonus_rules = $(this).is(':checked') ? 1 : 2;
+            if (global_bonus_rules == 1) {
+                $('.global_bonus_recommend_type').removeAttr('checked');
+                $("input[name=global_bonus_recommend_type]:eq(0)").attr("checked", 'checked');
+                $('#global_bonus_recommend_type').removeClass('hide');
+                var global_bonus_recommend_type = $("input[name='global_bonus_recommend_type']:checked").val();
+                if(global_bonus_recommend_type == 1){
+                    $('#global_bonus_input').removeClass('hide');
+                    $('#global_bonus_input1').addClass('hide');
+                }else{
+                    $('#global_bonus_input1').removeClass('hide');
+                    $('#global_bonus_input').addClass('hide');
+                }
+            }else{
+                $('#global_bonus_recommend_type').addClass('hide');
+                $('#global_bonus_input').addClass('hide');
+                $('#global_bonus_input1').addClass('hide');
+            }
+        });
+        $("input[name='global_bonus_recommend_type']").click(function () {
+            if ($(this).is(':checked') && $("input[name='global_bonus_recommend_type']:checked").val() == 1) {
+                $('#global_bonus_input').removeClass('hide');
+                $('#global_bonus_input1').addClass('hide');
+            } else if ($(this).is(':checked') && $("input[name='global_bonus_recommend_type']:checked").val() == 2) {
+                $('#global_bonus_input1').removeClass('hide');
+                $('#global_bonus_input').addClass('hide');
+            }
+        });
+        $('input[name=team_bonus_choose]').change(function () {
+            var bonus_rule = $(this).is(':checked') ? 1 : 2;
+            if (bonus_rule == 1) {
+                $('.team_bonus_calculation').removeClass('hide');
+            }else{
+                $('.team_bonus_calculation').addClass('hide');
+            }
+        });
+        //复购设置
+        $("#buyagain-switch").change(function () {
+            var buyagain = $("input[name='buyagain']:checked").val();
+			if(buyagain == 1){
+                $('.buyagain_commission').show();
+                $('.buyagain_commission').removeClass('hide');
+                //默认开启
+                $('#buyagain_distribution_input').removeClass('hide');
+			}else{
+                $('.buyagain_commission').hide();
+                $('.buyagain_commission').addClass('hide');
+			}
+        })
+        $("input[name='buyagain_recommend_type']").click(function () {
+            if ($(this).is(':checked') && $("input[name='buyagain_recommend_type']:checked").val() == 1) {
+                var buyagain_level_rule = $("input[name='buyagain_level_rule']").is(':checked') ? 1 : 2;
+                if (buyagain_level_rule == 1) {
+                    $('#buyagain_distribution_input2').removeClass('hide');
+                    $('#buyagain_distribution_input3').addClass('hide');
+                } else {
+                    $('#buyagain_distribution_input').removeClass('hide');
+                    $('#buyagain_distribution_input1').addClass('hide');
+                }
+            } else if ($(this).is(':checked') && $("input[name='buyagain_recommend_type']:checked").val() == 2) {
+                var buyagain_level_rule = $("input[name='buyagain_level_rule']").is(':checked') ? 1 : 2;
+                if (buyagain_level_rule == 1) {
+                    $('#buyagain_distribution_input3').removeClass('hide');
+                    $('#buyagain_distribution_input2').addClass('hide');
+                } else {
+                    $('#buyagain_distribution_input1').removeClass('hide');
+                    $('#buyagain_distribution_input').addClass('hide');
+                }
+            }
+        });
+        //等级复购
+        $('input[name=buyagain_level_rule]').change(function () {
+            var buyagain_level_rule = $(this).is(':checked') ? 1 : 2;
+            if (buyagain_level_rule == 1) {
+                $('#buyagain_distribution_input').addClass('hide');
+                $('#buyagain_distribution_input1').addClass('hide');
+                $('.buyagain_recommend_type').removeAttr('checked');
+                $("input[name=buyagain_recommend_type]:eq(0)").attr("checked", 'checked');
+                $('#buyagain_distribution_input2').removeClass('hide');
+                $('#buyagain_distribution_input input').attr('required', false);
+                $('#buyagain_distribution_input1 input').attr('required', false);
+            } else {
+                $('#buyagain_distribution_input2').addClass('hide');
+                $('#buyagain_distribution_input3').addClass('hide');
+                $('.buyagain_recommend_type').removeAttr('checked');
+                $('#buyagain_distribution_input2 input').attr('required', false);
+                $('#buyagain_distribution_input3 input').attr('required', false);
+                $("input[name=buyagain_recommend_type]:eq(0)").attr("checked", 'checked');
+                $('#buyagain_distribution_input').removeClass('hide');
+            }
+        });
+        $("input[name='is_bonus_global']").on('change', function () {
+            var val = $(this).val();
+            if(val == 1){
+                $('.gloable_all').removeClass('hide');
+                $('.global_bonus_choose').removeClass('hide');
+            }else{
+                $('.gloable_all').addClass('hide');
+            }
+            if (val == 2) {
+                // $('.bonus-td1').hide();
+                $('.bonus-td1').addClass('hide');
+            }
+
+            if ($("#bonus_rule").is(':checked')) {
+                if (val == 1) {
+                    $('.bonus-td1').find('input').attr('required', true);
+                } else {
+                    $('.bonus-td1').find('input').attr('required', false);
+                }
+            }
+            
+            if ($("input[name='is_bonus_global']:checked").val() == 2 && $("input[name='is_bonus_area']:checked").val() == 2 && $("input[name='is_bonus_team']:checked").val() == 2) {
+                $("#bounsRules").addClass("hide");
+            } else {
+                $("#bounsRules").removeClass("hide");
+            }
+        });
+        if($("input[name='is_bonus_team']:checked").val() == 1){
+           
+            $('.J-teambonus_rule').removeClass('hide');
+        }else{
+           
+            $('.J-teambonus_rule').addClass('hide');
+        }
+        $("input[name='is_bonus_area']").on('change', function () {
+            var val = $(this).val();
+            if(val == 1){
+                $('.area_all').removeClass('hide');
+                $('.area_bonus_choose').removeClass('hide');
+            }else{
+                $('.area_all').addClass('hide');
+            }
+            if (val == 2) {
+                // $('.bonus-td2').hide();
+                $('.bonus-td2').addClass('hide');
+            }
+
+            if ($("#bonus_rule").is(':checked')) {
+                if (val == 1) {
+                    $('.bonus-td2').find('input').attr('required', true);
+                } else {
+                    $('.bonus-td2').find('input').attr('required', false);
+                }
+            }
+
+            if ($("input[name='is_bonus_global']:checked").val() == 2 && $("input[name='is_bonus_area']:checked").val() == 2 && $("input[name='is_bonus_team']:checked").val() == 2) {
+                $("#bounsRules").addClass("hide");
+            } else {
+                $("#bounsRules").removeClass("hide");
+            }
+        });
+        $("input[name='is_bonus_team']").on('change', function () {
+            var val = $(this).val();
+            console.log('2333',val)
+            if(val == 1){
+                $('.team_all').removeClass('hide');
+                $('.team_bonus_choose').removeClass('hide');
+                $('.J-teambonus_rule').removeClass('hide');
+            }else{
+                $('.team_all').addClass('hide');
+            }
+            if ($("#bonus_rule").is(':checked')) {
+                // if (val == 1) {
+                //     $('.bonus-td3').find('input').attr('required', true);
+                // } else {
+                //     $('.bonus-td3').find('input').attr('required', false);
+                // }
+            }
+
+            // if ($("input[name='is_bonus_global']:checked").val() == 2 && $("input[name='is_bonus_area']:checked").val() == 2 && $("input[name='is_bonus_team']:checked").val() == 2) {
+            //     $("#bounsRules").addClass("hide");
+            // } else {
+            //     $("#bounsRules").removeClass("hide");
+            // }
+        });
+        if($("input[name='is_bonus_team']:checked").val() == 2){
+            $('.bonus-td2').addClass('hide');
+            $('.J-teambonus_grade_info').addClass('hide');
+        }
+        $('input[name=teambonus_rule]').change(function(){
+            console.log($('input[name=teambonus_rule]:checked').val());
+            if($(this).is(':checked')){
+                $('.J-teambonus_grade_info').removeClass('hide');
+                $('.J-teambonus_grade_info').find('input').attr('required', true);
+            }else{
+                $('.J-teambonus_grade_info').addClass('hide');
+                $('.J-teambonus_grade_info').find('input').attr('required', false);
+            }
+        })
+
+        if($("input[name='is_bonus_team']:checked").val() == 1 && $('input[name=teambonus_rule]:checked').val() == 'on'){
+            $('.J-teambonus_grade_info').removeClass('hide');
+            $('.J-teambonus_grade_info').find('input').attr('required', true);
+        }
+        $('input[name=bonus_type]').change(function(){
+            if($(this).val() == 1){
+                $('.J-level_unit').html('%分红');
+            }else{
+                $('.J-level_unit').html('元分红');
+            }
+        })
+        if($('input[name=bonus_type]:checked').val() == '1'){
+            $('.J-level_unit').html('%分红');
+        }else{
+            $('.J-level_unit').html('元分红');
+        }
+
+        $('#upgrade-condition input[type=checkbox]').click(function(){
+            if($(this).attr('checked') === 'checked'){
+                $(this).parent().parent().find('input[type=number]').attr('required','required');
+            }else if($(this).attr('checked') === undefined){
+                var idx = $(this).val();
+                $(this).parent().parent().find('input[type=number]').attr('required',null);
+                if(idx == '1'){
+                    $(this).attr('required','required');
+                    $(this).attr('aria-required',false);
+                    $(this).parent().parent().find('input[type=number]').attr('required','required');
+                    $(this).parent().parent().find('input[type=number]').attr('aria-required',false);
+                }
+                $(this).parent().parent().removeClass('has-error');
+            }
+        })
+        $('#upgrade-condition input[type=checkbox]:checked').parent().parent().find('input[type=number]').attr('required','required');
+        $('#upgrade-condition input[type=number]').click(function(){
+            $(this).attr('required','required');
+            $(this).parent().parent().parent().find('input[type=checkbox]').attr('checked','required');
+        })
+        if(!isDistribution){
+            $('#distribution_input input').attr('required',null);
+        }
+        if($('input[name=is_bonus]:checked').val() != 1){
+            $('#bonus_input input').attr('required',false);
+        }
+
+        $("input[name='rule_commission']").on('change', function () {
+            if ($(this).is(':checked')) {
+                $("#distribution_input").removeClass('hide');
+                $("#distribution_input").find('input').attr('required', true);
+            } else {
+                $("#distribution_input").addClass('hide');
+                $("#distribution_input").find('input').removeAttr('required', true);
+            }
+        });
+
+        $("input[name='rule_bonus']").on('change', function () {
+            if ($(this).is(':checked')) {
+                $("#bonus_input").removeClass('hide');
+                $("#bonus_input").find('input').attr('required', true);
+            } else {
+                $("#bonus_input").addClass('hide');
+                $("#bonus_input").find('input').removeAttr('required', true);
+            }
+        });
+
+        util.validate($('.form-validate'), function (form) {
+            //是否参与分销
+            var data_val = {};
+            var distribution_obj = {};
+            var is_distribution = $('input[name=is_distribution]:checked').val();
+            var distribution_rule = $('input[name=distribution_rule]').is(':checked') ? 1 : 2;
+            var recommend_type = $('input[name=recommend_type]:checked').val();
+            var level_rule = $('input[name=level_rule]').is(':checked') ? 1 : 2;
+            data_val.is_distribution = is_distribution;
+            data_val.distribution_rule = distribution_rule;
+            //分销复购独立设置
+            var buyagain_distribution_obj = {};
+            var buyagain = $('input[name=buyagain]').is(':checked') ? 1 : 2; //是否开启复购
+            var buyagain_level_rule = $('input[name=buyagain_level_rule]').is(':checked') ? 1 : 2; //是否开启等级复购
+            var buyagain_recommend_type = $('input[name=buyagain_recommend_type]:checked').val(); //复购返佣类型
+            data_val.buyagain = buyagain;
+            data_val.buyagain_level_rule = buyagain_level_rule;
+            data_val.buyagain_recommend_type = buyagain_recommend_type;
+            if(buyagain == "1" && buyagain_recommend_type && buyagain_level_rule == 2){
+                if (buyagain_recommend_type == 1) {
+                    var buyagain_first_rebate = $('#buyagain_first_rebate').val() == '' ? '0' : $('#buyagain_first_rebate').val();
+                    var buyagain_second_rebate = $('#buyagain_second_rebate').val() == '' ? '0' : $('#buyagain_second_rebate').val();
+                    var buyagain_third_rebate = $('#buyagain_third_rebate').val() == '' ? '0' : $('#buyagain_third_rebate').val();
+                    var buyagain_first_point = $('#buyagain_first_point').val() == '' ? '0' : $('#buyagain_first_point').val();
+                    var buyagain_second_point = $('#buyagain_second_point').val() == '' ? '0' : $('#buyagain_second_point').val();
+                    var buyagain_third_point = $('#buyagain_third_point').val() == '' ? '0' : $('#buyagain_third_point').val();
+                } else {
+                    var buyagain_first_rebate1 = $('#buyagain_first_rebate1').val() == '' ? '0' : $('#buyagain_first_rebate1').val();
+                    var buyagain_second_rebate1 = $('#buyagain_second_rebate1').val() == '' ? '0' : $('#buyagain_second_rebate1').val();
+                    var buyagain_third_rebate1 = $('#buyagain_third_rebate1').val() == '' ? '0' : $('#buyagain_third_rebate1').val();
+                    var buyagain_first_point1 = $('#buyagain_first_point1').val() == '' ? '0' : $('#buyagain_first_point1').val();
+                    var buyagain_second_point1 = $('#buyagain_second_point1').val() == '' ? '0' : $('#buyagain_second_point1').val();
+                    var buyagain_third_point1 = $('#buyagain_third_point1').val() == '' ? '0' : $('#buyagain_third_point1').val();
+                }
+                buyagain_distribution_obj.buyagain_recommend_type = buyagain_recommend_type;
+                buyagain_distribution_obj.buyagain_level_rule = buyagain_level_rule;
+                buyagain_distribution_obj.buyagain_first_rebate = buyagain_first_rebate;
+                buyagain_distribution_obj.buyagain_second_rebate = buyagain_second_rebate;
+                buyagain_distribution_obj.buyagain_third_rebate = buyagain_third_rebate;
+                buyagain_distribution_obj.buyagain_first_point = buyagain_first_point;
+                buyagain_distribution_obj.buyagain_second_point = buyagain_second_point;
+                buyagain_distribution_obj.buyagain_third_point = buyagain_third_point;
+                buyagain_distribution_obj.buyagain_first_rebate1 = buyagain_first_rebate1;
+                buyagain_distribution_obj.buyagain_second_rebate1 = buyagain_second_rebate1;
+                buyagain_distribution_obj.buyagain_third_rebate1 = buyagain_third_rebate1;
+                buyagain_distribution_obj.buyagain_first_point1 = buyagain_first_point1;
+                buyagain_distribution_obj.buyagain_second_point1 = buyagain_second_point1;
+                buyagain_distribution_obj.buyagain_third_point1 = buyagain_third_point1;
+                data_val.buyagain_distribution_val = JSON.stringify(buyagain_distribution_obj);
+            }else if(buyagain == "1" && buyagain_recommend_type && buyagain_level_rule == 1){
+                var buyagain_first_rebate = [];
+                var buyagain_second_rebate = [];
+                var buyagain_third_rebate = [];
+                var buyagain_first_point = [];
+                var buyagain_second_point = [];
+                var buyagain_third_point = [];
+                var buyagain_first_rebate1 = [];
+                var buyagain_second_rebate1 = [];
+                var buyagain_third_rebate1 = [];
+                var buyagain_first_point1 = [];
+                var buyagain_second_point1 = [];
+                var buyagain_third_point1 = [];
+                var levelids = $("#level_ids").val();
+                var arr = levelids.split(',');
+                if (buyagain_recommend_type == 1) {
+                    for (var jj = 0; jj < arr.length; jj++) {
+                        if ($('#buyagain_level_first_rebate_' + arr[jj]).val() == '') {
+                            buyagain_first_rebate.push('0');
+                        } else {
+                            buyagain_first_rebate.push($('#buyagain_level_first_rebate_' + arr[jj]).val());
+                        }
+                        if ($('#buyagain_level_second_rebate_' + arr[jj]).val() == '') {
+                            buyagain_second_rebate.push('0');
+                        } else {
+                            buyagain_second_rebate.push($('#buyagain_level_second_rebate_' + arr[jj]).val());
+                        }
+                        if ($('#buyagain_level_third_rebate_' + arr[jj]).val() == '') {
+                            buyagain_third_rebate.push('0');
+                        } else {
+                            buyagain_third_rebate.push($('#buyagain_level_third_rebate_' + arr[jj]).val());
+                        }
+                        if ($('#buyagain_level_first_point_' + arr[jj]).val() == '') {
+                            buyagain_first_point.push('0');
+                        } else {
+                            buyagain_first_point.push($('#buyagain_level_first_point_' + arr[jj]).val());
+                        }
+                        if ($('#buyagain_level_second_point_' + arr[jj]).val() == '') {
+                            buyagain_second_point.push('0');
+                        } else {
+                            buyagain_second_point.push($('#buyagain_level_second_point_' + arr[jj]).val());
+                        }
+                        if ($('#buyagain_level_third_point_' + arr[jj]).val() == '') {
+                            buyagain_third_point.push('0');
+                        } else {
+                            buyagain_third_point.push($('#buyagain_level_third_point_' + arr[jj]).val());
+                        }
+
+                    }
+                    
+                } else {
+                    for (var g = 0; g < arr.length; g++) {
+                        
+                        if ($('#buyagain_level_first_rebate1_' + arr[g]).val() == "") {
+                            buyagain_first_rebate1.push('0');
+                        } else {
+                            buyagain_first_rebate1.push($('#buyagain_level_first_rebate1_' + arr[g]).val());
+                        }
+                        if ($('#buyagain_level_second_rebate1_' + arr[g]).val() == '') {
+                            buyagain_second_rebate1.push('0');
+                        } else {
+                            buyagain_second_rebate1.push($('#buyagain_level_second_rebate1_' + arr[g]).val());
+                        }
+                        if ($('#buyagain_level_third_rebate1_' + arr[g]).val() == '') {
+                            buyagain_third_rebate1.push('0');
+                        } else {
+                            buyagain_third_rebate1.push($('#buyagain_level_third_rebate1_' + arr[g]).val());
+                        }
+                        if ($('#buyagain_level_first_point1_' + arr[g]).val() == '') {
+                            buyagain_first_point1.push('0');
+                        } else {
+                            buyagain_first_point1.push($('#buyagain_level_first_point1_' + arr[g]).val());
+                        }
+                        if ($('#buyagain_level_second_point1_' + arr[g]).val() == '') {
+                            buyagain_second_point1.push('0');
+                        } else {
+                            buyagain_second_point1.push($('#buyagain_level_second_point1_' + arr[g]).val());
+                        }
+                        if ($('#buyagain_level_third_point1_' + arr[g]).val() == '') {
+                            buyagain_third_point1.push('0');
+                        } else {
+                            buyagain_third_point1.push($('#buyagain_level_third_point1_' + arr[g]).val());
+                        }
+                    }
+                }
+                    buyagain_distribution_obj.buyagain_recommend_type = buyagain_recommend_type;
+                    buyagain_distribution_obj.buyagain_level_rule = buyagain_level_rule;
+                    buyagain_distribution_obj.level_ids = arr;
+                    buyagain_distribution_obj.buyagain_first_rebate = buyagain_first_rebate;
+                    buyagain_distribution_obj.buyagain_second_rebate = buyagain_second_rebate;
+                    buyagain_distribution_obj.buyagain_third_rebate = buyagain_third_rebate;
+                    buyagain_distribution_obj.buyagain_first_point = buyagain_first_point;
+                    buyagain_distribution_obj.buyagain_second_point = buyagain_second_point;
+                    buyagain_distribution_obj.buyagain_third_point = buyagain_third_point;
+                    buyagain_distribution_obj.buyagain_first_rebate1 = buyagain_first_rebate1;
+                    buyagain_distribution_obj.buyagain_second_rebate1 = buyagain_second_rebate1;
+                    buyagain_distribution_obj.buyagain_third_rebate1 = buyagain_third_rebate1;
+                    buyagain_distribution_obj.buyagain_first_point1 = buyagain_first_point1;
+                    buyagain_distribution_obj.buyagain_second_point1 = buyagain_second_point1;
+                    buyagain_distribution_obj.buyagain_third_point1 = buyagain_third_point1;
+                    data_val.buyagain_distribution_val = JSON.stringify(buyagain_distribution_obj);
+            }else{
+                data_val.buyagain_distribution_val = '';
+            }
+            console.log('distribution_rule',distribution_rule);
+            console.log('recommend_type',recommend_type);
+            console.log('level_rule',level_rule);
+            if (distribution_rule == '1' && recommend_type && level_rule == 2) {
+                if (recommend_type == 1) {
+                    var first_rebate = $('#first_rebate').val() == '' ? '0' : $('#first_rebate').val();
+                    var second_rebate = $('#second_rebate').val() == '' ? '0' : $('#second_rebate').val();
+                    var third_rebate = $('#third_rebate').val() == '' ? '0' : $('#third_rebate').val();
+                    var first_point = $('#first_point').val() == '' ? '0' : $('#first_point').val();
+                    var second_point = $('#second_point').val() == '' ? '0' : $('#second_point').val();
+                    var third_point = $('#third_point').val() == '' ? '0' : $('#third_point').val();
+                } else {
+                    var first_rebate1 = $('#first_rebate1').val() == '' ? '0' : $('#first_rebate1').val();
+                    var second_rebate1 = $('#second_rebate1').val() == '' ? '0' : $('#second_rebate1').val();
+                    var third_rebate1 = $('#third_rebate1').val() == '' ? '0' : $('#third_rebate1').val();
+                    var first_point1 = $('#first_point1').val() == '' ? '0' : $('#first_point1').val();
+                    var second_point1 = $('#second_point1').val() == '' ? '0' : $('#second_point1').val();
+                    var third_point1 = $('#third_point1').val() == '' ? '0' : $('#third_point1').val();
+                }
+                distribution_obj.recommend_type = recommend_type;
+                distribution_obj.level_rule = level_rule;
+                distribution_obj.first_rebate = first_rebate;
+                distribution_obj.second_rebate = second_rebate;
+                distribution_obj.third_rebate = third_rebate;
+                distribution_obj.first_point = first_point;
+                distribution_obj.second_point = second_point;
+                distribution_obj.third_point = third_point;
+                distribution_obj.first_rebate1 = first_rebate1;
+                distribution_obj.second_rebate1 = second_rebate1;
+                distribution_obj.third_rebate1 = third_rebate1;
+                distribution_obj.first_point1 = first_point1;
+                distribution_obj.second_point1 = second_point1;
+                distribution_obj.third_point1 = third_point1;
+                data_val.distribution_val = JSON.stringify(distribution_obj);
+            } else if (distribution_rule == '1' && recommend_type && level_rule == 1) {
+                var first_rebate = [];
+                var second_rebate = [];
+                var third_rebate = [];
+                var first_point = [];
+                var second_point = [];
+                var third_point = [];
+                var first_rebate1 = [];
+                var second_rebate1 = [];
+                var third_rebate1 = [];
+                var first_point1 = [];
+                var second_point1 = [];
+                var third_point1 = [];
+                var levelids = $("#level_ids").val();
+                var arr = levelids.split(',');
+                if (recommend_type == 1) {
+                    for (var j = 0; j < arr.length; j++) {
+                        if ($('#level_first_rebate_' + arr[j]).val() == '') {
+                            first_rebate.push('0');
+                        } else {
+                            first_rebate.push($('#level_first_rebate_' + arr[j]).val());
+                        }
+                        if ($('#level_second_rebate_' + arr[j]).val() == '') {
+                            second_rebate.push('0');
+                        } else {
+                            second_rebate.push($('#level_second_rebate_' + arr[j]).val());
+                        }
+                        if ($('#level_third_rebate_' + arr[j]).val() == '') {
+                            third_rebate.push('0');
+                        } else {
+                            third_rebate.push($('#level_third_rebate_' + arr[j]).val());
+                        }
+                        if ($('#level_first_point_' + arr[j]).val() == '') {
+                            first_point.push('0');
+                        } else {
+                            first_point.push($('#level_first_point_' + arr[j]).val());
+                        }
+                        if ($('#level_second_point_' + arr[j]).val() == '') {
+                            second_point.push('0');
+                        } else {
+                            second_point.push($('#level_second_point_' + arr[j]).val());
+                        }
+                        if ($('#level_third_point_' + arr[j]).val() == '') {
+                            third_point.push('0');
+                        } else {
+                            third_point.push($('#level_third_point_' + arr[j]).val());
+                        }
+
+                    }
+                } else {
+                    for (var g = 0; g < arr.length; g++) {
+                        if ($('#level_first_rebate1_' + arr[g]).val() == "") {
+                            first_rebate1.push('0');
+                        } else {
+                            first_rebate1.push($('#level_first_rebate1_' + arr[g]).val());
+                        }
+                        if ($('#level_second_rebate1_' + arr[g]).val() == '') {
+                            second_rebate1.push('0');
+                        } else {
+                            second_rebate1.push($('#level_second_rebate1_' + arr[g]).val());
+                        }
+                        if ($('#level_third_rebate1_' + arr[g]).val() == '') {
+                            third_rebate1.push('0');
+                        } else {
+                            third_rebate1.push($('#level_third_rebate1_' + arr[g]).val());
+                        }
+                        if ($('#level_first_point1_' + arr[g]).val() == '') {
+                            first_point1.push('0');
+                        } else {
+                            first_point1.push($('#level_first_point1_' + arr[g]).val());
+                        }
+                        if ($('#level_second_point1_' + arr[g]).val() == '') {
+                            second_point1.push('0');
+                        } else {
+                            second_point1.push($('#level_second_point1_' + arr[g]).val());
+                        }
+                        if ($('#level_third_point1_' + arr[g]).val() == '') {
+                            third_point1.push('0');
+                        } else {
+                            third_point1.push($('#level_third_point1_' + arr[g]).val());
+                        }
+
+
+
+
+
+
+
+                    }
+                }
+
+                
+                distribution_obj.recommend_type = recommend_type;
+                distribution_obj.level_rule = level_rule;
+                distribution_obj.level_ids = arr;
+                distribution_obj.first_rebate = first_rebate;
+                distribution_obj.second_rebate = second_rebate;
+                distribution_obj.third_rebate = third_rebate;
+                distribution_obj.first_point = first_point;
+                distribution_obj.second_point = second_point;
+                distribution_obj.third_point = third_point;
+                distribution_obj.first_rebate1 = first_rebate1;
+                distribution_obj.second_rebate1 = second_rebate1;
+                distribution_obj.third_rebate1 = third_rebate1;
+                distribution_obj.first_point1 = first_point1;
+                distribution_obj.second_point1 = second_point1;
+                distribution_obj.third_point1 = third_point1;
+                data_val.distribution_val = JSON.stringify(distribution_obj);
+            } else {
+                data_val.distribution_val = '';
+            }
+            var distribution_bonus_choose = $('input[name=distribution_bonus_choose]').is(':checked') ? 1 : 2;//全球分红独立结算节点
+            var distribution_bonus_calculation = $("#distribution_bonus_calculation").val();
+
+            data_val.distribution_bonus_choose = distribution_bonus_choose;
+            data_val.distribution_bonus_calculation = distribution_bonus_calculation;
+            //是否参与分红
+            var bonus_obj = {};
+            var is_global_bonus = $('input[name=is_bonus_global]:checked').val();
+            var is_area_bonus = $('input[name=is_bonus_area]:checked').val();
+            var is_team_bonus = $('input[name=is_bonus_team]:checked').val();
+            var bonus_rule = $('input[name=bonus_rule]').is(':checked') ? 1 : 2;
+            data_val.is_global_bonus = is_global_bonus;
+            data_val.is_area_bonus = is_area_bonus;
+            data_val.is_team_bonus = is_team_bonus;
+            data_val.bonus_rule = bonus_rule;
+            // if (bonus_rule == '1') {
+            //     //全球分红
+            //     var global_bonus = $('#global_bonus').val();
+            //     //区域分红
+            //     var province_bonus = $('#province_bonus').val();
+            //     var city_bonus = $('#city_bonus').val();
+            //     var district_bonus = $('#district_bonus').val();
+            //     //团队分红
+            //     // var team_bonus = $('#team_bonus').val();
+            //     bonus_obj.global_bonus = global_bonus;
+            //     bonus_obj.province_bonus = province_bonus;
+            //     bonus_obj.city_bonus = city_bonus;
+            //     bonus_obj.district_bonus = district_bonus;
+            //     // bonus_obj.team_bonus = team_bonus;
+            //     bonus_obj.is_team_bonus = is_team_bonus;
+            //     data_val.bonus_val = JSON.stringify(bonus_obj);
+            // } else {
+            //     data_val.bonus_val = '';
+            // }
+            //分红独立设置
+            var global_bonus_choose = $('input[name=global_bonus_choose]').is(':checked') ? 1 : 2;//全球分红独立结算节点
+            var global_bonus_calculation = $("#global_bonus_calculation").val();
+            var area_bonus_choose = $('input[name=area_bonus_choose]').is(':checked') ? 1 : 2;//区域分红独立结算节点
+            var area_bonus_calculation = $("#area_bonus_calculation").val();
+            var team_bonus_choose = $('input[name=team_bonus_choose]').is(':checked') ? 1 : 2;//团队分红独立结算节点
+            var team_bonus_calculation = $("#team_bonus_calculation").val();
+            data_val.global_bonus_choose = global_bonus_choose;
+            data_val.global_bonus_calculation = global_bonus_calculation;
+            data_val.area_bonus_choose = area_bonus_choose;
+            data_val.area_bonus_calculation = area_bonus_calculation;
+            data_val.team_bonus_choose = team_bonus_choose;
+            data_val.team_bonus_calculation = team_bonus_calculation;
+            var global_bonus_rules = $('input[name=global_bonus_rules]').is(':checked') ? 1 : 2; //是否开启独立全球分红
+            var global_bonus_obj = {};
+            if(is_global_bonus == 1 && global_bonus_rules == 1){
+                var global_bonus_recommend_type = $("input[name='global_bonus_recommend_type']:checked").val();//返佣类型
+                var global_level_ids = $("#global_level_ids").val();
+                var arr_global = global_level_ids.split(',');
+                var global_rebate = []; //比例规则
+                var globals_rebate = [];//固定规则
+                if(global_bonus_recommend_type == 1){ //比例
+                    for (var j = 0; j < arr_global.length; j++) {
+                        if ($('#global_level_' + arr_global[j]).val() == '') {
+                            global_rebate.push('0');
+                        }else{
+                            global_rebate.push($('#global_level_' + arr_global[j]).val());
+                        } 
+                    }
+                }else{ //固定
+                    for (var j = 0; j < arr_global.length; j++) {
+                        if ($('#globals_level_' + arr_global[j]).val() == '') {
+                            globals_rebate.push('0');
+                        }else{
+                            globals_rebate.push($('#globals_level_' + arr_global[j]).val());
+                        } 
+                    }
+                }
+                global_bonus_obj.global_bonus_recommend_type = global_bonus_recommend_type;
+                global_bonus_obj.global_bonus_rules = global_bonus_rules;
+                global_bonus_obj.level_ids = arr_global;
+                global_bonus_obj.global_rebate = global_rebate;
+                global_bonus_obj.globals_rebate = globals_rebate;
+                data_val.global_bonus_val = JSON.stringify(global_bonus_obj);
+            }else{
+                data_val.global_bonus_val = '';
+            }
+            var area_bonus_rules = $('input[name=area_bonus_rules]').is(':checked') ? 1 : 2; //是否开启独立区域分红
+            var area_bonus_obj = {};
+            if(area_bonus_rules == 1 && is_area_bonus == 1){
+                var area_bonus_recommend_type = $("input[name='area_bonus_recommend_type']:checked").val();//返佣类型
+                var area_level_ids = $("#area_level_ids").val();
+                var arr_area = area_level_ids.split(',');
+                var area_rebate_province = []; //比例规则
+                var area_rebate_city = []; //比例规则
+                var area_rebate_district = []; //比例规则
+                var areas_rebate_province = [];//固定规则
+                var areas_rebate_city = [];//固定规则
+                var areas_rebate_district = [];//固定规则
+                if(area_bonus_recommend_type == 1){ //比例
+                    for (var j = 0; j < arr_area.length; j++) {
+                        if ($('#province_bonus_level_' + arr_area[j]).val() == '') {
+                            area_rebate_province.push('0');
+                        }else{
+                            area_rebate_province.push($('#province_bonus_level_' + arr_area[j]).val());
+                        } 
+                        if ($('#city_bonus_level_' + arr_area[j]).val() == '') {
+                            area_rebate_city.push('0');
+                        }else{
+                            area_rebate_city.push($('#city_bonus_level_' + arr_area[j]).val());
+                        } 
+                        if ($('#district_bonus_level_' + arr_area[j]).val() == '') {
+                            area_rebate_district.push('0');
+                        }else{
+                            area_rebate_district.push($('#district_bonus_level_' + arr_area[j]).val());
+                        } 
+                    }
+                }else{ //固定
+                    for (var j = 0; j < arr_area.length; j++) {
+                        if ($('#provinces_bonus_level_' + arr_area[j]).val() == '') {
+                            areas_rebate_province.push('0');
+                        }else{
+                            areas_rebate_province.push($('#provinces_bonus_level_' + arr_area[j]).val());
+                        } 
+                        if ($('#citys_bonus_level_' + arr_area[j]).val() == '') {
+                            areas_rebate_city.push('0');
+                        }else{
+                            areas_rebate_city.push($('#citys_bonus_level_' + arr_area[j]).val());
+                        } 
+                        if ($('#districts_bonus_level_' + arr_area[j]).val() == '') {
+                            areas_rebate_district.push('0');
+                        }else{
+                            areas_rebate_district.push($('#districts_bonus_level_' + arr_area[j]).val());
+                        } 
+                    }
+                }
+                area_bonus_obj.level_ids = arr_area;
+                area_bonus_obj.area_bonus_recommend_type = area_bonus_recommend_type;
+                area_bonus_obj.area_bonus_rules = area_bonus_rules;
+                area_bonus_obj.area_rebate_province = area_rebate_province;
+                area_bonus_obj.area_rebate_city = area_rebate_city;
+                area_bonus_obj.area_rebate_district = area_rebate_district;
+                area_bonus_obj.areas_rebate_province = areas_rebate_province;
+                area_bonus_obj.areas_rebate_city = areas_rebate_city;
+                area_bonus_obj.areas_rebate_district = areas_rebate_district;
+                
+                data_val.area_bonus_val = JSON.stringify(area_bonus_obj);
+            }else{
+                data_val.area_bonus_val = '';
+            }
+            
+            //开启组装全球分红规则
+            //获取全球分红设置
+            
+            
+            //开始组装区域分红信息
+            //获取区域分红设置
+
+            //团队分红 独立出来
+            var teambonus_obj = {};
+            var teambonus_rule = $('input[name=teambonus_rule]').is(':checked') ? 1 : 2;
+            if(teambonus_rule == '1'){
+                var bonus_type = $('input[name=bonus_type]:checked').val();
+                var bonus_level_ids = $('input[name=bonus_level_ids]').val();
+                
+                bonus_level_id_arr = bonus_level_ids.split(',');
+                var team_bonus = '';
+                for(var i=0;i<bonus_level_id_arr.length;i++) {
+                    team_bonus += bonus_level_id_arr[i] +':'+ $('input[name='+ 'level_'+bonus_level_id_arr[i] +']').val() + ';';
+                }
+                
+                team_bonus = team_bonus.substr(0, team_bonus.length - 1);
+                teambonus_obj.teambonus_rule = teambonus_rule;
+                teambonus_obj.bonus_type = bonus_type;
+                teambonus_obj.team_bonus = team_bonus;
+                data_val.teambonus_val = JSON.stringify(teambonus_obj);
+            }
+            
+            var bonus_val = JSON.stringify(data_val);
+            console.log('bonus_val',bonus_val);
+            $.ajax({
+                type: 'POST', 
+                dataType: 'json',
+                url: '{$saveGroupShoppingSettingUrl}',
+                data: {
+                    'is_group_shopping': $('#is_group_shopping').is(':checked')? 1 : 0,//是否开启拼团
+                    'pay_time_limit' : $("input[name='pay_time_limit']").val(),//支付时限
+                    'is_distribution' : $('#is_distribution').is(':checked')? 1 : 0,//是否参与分销
+                    'recommend_type':  $("input[name='recommend_type']:checked").val(),
+                    'rule_commission' : $("input[name='rule_commission']:checked").val(),//是否设置独立分销佣金规则
+                    'is_global_bonus' : $('#is_global_bonus').is(':checked')? 1 : 0,//是否参与全球分红
+                    'is_area_bonus' : $('#is_area_bonus').is(':checked')? 1 : 0,//是否参与区域分红
+                    'is_team_bonus' : $('#is_team_bonus').is(':checked')? 1 : 0,//是否参与团队分红
+                    'bonus_val' : bonus_val
+                },
+                success: function (data) {
+                    if (data['code'] > 0) {
+                        util.message(data["message"], 'success');
+                    } else {
+                        util.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+    });
+</script>
+{/block}

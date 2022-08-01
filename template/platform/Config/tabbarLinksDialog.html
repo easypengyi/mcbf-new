@@ -1,0 +1,78 @@
+<div class="links-dialog">
+  <ul class="nav nav-tabs v-nav-tabs pt-15" role="tablist">
+    <li role="presentation" class="active"><a href="#tabbar" aria-controls="tabbar" role="tab" data-toggle="tab" class="flex-auto-center">可选页面</a></li>
+  </ul>
+  <div class="tab-content min-h-200">
+    <div role="tabpanel" class="tab-pane fade in active" id="mall">
+      <div class="" id="tabbar">
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/mall/index">商城首页</a>
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/mall/cart">购物车</a>
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/goods/list">商品列表</a>
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/goods/category">商品分类</a>
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/order/list">订单列表</a>
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/property/index">我的资产</a>
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/member/index">会员中心</a>
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/message/index">消息中心</a>
+          {if $config['shop']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/shop/list">店铺街</a>
+          {/if}
+          {if $config['store']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/store/list">门店列表</a>
+          {/if}
+          {if $config['coupontype']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/coupon/index">领券中心</a>
+          {/if}
+          {if $config['distribution']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/distribute/index">分销中心</a>
+          {/if}
+          {if $config['areabonus'] || $config['globalbonus'] || $config['teambonus']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/bonus/index">分红中心</a>
+          {/if}
+          {if $config['channel']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/channel/index">微商中心</a>
+          {/if}
+          {if $config['agent']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/agent/index">代理中心</a>
+          {/if}
+          {if $config['microshop']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/microshop/index">微店中心</a>
+          {/if}
+          {if $config['taskcenter']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/task/index">任务中心</a>
+          {/if}
+          {if $config['helpcenter']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/help/index">帮助中心</a>
+          {/if}
+          {if $config['integral']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/integral/index">积分商城</a>
+          {/if}
+          {if $config['thingcircle']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/thingcircle/index">好物圈</a>
+          {/if}
+          {if $config['blockchain']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/blockchain/list">数字资产</a>
+          {/if}
+          {if $config['signin']}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/signin/index">每日签到</a>
+          {/if}
+          {if ($config['mplive']) && ($platform eq 'mini')}
+          <a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="pages/mplive/index">小程序直播</a>
+          {/if}
+      </div>
+    </div>
+  </div>
+  <input type="hidden" id="selectedTabbar">
+</div>
+
+<script>
+$(function () {
+  $('.links-dialog').on('click','.selectedPage',function(){
+    $(this).siblings().removeClass('btn-primary');
+    $(this).addClass('btn-primary');
+    setSelect($(this).data('link'));
+  })
+  function setSelect(page){
+    $('#selectedTabbar').data('link',page);
+  }
+})
+</script>

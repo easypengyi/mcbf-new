@@ -1,0 +1,219 @@
+{block name="main"}
+<!--模板列表 start-->
+<ul id="code_status_tab" class="nav nav-tabs v-nav-tabs fs-12" {if ($is_view == 0)}hidden{/if}>
+    <li role="presentation" class="active"><a href="javascript:void(0)" data-toggle="tab" class="flex-auto-center template_list" aria-expanded="true" data-status="1" >草稿箱<br></a></li>
+    <li role="presentation"><a href="javascript:void(0)" data-toggle="tab" class="flex-auto-center template_list" aria-expanded="false" data-status="2" >模板库<br></a></li>
+</ul>
+<table class="table v-table table-auto-center" id="table1" {if ($is_view == 0)}hidden{/if}>
+    <thead>
+    <tr class="order-list-item">
+        <th>版本号</th>
+        <th>版本描述</th>
+        <th>上传时间</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+    <tbody id="template_list1">
+    </tbody>
+</table>
+<nav aria-label="Page navigation" class="clearfix page1" {if ($is_view == 0)}hidden{/if}>
+    <ul id="page1" class="pagination pull-right"></ul>
+</nav>
+<table class="table v-table table-auto-center hide" id="table2" {if ($is_view == 0)}hidden{/if}>
+    <thead>
+    <tr class="order-list-item">
+        <th>版本号</th>
+        <th>版本描述</th>
+        <th>添加到模板库时间</th>
+        <th>操作</th>
+    </tr>
+    </thead>
+    <tbody id="template_list2">
+    </tbody>
+</table>
+<nav aria-label="Page navigation" class="clearfix page2" {if ($is_view == 0)}hidden{/if}>
+    <ul id="page2" class="pagination pull-right"></ul>
+</nav>
+<!--模板列表 end/-->
+<input type="hidden" id="page_index">
+<input type="hidden" id="is_view" value="{$is_view}">
+{/block}
+{block name="script"}
+
+<!--模板列表-->
+<script id="tpl_template_list1" type="text/html">
+    <%each data as item index%>
+    <tr>
+        <td><%item.user_version%></td>
+        <td><%item.user_desc%></td>
+        <td><%timeStampTurnTime(item.create_time)%></td>
+        <td>
+            <a href="javascript:void(0);" class="btn-operation add_template" data-type="view" data-id="<%item.draft_id%>">添加到模板库</a>
+        </td>
+    </tr>
+    <%/each%>
+</script>
+<script id="tpl_template_list2" type="text/html">
+    <%each data as item index%>
+    <tr>
+        <td><%item.user_version%></td>
+        <td><%item.user_desc%></td>
+        <td><%timeStampTurnTime(item.create_time)%></td>
+        <td>
+            <a href="javascript:void(0);" class="btn-operation del_template" data-type="export" data-id="<%item.template_id%>">删除</a>
+        </td>
+    </tr>
+    <%/each%>
+</script>
+
+<script>
+    require(["util", "tpl"], function (util, tpl) {
+        var is_view = $("#is_view").val();
+        util.initPage(LoadingInfo);
+
+        // 发布列表加载
+        function LoadingInfo(page_index) {
+            if (is_view == 1){
+                //加载草稿箱
+                if($('#table1').hasClass('hide')){
+                    $('#table1').removeClass('hide');
+                }
+                if($('#table2').hasClass('hide')){
+                }else{
+                    $('#table2').addClass('hide');
+                }
+                util.initPage(LoadingInfoDraftList(page_index),'page1')
+            }
+        }
+        tpl.helper("timeStampTurnTime", function (value) {
+            return timeStampTurnTime(value)
+        });
+        // 获取草稿箱列表数据
+        function LoadingInfoDraftList(page_index) {
+            $("#page_index").val(page_index);
+            $.ajax({
+                type: "post",
+                url: "{$draftListUrl}",
+                data: {
+                    "page_index": page_index,
+                    "page_size": 20,
+                },
+                success: function (data) {
+                    var html = '<tr><td class="h-200" colspan="4">暂无符合条件的数据记录</td></tr>';
+                    if (data.code == 0){
+                        $("#template_list1").html(tpl('tpl_template_list1', data));
+                    }else{
+                        $("#template_list1").html(html);
+                    }
+                    $('#page1').paginator('option', {
+                        totalCounts: data['total_count'],  // 动态修改总数
+                        pageSize: 20 //动态修改每页条数
+                    });
+                }
+            });
+        }
+
+        function LoadingInfoTemplateList(page_index) {
+            $("#page_index").val(page_index);
+            $.ajax({
+                type: "post",
+                url: "{$templateListUrl}",
+                data: {
+                    "page_index": page_index,
+                    "page_size": 20,
+                },
+                success: function (data) {
+                    var html = '<tr><td class="h-200" colspan="4">暂无符合条件的数据记录</td></tr>';
+                    if (data.code == 0){
+                        $("#template_list2").html(tpl('tpl_template_list2', data));
+                    }else{
+                        $("#template_list2").html(html);
+                    }
+                    $('#page2').paginator('option', {
+                        totalCounts: data['total_count'],  // 动态修改总数
+                        pageSize: 20 //动态修改每页条数
+                    });
+                }
+            });
+        }
+        //模板列表
+        $('#code_status_tab').on('click', '.template_list', function () {
+            $('#status').val($(this).data('status'));
+            var status = $(this).data('status');
+            if (status == 1){
+               if($('#table1').hasClass('hide')){
+                   $('#table1').removeClass('hide');
+                   $('.page1').removeClass('hide');
+               }
+                if($('#table2').hasClass('hide')){
+                }else{
+                    $('#table2').addClass('hide');
+                    $('.page2').addClass('hide');
+                }
+                util.initPage(LoadingInfoDraftList,'page1');
+            }else if(status == 2){
+                if($('#table2').hasClass('hide')){
+                    $('#table2').removeClass('hide');
+                    $('.page2').removeClass('hide');
+                }
+                if($('#table1').hasClass('hide')){
+                }else{
+                    $('#table1').addClass('hide');
+                    $('.page1').addClass('hide');
+                }
+                util.initPage(LoadingInfoTemplateList,'page2');
+            }
+        });
+
+        //添加到模板库
+        $("body").on('click','.add_template',function (){
+            var draft_id = $(this).data('id');
+            util.alert('确定添加？', function (){
+            $.ajax({
+                type: "post",
+                url: "{$addToTemplateUrl}",
+                data: {
+                    'draft_id': draft_id
+                },
+                    success: function (data) {
+                        if (data["code"] > 0) {
+                            util.message(data["message"], 'success',function () {
+                                window.location.reload();
+                            });
+                        } else {
+                            util.message(data["message"], 'danger',function () {
+                                window.location.reload();
+                            });
+                        }
+                    }
+                });
+            });
+        });
+        //删除指定的小程序模板库
+        $("body").on('click','.del_template',function (){
+            var template_id = $(this).data('id');
+            util.alert('确定删除？', function (){
+                $.ajax({
+                    type: "post",
+                    url: "{$deleteTemplateUrl}",
+                    data: {
+                        'template_id': template_id
+                    },
+                    success: function (data) {
+                        if (data["code"] > 0) {
+                            util.message(data["message"], 'success',function () {
+                                window.location.reload();
+                            });
+                        } else {
+                            util.message(data["message"], 'danger',function () {
+                                window.location.reload();
+                            });
+                        }
+                    }
+                });
+            });
+        })
+
+    })
+</script>
+{/block}

@@ -1,0 +1,300 @@
+{block name="main"}
+<!-- page -->
+<div class="tab-content">
+	<div role="tabpanel" class="tab-pane fade in active" id="base">
+		<form class="form-horizontal form-validate  pt-15 widthFixedForm">
+			<div class="form-group">
+				<div class="col-md-10">
+					<div class="flex spec-tips">
+						<div>
+							<p>卡密库名称：{$info.electroncard_base_name}</p>
+							<p>卡密库分类：{$info.category_name}</p>
+							<p>备注：{$info.memo}</p>
+							<p>使用说明：{$info.description}</p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-md-10  ">
+					<div class="">
+						<a class="btn btn-primary" href="{:__URL('admin/Menu/addonmenu?addons=addData&id=')}{$id}">添加卡密数据</a>
+						<a class="btn btn-primary import" href="javascript:void(0);" style="margin-left: 15px;">批量导入数据</a>
+						<a class="btn btn-primary" href="javascript:void(0);" id="down-tpl" style="margin-left: 15px;">下载模版</a>
+						<a class="btn btn-success dataExcel" href="javascript:void(0);" style="margin-left: 15px;">导出Excel数据</a>
+					</div>
+
+				</div>
+			</div>
+			<ul class="nav nav-tabs v-nav-tabs fs-12" data-type="uncheck" id="check_now_time">
+				<li role="presentation" class="active" data-status="0"><a href="javascript:;" class="flex-auto-center type">未出售<span class="unsales"></span></a></li>
+				<li role="presentation" class="" data-status="1"><a href="javascript:;" class="flex-auto-center type">已出售<span class="sales"></span></a></li>
+
+				<input type="hidden" id="type" value="0">
+				<div class="input-group search-input-group ml-10" style="float:right">
+					<input type="text" class="form-control" id="search_text" name="search_text" placeholder="请输入Key值">
+					<span class="input-group-btn">
+            		<button class="btn btn-primary search J-search" type="button">搜索</button>
+        		</span>
+				</div>
+			</ul>
+
+			<table class="table v-table table-auto-center table_shop">
+				<thead>
+				<tr>
+					{foreach $info.key_name as $v}
+					<th>{$v}</th>
+					{/foreach}
+					<th>状态</th>
+					<th>添加时间</th>
+					<th>操作</th>
+				</tr>
+				</thead>
+				<tbody id="shop_list">
+
+				</tbody>
+			</table>
+			<input type="hidden" id="page_index" value="">
+			<nav aria-label="Page navigation" class="clearfix">
+				<ul id="page" class="pagination pull-right"></ul>
+			</nav>
+		</form>
+	</div>
+</div>
+<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+	require(['utilAdmin', 'jqueryForm'],function(utilAdmin) {
+		utilAdmin.initPage(getList);
+		function getList(page_index){
+			$("#page_index").val(page_index);
+			var search_text = $('#search_text').val();
+			var status = $("#type").val();
+			var id = '{$id}';
+			$.ajax({
+				type : "post",
+				url : '{$electroncardBaseDetailUrl}',
+				async : true,
+				data : {
+					"page_index" :page_index, "id" : id, "status" : status,"search_text":search_text
+				},
+				success : function(data) {
+					var html = '';
+
+					if (data["data"].length>0) {
+						for (var i = 0; i < data["data"].length; i++) {
+							html += '<tr>';
+							for (var k = 0; k < data["data"][i]['value'].length; k ++) {
+								html += '<td><span class="block">' + data["data"][i]['value'][k] + '</span></td>';
+							}
+							if(data['data'][i]["status"] == 0) {
+								html += '<td><span class="label label-success">' + '未出售' + '</span></td>';
+							}else{
+								html += '<td><span class="label label-danger">' + '已出售' + '</span></td>';
+							}
+							html += '<td><span class="block">' + data['data'][i]["create_time"] + '</span></td>';
+							html += '<td class="fs-0"><a class="btn-operation edit" href="javascript:;" data-id="'+ data["data"][i]['id']+'">编辑</a>';
+							if(data['data'][i]["status"] == 0) {
+								html += '<a class="btn-operation del text-red" href="javascript:;" data-id="'+ data["data"][i]['id']+'">删除</a>';
+							}
+							html += '</td>';
+							html += '</tr>';
+						}
+					} else {
+						html += '<tr><td class="h-200" colspan="6">暂无符合条件的数据记录</td></tr>';
+					}
+					$("#shop_list").html(html);
+
+
+					$('#page').paginator('option', {
+						totalCounts: data['total_count']  // 动态修改总数
+					});
+					$('.unsales').html('('+data["unsales"]+')');
+					$('.sales').html('('+data["sales"]+')');
+				}
+			});
+		}
+		$('.search').on('click',function(){
+			utilAdmin.initPage(getList);
+		});
+
+		$('body').on('click','.type',function(){
+			var type = $(this).parent().data('status');
+			//实现点击某一个按钮，颜色就选中
+			$(this).parent().addClass('active').siblings().removeClass('active');
+			$('#type').val(type);
+			getList($("#page_index").val())
+		});
+
+		//删除
+		$('body').on('click','.del',function(){
+			var id = $(this).data('id');
+			utilAdmin.alert('确定删除？',function(){
+				$.ajax({
+					type : "post",
+					url : "{$delElectroncardDataUrl}",
+					data : {
+						'id' : id
+					},
+					async : true,
+					success : function(data) {
+						if (data['code'] > 0) {
+							utilAdmin.message(data["message"], 'success', getList($("#page_index").val()));
+						} else {
+							utilAdmin.message(data["message"], 'danger', getList($("#page_index").val()));
+						}
+					}
+				});
+			})
+		});
+
+		//编辑
+		$('body').on('click','.edit',function(){
+			var id = $(this).data('id');
+			var url= "{$editElectroncardDataUrl}"+'&id='+id;
+			utilAdmin.confirm('编辑','url:'+url,function(){
+                var list = [];
+                var data = {};
+			    var num = $('.list').length;
+			    for (var i = 0;i < num;i++) {
+			        var key = '';
+			        key = $('.key'+i).val();
+			        if(key == '') {
+                        utilAdmin.message('卡密数据不能为空', 'danger');
+                        return false;
+                    }
+			        list.push(key);
+                }
+                data.list = list;
+                data.id = id;
+				var urls = "{$updateElectroncardDataUrl}";
+				$.ajax({
+					type: "post",
+					url : urls,
+					data : data,
+					async: true,
+					success: function (data) {
+						if (data['code'] > 0) {
+							utilAdmin.message(data["message"],'success',getList(1));
+						} else {
+							utilAdmin.message(data["message"], 'danger');
+						}
+					}
+				});
+			},'large')
+		});
+
+		//下载模板
+		$('#down-tpl').on('click',function(){
+			var id = "{$id}";
+			window.location.href = ("{$downTplUrl}" +
+					"?id=" + id
+			);
+		});
+
+		//导出Excel
+		$('.dataExcel').on('click',function(){
+			// var tip1 = document.getElementById("tip1").innerText;
+			// var tip1 = parseInt(tip1)+parseInt(1);
+			// var total_tips2=tip1>99?"99+":tip1;
+
+			var search_text = $('#search_text').val();
+			var status = $("#type").val();
+			var id = '{$id}';
+
+			// $.ajax({
+			// 	type: "get",
+			// 	url: "{$dataExcelUrl}",
+			// 	async: true,
+			// 	data: {
+			// 		"search_text": search_text,
+			// 		"status": status,
+			// 		"id": id
+			// 	},
+			// 	success: function (data) {
+			// 		if (data["code"] == 0) {
+			// 			document.getElementById("tip1").innerText = total_tips2;
+			// 			utilAdmin.message(data["message"], 'success', getList($('#page_index').val()));
+			// 		} else {
+			// 			utilAdmin.message(data["message"], 'danger', getList($('#page_index').val()));
+			// 		}
+			// 	}
+			// })
+			window.location.href = __URL("{$adminDataExcelUrl}" +
+			    "?search_text=" + search_text +
+			    "&status=" + status +
+			    "&id=" + id
+			);
+
+		});
+
+		//批量导入数据
+		$(".import").click(function () {
+			var id = "{$id}";
+			var html = '';
+			html = '<form action="{$uploadFileUrl}" class="form-horizontal padding-15" id="batch_form" onsubmit="return check_excel()" enctype="multipart/form-data" method="post" >';
+
+			html += '<div class="form-group ">';
+			html += '<div class="pull-left col-md-3"><span class="text-bright">*</span>Excel文件：</div>';
+			html += '<div class="col-md-9"><div class="input-group"><input class="excelPackage form-control" disabled="" type="text"><span class="input-group-btn">' +
+					'<button class="btn btn-info btn-file J-btnwx">上传文件<input id="excel_file" class="fileuploads" type="file" name="excel" multiple></button>' +
+					'</span></div>';
+			html += '<p class="help-block mb-0">支持xlsx、xls、csv格式文件。</p></div></div>';
+			html += '</div>';
+			html += '</form>';
+
+			//提交文件
+			utilAdmin.confirm('批量导入数据',html,function(){
+				if (!check_excel()) {
+					return false;
+				}
+				$("#batch_form").ajaxSubmit({
+					type: "post",
+					dataType: "text",
+					data: {"id":id},
+					url: "{$uploadFileUrl}",
+					success: function (file) {
+						var data = JSON.parse(file);
+						if (data.code == '1') {
+							utilAdmin.message(data.message, 'success', function(){
+								location.reload();
+							});
+						} else {
+							utilAdmin.message(data.message, 'danger');
+						}
+					}
+				});
+
+			})
+		});
+
+		$("body").on('change', '#excel_file',function () {
+			var path = $(this).val(),
+					extStart = path.lastIndexOf('.'),
+					ext = path.substring(extStart, path.length).toUpperCase();
+			if (path === '') {
+				return false;
+			}
+			//判断格式
+			if (ext !== '.XLSX' && ext !== '.XLS' && ext !== '.CSV') {
+				$(this).val('');
+				utilAdmin.message('请上传正确格式的文件', 'danger');
+				return false;
+			}
+			$('.excelPackage').val(path);
+		});
+
+		function check_excel() {
+			var xls = $("#excel_file").val();
+			if (xls.length == 0)
+			{
+				utilAdmin.message('请上传Excel文件', 'danger');
+				return false;
+			}
+			return true;
+		}
+	});
+
+</script>
+{/block}

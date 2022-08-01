@@ -1,0 +1,51 @@
+<div class="form-control-static"></div>
+<div class="mb-10 flex flex-pack-justify">
+
+    <div class="area_agent_status">
+        <div class="form-horizontal form-validate widthFixedForm">
+            <div class="form-group" style="display: flex;justify-content: start; margin-left: 10px;">
+                <label class="control-label " style="margin-right: 20px;width: 20%;">订单金额</label>
+                <div class="" >
+                    <div class="input-group" style="width: 300px;">
+                        <label class="control-label">{$order_info.order_money}元</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-horizontal form-validate widthFixedForm">
+            <div class="form-group" style="display: flex;justify-content: start; margin-left: 10px;">
+                <label class="control-label " style="margin-right: 20px;width: 20%;">付款凭证</label>
+                <div class="" >
+                    <div class="input-group pay_voucher" style="width: 300px;">
+                        <label class="control-label"><img src="{$order_info.pay_voucher}" id="pay_voucher"></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-horizontal form-validate widthFixedForm">
+            <div class="form-group" style="display: flex;justify-content: start; margin-left: 10px;">
+                <label class="control-label " style="margin-right: 20px;width: 20%;">处理结果</label>
+                <div class="" >
+                    <div class="input-group" style="width: 300px;">
+                        <label class="radio-inline"><input type="radio" name="check_status" value="1" required>审核通过</label>
+                        <label class="radio-inline"><input type="radio" name="check_status" value="2" required>审核不通过</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    require(['util'], function (util) {
+        $('#pay_voucher').on('click',function () {
+            var width = $(this).width();
+            if(width == 300) {
+                $('.pay_voucher').css('width','');
+            }else{
+                $('.pay_voucher').css('width',300);
+            }
+        })
+    })
+</script>

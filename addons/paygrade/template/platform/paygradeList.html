@@ -1,0 +1,101 @@
+{block name="main"}
+	<table class="table v-table table-auto-center">
+	    <thead>
+	    <tr>
+	        <th>等级类型</th>
+	        <th>套餐</th>
+	        <th>状态</th>
+	        <th class="col-md-2 pr-14 operationLeft">操作</th>
+	    </tr>
+	    </thead>
+	    <tbody id="pay_grade_list">
+	    </tbody>
+	</table>
+{/block}
+{block name="script"}
+<script id="list" type="text/html">
+    <%each data as item index%>
+    <tr>
+        <td><%item.grade_name%></td>
+        <td>
+		<%if item.setmeal_list != ''%>
+			<%each item.setmeal_list as item2 index2%>
+				<p>
+					<%item2.grade_level_name%>：<%item2.price%>元<%item2.effective_time%>
+					<%if item2.granularity == 1%>年<%else if item2.granularity == 2 %>季<%else if item2.granularity == 3 %>月<%/if%>
+				</p>
+			<%/each%>
+		<%else%>
+			无
+		<%/if%>
+		</td>
+		<td>
+			<%if item.is_putaway == 1 %>
+			<p class="label font-color-success">上架</p>
+			<%else if item.is_putaway == 0 %>
+			<p class="label font-color-red">下架</p>
+			<%/if%>
+		</td>
+        <td class="fs-0 operationLeft">
+            <a href="javascript:void(0);" class="btn-operation" data-type="edit" data-id="<%item.pay_grade_id%>">编辑</a>
+        </td>
+    </tr>
+    <%/each%>
+</script>
+
+<script>
+    require(['util', 'tpl'], function (util, tpl) {
+        util.initPage(LoadingInfo);
+        tpl.helper("timeStamp", function (timeStamp) {
+            if (timeStamp > 0) {
+                var date = new Date();
+                date.setTime(timeStamp * 1000);
+                var y = date.getFullYear();
+                var m = date.getMonth() + 1;
+                m = m < 10 ? ('0' + m) : m;
+                var d = date.getDate();
+                d = d < 10 ? ('0' + d) : d;
+                var h = date.getHours();
+                h = h < 10 ? ('0' + h) : h;
+                var minute = date.getMinutes();
+                var second = date.getSeconds();
+                minute = minute < 10 ? ('0' + minute) : minute;
+                second = second < 10 ? ('0' + second) : second;
+                return y + '-' + m + '-' + d + ' ' + h + ':' + minute + ':' + second;
+            } else {
+                return "";
+            }
+        });
+
+        $('#pay_grade_list').on('click', '.btn-operation', function () {
+            var type = $(this).attr('data-type');
+            var id = $(this).attr('data-id');
+            switch (type) {
+                case 'edit':
+                    location.href = __URL('ADDONS_MAINupdatePaygrade&pay_grade_id=' + id);
+                    break;
+            }
+        })
+
+        function LoadingInfo() {
+            $.ajax({
+                type: "post",
+                url: "{$paygradeListUrl}",
+                data: {
+                    "search_text": $("#search_text").val(),
+                    "state": $("#state").val(),
+                },
+                success: function (data) {
+                    html ='';
+                    html += '<tr><td class="h-200" colspan="5">暂无数据记录</td></tr>';
+                    if(tpl('list', data)){
+                        $("#pay_grade_list").html(tpl('list', data));
+                    }else{
+                        $("#pay_grade_list").html(html);
+                    }
+                }
+            });
+        }
+    })
+</script>
+{/block}

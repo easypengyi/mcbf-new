@@ -1,0 +1,285 @@
+<ul class="nav nav-tabs v-nav-tabs pt-15" role="tablist" id="popup-tabbar-tab">
+	<li role="presentation" class="active"><a href="#wapTabbar" style="width: auto;" aria-controls="wapTabbar" role="tab"
+			data-toggle="tab" class="flex-auto-center">移动端（公众号端、H5端）</a></li>
+</ul>
+<div class="tab-content" id="popup-tabbar-content">
+	<div class="popup-dialog">
+		<div class="popup-view">
+			<div class="view-main view-tabbar-main">
+
+			</div>
+		</div>
+		<div class="popup-edit">
+			<div class="editor-inner">
+
+			</div>
+		</div>
+	</div>
+	<input type="hidden" id="modalData">
+</div>
+</div>
+<style>
+	#popup-tabbar-content .popup-dialog .popup-view{
+		display: none;
+	}
+	#popup-tabbar-content .popup-dialog{
+		justify-content: center;
+	}
+
+	#popup-tabbar-content .view-tabbar-main {
+		width: 375px;
+	}
+
+	#popup-tabbar-content .vui-tabbar .vui-tabbar-item .vui-tabbar-item-icon img {
+		height: 24px;
+	}
+</style>
+<script type="text/html" id="tpl_popup_show_tabbar">
+    <div class="vui-tabbar">
+        <% each data as item%>
+        <div class="vui-tabbar-item">
+            <div class="vui-tabbar-item-icon">
+                <img src="<%item.normal%>">
+            </div>
+            <div class="vui-tabbar-item-text">
+                <span><%item.text%></span>
+            </div>
+        </div>
+        <%/each%>
+    </div>
+</script>
+<script type="text/html" id="tpl_popup_edit_tabbar">
+    <!-- <div class="form-editor-title">底部导航设置</div> -->
+    <!-- <div class="alert alert-info alert-sm" role="alert">装修小程序底部导航，编辑链接或排序，需要“保存”后“发布”提交到微信平台审核。其他编辑保存后重新进入小程序即可生效。</div> -->
+    <div class="alert alert-info alert-sm" role="alert">图标建议保留5至10px内边距，左边图片为默认，右边图片为选中（建议大小81x81）</div>
+    <div class="form-items indent" data-min="2" data-max="5">
+        <div class="inner" id="form-items">
+            <%each data as child itemid %>
+            <div class="item <%if child.index == 0%>fixed<%/if%>"  data-id="<%itemid%>">
+                <% if child.index != 0%>
+                <span class="btn-del" title="删除"></span>
+                <%/if%>
+                <div class="item-image square">
+                    <div class="text singlePicture" data-toggle="selectImg" data-input="#normal-<%itemid%>" data-img="#normal-<%itemid%>">选择图片</div>
+                    <img src="<%child.normal%>" class="changePath" id="normal-<%itemid%>">
+                    <input type="hidden" class="diy-bind changePath" data-bind-parent="data" data-bind-child="<%itemid%>" data-bind="normal" id="normal-<%itemid%>" value="<%child.normal%>">
+                </div>
+                <div class="item-image square">
+                    <div class="text singlePicture" data-toggle="selectImg" data-input="#active-<%itemid%>" data-img="#active-<%itemid%>">选择图片</div>
+                    <img src="<%child.active%>" class="changePath" id="active-<%itemid%>">
+                    <input type="hidden" class="diy-bind changePath" data-bind-parent="data" data-bind-child="<%itemid%>" data-bind="active" id="active-<%itemid%>" value="<%child.active%>">
+                </div>
+                <div class="item-form">
+                    <div class="input-group mb-10">
+                        <span class="input-group-addon">文字</span>
+                        <input type="text" class="form-control input-sm diy-bind" value="<%child.text%>" data-bind-parent="data" data-bind-child="<%itemid%>" data-bind="text">
+                    </div>
+                    <% if child.index != 0%>
+                    <div class="input-group">
+                        <input type="text" class="form-control input-sm diy-bind" data-bind-parent="data" data-bind-child="<%itemid%>" readonly data-bind="path" id="curl-<%itemid%>" placeholder="请选择链接" value="<%child.path%>" />
+                        <span class="input-group-addon btn btn-default" data-toggle="selectTabbarUrl" data-input="#curl-<%itemid%>">选择链接</span>
+                    </div>
+                    <%/if%>
+                </div>
+            </div>
+            <%/each%>
+        </div>
+        <div class="btn btn-w-m btn-block btn-default btn-outline" id="addTabbarChild"><i class="icon icon-add1"></i> 添加一个</div>
+    </div>
+</script>
+
+<script>
+
+	require(['util', 'tpl', 'jquery-ui'], function (util, tpl) {
+		var modal = $('#modalData').data('set')
+		if(modal.mpTabbar){
+			$('#popup-tabbar-tab').append('<li role="presentation"><a href="#mpTabbar" aria-controls="mpTabbar" role="tab" data-toggle="tab" class="flex-auto-center">小程序端</a></li>')
+		}
+		if(modal.appTabbar){
+			$('#popup-tabbar-tab').append('<li role="presentation"><a href="#appTabbar" aria-controls="appTabbar" role="tab" data-toggle="tab" class="flex-auto-center">APP端</a></li>')
+		}
+		var tabtype = 'wapTabbar'// 默认wap
+		var tabbarData = modal[tabtype]
+		init()
+		$('#popup-tabbar-tab a[data-toggle="tab"]').click(function () {
+			tabtype = $(this).attr('aria-controls')
+			tabbarData = modal[tabtype]
+			init()
+		})
+
+		function init() {
+			console.log(tabbarData)
+			var showHtml = tpl("tpl_popup_show_tabbar", tabbarData)
+			var editHtml = tpl("tpl_popup_edit_tabbar", tabbarData)
+			$(".popup-view .view-main").html(showHtml)
+			$(".popup-edit .editor-inner").html(editHtml)
+
+			// 双向绑定数据
+			$(".popup-edit .editor-inner").find(".diy-bind").bind('input propertychange change', function () {
+				var _this = $(this);
+				var bind = _this.data("bind");
+				var bindchild = _this.data("bind-child");
+				var bindparent = _this.data("bind-parent");
+				var value = '';
+				var tag = this.tagName;
+				if (tag == 'INPUT') {
+					value = _this.val();
+				} else if (tag == 'SELECT') {
+					value = _this.find('option:selected').val()
+				}
+				value = $.trim(value);
+				tabbarData[bindparent][bindchild][bind] = value
+				console.log(tabbarData)
+				var showHtml = tpl("tpl_popup_show_tabbar", tabbarData)
+				$(".popup-view .view-main").html(showHtml)
+			})
+
+			// 选择图片
+			$('[data-toggle="selectImg"]').unbind('click').click(function () {
+				var _this = $(this);
+				if (_this.data('disabled') == 'disabled') {
+					return false
+				}
+				var cimg = _this.parents('.item').find('input' + _this.data('input'));
+				var pimg = _this.parents('.item').find('img' + _this.data('img'));
+				util.confirm('素材空间', modal.popupPicUrl[modal.portName], function (e) {
+					var data = this.$content.find('#selectedData').data();
+					if (util.isEmpty(data) || util.isEmpty(data['id'])) {
+						util.message('请选择图片')
+						return false;
+					}
+					var path = data.path[0];
+					cimg.val(path).change();
+					pimg.attr('src', path);
+				}, 'col-md-11')
+			})
+
+			// 选择链接
+			$('[data-toggle="selectTabbarUrl"]').unbind('click').click(function () {
+				var _this = $(this);
+				if (_this.data("disabled") == "disabled") {
+					return false;
+				}
+				var curlId = _this.data("input");
+				var elm = _this.parent().find("input" + curlId);
+				util.confirm(
+					"选择底部导航",
+					"url:" +
+					__URL(
+						modal.popupTabbarLinkUrl[modal.portName] +
+						"&platform=" +
+						modal.diff[modal.platform].name +
+						"&template_type=" +
+						modal.type
+					),
+					function (e) {
+						var link = this.$content.find("#selectedTabbar").data("link");
+						if (util.isEmpty(link)) {
+							util.message("请选择链接");
+							return false;
+						}
+						elm.val(link).change();
+					},
+					"large"
+				);
+			})
+
+			var initSortableChild = function () {
+				$("#popup-tabbar-content .editor-inner").sortable({
+					opacity: 0.8,
+					placeholder: "highlight",
+					items: ".item:not(.fixed)",
+					revert: 100,
+					scroll: false,
+					cancel: ".goods-selector,input,textarea,select,.btn,btn-del",
+					start: function (event, ui) {
+						var height = ui.item.height();
+						$(".highlight").css({ height: height + 22 + "px" });
+						$(".highlight").html(
+							'<div><i class="icon icon-add1"></i> 放置此处</div>'
+						);
+						$(".highlight div").css({ "line-height": height + 16 + "px" });
+					},
+					update: function (event, ui) {
+						var newChild = {};
+						$("#popup-tabbar-content .form-items .item").each(function () {
+							var thisid = $(this).data("id");
+							newChild[thisid] = tabbarData.data[thisid];
+						});
+						tabbarData.data = newChild;
+						var showHtml = tpl("tpl_popup_show_tabbar", tabbarData)
+						$(".popup-view .view-main").html(showHtml)
+					}
+				});
+			}
+			var tabbarAddChild = function () {
+				$("#addTabbarChild")
+					.unbind("click")
+					.click(function () {
+						var temp = tabbarData.data;
+						var max = $(this)
+							.closest(".form-items")
+							.data("max");
+						if (max) {
+							var length = modal.length(tabbarData.data);
+							if (length >= max) {
+								util.message("最多添加 " + max + " 个！");
+								return;
+							}
+						}
+						var newChild = {};
+						var index = 0;
+						$.each(temp, function (i, t) {
+							if (index == 0) {
+								newChild = t;
+								index++;
+							}
+						});
+						if (newChild) {
+							var childName = modal.getId("C", 0);
+							if (typeof tabbarData.data === "undefined") {
+								tabbarData.data = {};
+							}
+							newChild = $.extend(true, {}, newChild);
+							tabbarData.data[childName] = newChild;
+						}
+						var ind = 0;
+						$.each(tabbarData.data, function(i, e) {
+							e.index = ind;
+							ind++;
+						});
+						init()
+					});
+				$("#popup-tabbar-content .form-items .item .btn-del")
+					.unbind("click")
+					.click(function () {
+						var childid = $(this)
+							.closest(".item")
+							.data("id");
+						var min = $(this)
+							.closest(".form-items")
+							.data("min");
+						if (min) {
+							var length = modal.length(tabbarData.data);
+							if (length <= min) {
+								util.message("至少保留 " + min + " 个！");
+								return;
+							}
+						}
+						util.alert("确定删除吗", function () {
+							delete tabbarData.data[childid];
+							init()
+						});
+					});
+			};
+
+			var childitems = $("#popup-tabbar-content .form-items").length;
+			if (childitems > 0) {
+				initSortableChild();
+				tabbarAddChild();
+			}
+
+		}
+	})
+
+</script>

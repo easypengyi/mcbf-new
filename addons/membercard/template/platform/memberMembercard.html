@@ -1,0 +1,223 @@
+
+{block name="main"}
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">会员卡号</label>
+                    <div class="v__controls">
+                        <input type="text" id="membercard_no" class="v__control_input" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">会员信息</label>
+                    <div class="v__controls">
+                        <input type="text" class="v__control_input" id="user" placeholder="会员ID/用户名/昵称/手机号码" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
+                        <a class="btn btn-success ml-15 dataExcel">导出EXCEL</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+                <div class="screen-title">
+                    <span class="text">信息列表</span>
+                </div>
+                <div class="flex-auto-center mb-20 bg-info text-center border-info">
+                    <div class="flex-1 padding-15">
+                        <h3 class="strong">会员数</h3>
+                        <p>{$user_count_num}</p>
+                    </div>
+                    <div class="flex-1 padding-15">
+                        <h3 class="strong">会员卡余额</h3>
+                        <p id="user_balance">{$user_membercard_balance}</p>
+                    </div>
+                </div>
+                <table class="table v-table table-auto-center">
+                    <thead>
+                        <tr class="order-list-item">
+                            <th>ID</th>
+                            <th>会员卡号/类型</th>
+                            <th>推荐人</th>
+                            <th>会员信息</th>
+                            <th>卡内余额</th>
+                            <th>注册时间</th>
+                            <th class="col-md-2 pr-14 operationLeft">操作</th>
+                        </tr>
+                    </thead> 
+                    <tbody id="list">
+
+                    </tbody>
+                </table>
+                <input type="hidden" id="page_index">
+                <nav aria-label="Page navigation" class="clearfix">
+                    <ul id="page" class="pagination pull-right"></ul>
+                </nav>
+                <!-- page end -->
+{/block}
+{block name="script"}
+<script>
+require(['util'],function(util){
+    util.initPage(getMemberList);
+
+    function getMemberList(page_index){
+        $("#page_index").val(page_index);
+        var user = $("#user").val();
+        var membercard_no = $("#membercard_no").val();
+
+        $.ajax({
+            type : "post",
+            url : "{$memberMembercardUrl}",
+            async : true,
+            data : {
+                "page_index" : page_index,
+                "user" : user,
+                "membercard_no" : membercard_no
+            },
+            success : function(data) {
+                var html = '';
+                if (data["data"].length > 0) {
+                    for (var i = 0; i < data["data"].length; i++) {
+                        html += '<tr>';
+                        html += '<td>'+ data["data"][i]["uid"]+'</td>';
+                        html +='<td>';
+                        html +='<p class="p"><span class="label font-color-red">卡号:'+ data["data"][i]["membercard_no"] +'</span></p>';
+                        html +='<span class="label font-color-success">类型:' + data["data"][i]["membercard_name"] + '</span>';
+                        html +='</td>';
+                        html += '<td>';
+                        if(data["data"][i]["referee_id"] && data["data"][i]["referee_data"]){
+                            if(data["data"][i]["referee_data"]['user_headimg']){
+                                html +='<img src="'+__IMG(data["data"][i]["referee_data"]['user_headimg'])+'" height="30" width="30" alt="">';
+                            }else{
+                                html +='<img src="/public/static/images/headimg.png" height="30" width="30" alt="">';
+                            }
+
+                            if(data["data"][i]["referee_data"]['user_name']){
+                                html +='<div class="line-1-ellipsis">'+data["data"][i]["referee_data"]['user_name'] +'</div>';
+                            }
+                            if (data["data"][i]["referee_data"]['user_tel']) {
+                                html +='<div>'+data["data"][i]["referee_data"]['user_tel'] +'</div>';
+                            }
+                            html +='</td>';
+                        }else{
+                        	html += '<p class="p"><span class="label font-color-success">总店</span></p>';
+                        }
+                        html += '<td>';
+                        if(data["data"][i]["user_headimg"]){
+                            html +='<img src="'+__IMG(data["data"][i]["user_headimg"])+'" height="30" width="30" alt="">';
+                        }else{
+                            html +='<img src="/public/static/images/headimg.png" height="30" width="30" alt="">';
+                        }
+
+                        if(data["data"][i]["user_name"]){
+                            html +='<div class="line-1-ellipsis">'+data["data"][i]["user_name"] +'</div>';
+                        }
+                        if(data["data"][i]["user_tel"]) {
+                            html +='<div>'+data["data"][i]["user_tel"] +'</div>';
+                        }
+                        html +='</td>';
+                        html +='<td>';
+                        html +='<p class="p"><span class="label font-color-red">余额:'+ data["data"][i]["membercard_balance"] +'</span></p>';
+                        html +='</td>';
+                        html += '<td >'+ timeStampTurnTime(data["data"][i]["reg_time"]) +'</td>';
+                        html +='<td class="operationLeft fs-0">';
+                        html +='<a href="javascript:;" class="btn-operation adjust" data-uid="'+ data['data'][i]['uid'] +'">调整余额</a>';
+                        html +='</td>';
+                        html += '</tr>';
+                    }
+
+                } else {
+                    html += '<tr align="center"><td colspan="9" class="h-200">暂无符合条件的数据记录</td></tr>';
+                }
+                $('#page').paginator('option', {
+                    totalCounts: data['total_count']  // 动态修改总数
+                });
+                $("#list").html(html);
+                util.tips();
+            }
+        });
+    }
+
+    $('.search').on('click',function(){
+        util.initPage(getMemberList);
+    });
+
+    $('body').on('click','.adjust',function(){
+        var uid = $(this).data('uid');
+        var html = '<form class="form-horizontal padding-15" id="">';
+        html += '<div class="form-group"><label class="col-md-3 control-label">余额</label><div class="col-md-8"><input type="number" id="adjustBalance" class="form-control" onkeydown="if(event.keyCode==13){event.keyCode=0;event.returnValue=false;}" /><p class="help-block">输入负值时代表减少余额</p></div></div>';
+        html += "<div class='form-group'>" ;
+        html +="<label class='col-md-3 control-label'>备注</label>";
+        html +="<div class='col-md-8'>";
+        html +="<textarea class='form-control' id='adjustBalance_memo' rows='4' placeholder='输入备注的内容'></textarea>";
+        html +="</div>";
+        html += '</form>';
+        util.confirm('调整余额',html,function(){
+            var num = this.$content.find('#adjustBalance').val();
+            if(num==''){
+                util.message('调整余额不能为空','danger');
+                return false;
+            }
+            var text = this.$content.find('#adjustBalance_memo').val();
+
+            $.ajax({
+                type : "post",
+                url : "{$adjustBalanceUrl}",
+                data : {
+                    "uid" : uid,
+                    "num" : num,
+                    "text" : text
+                },
+                success : function(data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"],'success',getMemberList($('#page_index').val()));
+                    }else{
+                        util.message(data["message"],'danger');
+                    }
+                }
+            });
+        })
+    });
+
+    /**
+     * 会员数据导出
+     */
+    $('.dataExcel').on('click',function(){
+        var url='url:'+__URL(PLATFORMMAIN + '/order/memberMembercardDataExcel');
+        util.confirm('订单导出',url,function(){
+            var ids = '';
+            $(".excel-list .field-item").each(function(){
+                var id = $(this).data('id');
+                ids += id + ',';
+            });
+            $("#page_index").val(page_index);
+            var user = $("#user").val();
+            var membercard_no = $("#membercard_no").val();
+            if(ids.length==0){
+                util.message('请添加模板字段');
+                return false;
+            }
+            window.location.href = ("{$memberMembercardDataExcelUrl}" +
+                "?user=" + user +
+                "&membercard_no=" + membercard_no +
+                "&ids=" + ids
+            );
+        },'xlarge');
+    });
+
+    })
+
+</script>
+{/block}

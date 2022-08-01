@@ -1,0 +1,295 @@
+{block name="main"}
+
+
+
+<div class="tab-content pt-15">
+    <div role="tabpanel" class="tab-pane fade in active" id="basic" >
+        <form class="form-horizontal form-validate1 widthFixedForm">
+            <div class="screen-title">
+                <span class="text">基本信息</span>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>直播类型</label>
+                <div class="col-md-5">
+                    <label class="radio-inline">
+                        <input type="radio" name="type" checked class="" value="0"> 手机直播
+                    </label>
+                    <!--<label class="radio-inline">-->
+                        <!--<input type="radio" name="pay_password_length" class="pay_password_length" value="2"  > 6位数密码-->
+                    <!--</label>-->
+                    <p class="help-block">通过“小程序直播”小程序开播。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>直播间标题</label>
+                <div class="col-md-5">
+                    <div class="input-group col-md-5">
+                        <input type="text" name="name" class="form-control" id="name" value="{$basic_setting['name']}" placeholder="" required="">
+                    </div>
+                    <p class="help-block">直播间标题最多17个字。</p>
+                </div>
+            </div>
+            <div class="form-group ">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>开播时间</label>
+                <div class="col-md-8">
+                    <div class="v-datetime-input-control">
+                        <label for="play_time">
+                            <input type="text" class="form-control" id="play_time" placeholder="请选择时间段" autocomplete="off" name="play_time" required autocomplete="off" data-types="datetime"  data-mindate="{$start_date}" data-maxdate="{$end_date}">
+                            <i class="icon icon-calendar"></i>
+                            <input type="hidden" id="startTime" name="startTime">
+                            <input type="hidden" id="endTime" name="endTime">
+                        </label>
+                    </div>
+                    <div class="help-block mb-0">开播时间段仅供参考，不是实际直播间可以开播的时间。直播间在开始时间前也可以开播，并且到结束时间后不会强制结束。若到结束时间仍未开播，则直播间无法再开播。</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>主播昵称</label>
+                <div class="col-md-5">
+                    <div class="input-group col-md-5">
+                        <input type="text" name="anchorName" class="form-control" id="anchorName" value="{$basic_setting['anchorName']}" placeholder="" required="">
+                    </div>
+                    <p class="help-block">本次直播的主播昵称。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>主播微信号</label>
+                <div class="col-md-5">
+                    <div class="input-group col-md-5">
+                        <input type="text" name="anchorWechat" class="form-control" id="anchorWechat" value="{$basic_setting['anchorWechat']}" placeholder="" required="">
+                    </div>
+                    <p class="help-block">本次直播的主播微信号，<a class="text-primary J-anchorWechat" href="javascript:;">若主播未认证请扫码完成认证</a>。</p>
+                    <p class="J-anchorWechatImg hide"><img src="https://res.wx.qq.com/op_res/9rSix1dhHfK4rR049JL0PHJ7TpOvkuZ3mE0z7Ou_Etvjf-w1J_jVX0rZqeStLfwh" class="qr-img"></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label">主播副号</label>
+                <div class="col-md-5">
+                    <div class="input-group col-md-5">
+                        <input type="text" name="subAnchorWechat" class="form-control" id="subAnchorWechat" value="{$basic_setting['subAnchorWechat']}" placeholder="">
+                    </div>
+                    <p class="help-block">
+                        <a class="text-primary" href="javascript:;">
+                            <span class="J-subAnchorWechat">若主播未认证请扫码完成认证</span>
+                        </a>
+                        ，直播时，主播副号能在主播端进行推送商品，抽奖等操作。仅从主播端小程序进入时，副号身份才生效。若从观众端进入，副号身份不生效。
+                    </p>
+                    <p class="J-subAnchorWechatImg hide"><img src="https://res.wx.qq.com/op_res/9rSix1dhHfK4rR049JL0PHJ7TpOvkuZ3mE0z7Ou_Etvjf-w1J_jVX0rZqeStLfwh" class="qr-img"></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label">官方收录</label>
+                <div class="col-md-5">
+                    <label class="radio-inline">
+                        <input type="radio" name="isFeedsPublic" checked value="1"> 开启
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="isFeedsPublic" value="0"> 关闭
+                    </label>
+                    <p class="help-block">开启后本场直播将有可能被官方推荐。</p>
+                </div>
+            </div>
+            <div class="screen-title">
+                <span class="text">直播间配置</span>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>分享卡片封面</label>
+                <div class="col-md-5">
+                    <div class="picture-list" id="shareImg"><a href="javascript:;" class="plus-box" data-toggle="singlePicture"><i class="icon icon-plus"></i></a></div>
+                    <p class="help-block">用户在微信对话框内分享的直播间将以分享卡片的形式呈现。建议尺寸：800像素 * 640像素，图片大小不得超过1M。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>直播间背景墙</label>
+                <div class="col-md-5">
+                    <div class="picture-list" id="coverImg"><a href="javascript:;" class="plus-box" data-toggle="singlePicture"><i class="icon icon-plus"></i></a></div>
+                    <p class="help-block">直播间背景墙是每个直播间的默认背景。建议尺寸：600像素 * 1300像素，图片大小不得超过 3M。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label">直播卡片封面</label>
+                <div class="col-md-5">
+                    <div class="picture-list" id="feedsImg"><a href="javascript:;" class="plus-box" data-toggle="singlePicture"><i class="icon icon-plus"></i></a></div>
+                    <p class="help-block">官方推荐的小程序直播将会出现在购物直播频道内。图片建议大小为 800像素 * 800像素。图片大小不超过 300KB。图片内容遵循平台规范后更容易被推荐。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>直播间功能</label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="closeComment" checked value="0" {if $basic_setting['closeComment'] == 1}checked{/if}> 评论
+                    </label>
+                    <p class="help-block">开启后直播间允许会员评论。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="closeGoods" checked value="0" {if $basic_setting['closeGoods'] == 1}checked{/if}> 商品货架
+                    </label>
+                    <p class="help-block">开启后可通过直播间前往购买商品。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="closeShare" checked value="0" {if $basic_setting['closeShare'] == 1}checked{/if}> 分享
+                    </label>
+                    <p class="help-block">开启后会员可以分享直播间。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="closeLike" checked value="0" {if $basic_setting['closeLike'] == 1}checked{/if}> 点赞
+                    </label>
+                    <p class="help-block">开启后允许在直播间点赞。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="closeReplay" checked value="0" {if $basic_setting['closeReplay'] == 1}checked{/if}> 回放
+                    </label>
+                    <p class="help-block">开启后直播结束后可生成视频回放反复查看。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="closeKf" checked value="0" {if $basic_setting['closeKf'] == 1}checked{/if}> 客服
+                    </label>
+                    <p class="help-block">开启后直播间将显示客服入口。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-8">
+                    <button class="btn btn-primary basic_set" type="submit">创建</button>
+                    <a href="javascript:history.go(-1);" class="btn btn-default-diy">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util'],function(util){
+        util.layDate3('#play_time',true,function(value, date, endDate){
+            var date1=date.year+'-'+date.month+'-'+date.date+' '+date.hours+':'+date.minutes+':'+date.seconds;
+            var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+endDate.hours+':'+endDate.minutes+':'+endDate.seconds;
+            var start_date = new Date(date1);
+            var end_date = new Date(date2);
+            var time1 = start_date.getTime();
+            var time2 = end_date.getTime();
+            if((time2 - time1) > 24*3600*1000 || (time2 - time1) <30*60*1000){
+                util.message('所选时间间隔不能超过24小时或者短于30分钟', 'danger');
+            }
+            if(value){
+                $('#startTime').val(date1);
+                $('#endTime').val(date2);
+                $('#play_time').parents('.form-group').removeClass('has-error');
+            }
+            else{
+                $('#startTime').val('');
+                $('#endTime').val('');
+            }
+        });
+
+        $('.J-subAnchorWechat').on('mouseover', function(){
+            $('.J-subAnchorWechatImg').removeClass('hide');
+        })
+        $('.J-subAnchorWechat').on('mouseout', function(){
+            $('.J-subAnchorWechatImg').addClass('hide');
+        })
+        $('.J-anchorWechat').on('mouseover', function(){
+            $('.J-anchorWechatImg').removeClass('hide');
+        })
+        $('.J-anchorWechat').on('mouseout', function(){
+            $('.J-anchorWechatImg').addClass('hide');
+        })
+        util.validate($('.form-validate1'), function (form) {
+            var post_data = $('.form-validate1').serializeArray();
+            var name = $('input[name=name]').val();
+            var date1 = $('#startTime').val();
+            var date2 = $('#endTime').val();
+            var start_date = new Date(date1);
+            var end_date = new Date(date2);
+            var time1 = start_date.getTime();
+            var time2 = end_date.getTime();
+            if((time2 - time1) > 24*3600*1000 || (time2 - time1) <30*60*1000){
+                util.message('所选时间间隔不能超过24小时或者短于30分钟', 'danger');
+                return false;
+            }
+            var name_leng = getByteLen(name);
+            if(name_leng<6 || name_leng >34){
+                util.message('直播间名字，最短3个汉字，最长17个汉字', 'danger');return false;
+            }
+            //分享卡片封面
+            var shareImg = $('#shareImg img').attr('src');
+            if(shareImg === undefined){
+                util.message('请选择分享卡片封面', 'danger');return false;
+            }
+            var obj1 = {};
+            obj1.name = 'shareImg';
+            obj1.value = shareImg;
+            post_data.push(obj1);
+            //直播间背景墙
+            var coverImg = $('#coverImg img').attr('src');
+            if(coverImg === undefined){
+                util.message('请选择直播间背景墙', 'danger');return false;
+            }
+            var obj2 = {};
+            obj2.name = 'coverImg';
+            obj2.value = coverImg;
+            post_data.push(obj2);
+            //直播卡片封面
+            var feedsImg = $('#feedsImg img').attr('src');
+            var obj3 = {};
+            obj3.name = 'feedsImg';
+            obj3.value = feedsImg;
+            post_data.push(obj3);
+            $('.basic_set').attr('disabled', true).html('创建中...');
+            $.ajax({
+                type: "post",
+                url: "{$createMplive}",
+                data: post_data,
+                async: true,
+                success: function (data) {
+                    if (data["code"] == 1) {
+                        util.message(data['message'], 'success', '{:__URL(\'ADDONS_MAINmpliveList\')}');
+                    }else if(data["code"] == 300039){
+                        util.alert('<p class="red">抱歉您填写的主播微信号或者主播副号未通过认证，请扫描二维码进行认证！</p><img src='+ data['qrcode_url'] +'>', function(){
+
+                        });
+                    } else {
+                        util.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+        function getByteLen(val) {
+            var len = 0;
+            for (var i = 0; i < val.length; i++) {
+                var a = val.charAt(i);
+                if (a.match(/[^\x00-\xff]/ig) != null)
+                {
+                    len += 2;
+                }
+                else
+                {
+                    len += 1;
+                }
+            }
+            return len;
+        }
+    })
+</script>
+{/block}

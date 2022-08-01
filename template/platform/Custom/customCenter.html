@@ -1,0 +1,310 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+<style>
+.platform-box{
+    display: flex;
+}
+	.platform-box .item{
+    border: 1px solid #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    width: 300px;
+    margin: 20px;
+}
+	.platform-box .item-head{
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    background: #F9F9FB;
+    height: 80px;
+}
+	.platform-box .item-head .item-head-icon{
+    width: 35px;
+    height: 35px;
+    text-align: center;
+    line-height: 35px;
+    border-radius: 35px;
+    background: #eee;
+    margin-right: 10px;
+    color: #fff;
+    display: flex;
+}
+.platform-box .item-head .item-head-icon .img{
+	width: 100%;
+  height: 100%;
+}
+
+	.platform-box .item-head .item-head-title{
+    font-size: 16px;
+    font-weight: 800;
+}
+	.platform-box .item-box{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 280px;
+    justify-content: center;
+}
+	.platform-box .item-box .item-box-qr{
+    width: 150px;
+    height: 150px;
+    margin: 30px;
+}
+	.platform-box .item-box .item-box-qr .img{
+    width: 100%;
+    height: 100%;
+}
+	.platform-box .item-box .item-box-link{
+    margin-bottom: 30px;
+}
+.platform-box .item-box .item-box-link .input-group{
+    
+}
+.platform-box .item-box .item-box-link .input{
+    background: #F8F8FA;
+    border: none;
+    border-radius: 0;
+    height: 40px;
+    box-shadow: none;
+    text-align: center;
+}
+.platform-box .item-box .item-box-link .link-text{
+    border: none;
+    cursor: pointer;
+}
+.platform-box .item-box .item-box-link .link-text.mobile-link{
+	color: #fff;
+	background: #01BB02;
+}
+.platform-box .item-box .item-box-link .link-text.mp-link{
+	color: #fff;
+	background: #625AB2;
+}
+.platform-box .item-box .item-box-btn-group{}
+.platform-box .item-box .item-box-btn-group .btn{
+    height: 40px;
+    line-height: 26px;
+    margin: 0 14px;
+}
+.platform-box .item-box .item-box-btn-group .btn-copy{
+    background: #63A6FF;
+    color: #fff;
+}
+.platform-box .item-box .item-box-btn-group .btn-open{
+    background: #fff;
+    color: #63A6FF;
+    border: 1px solid #63A6FF;
+}
+.tpl-box{
+	padding-right: 20px;
+}
+.tpl-box .item{
+	margin-right: 0px;
+	position: relative;
+}
+.tpl-box .item-head{
+	height: 40px;
+}
+.tpl-box .item-head .item-head-title{
+	font-size: 14px;
+}
+.tpl-box .item-head .item-head-icon{
+	width: 20px;
+  height: 20px;
+  line-height: 20px;
+  margin-left: 10px;
+    margin-right: 0;
+    display: flex;
+}
+.tpl-box .item-head .item-head-icon img{
+	width: 100%;
+  height: 100%;
+}
+.tpl-box .item-box{
+    width: 100%;
+    height: 0;
+    position: relative;
+    padding-bottom: 177.866%;
+}
+.tpl-box .item-box .box{
+	width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.tpl-box .item-box .pic{
+	width: 100%;
+  height: 100%;
+}
+.tpl-box .mask{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 1;
+	background: rgba(0,0,0,.5);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+.tpl-box .mask .message{
+    color: #fff;
+    font-size: 16px;
+    margin: 10px 0;
+}
+.tpl-box .mask .mask-btn-group{
+    display: flex;
+    flex-direction: column;
+}
+.tpl-box .mask .mask-btn-group .btn{
+    color: #fff;
+    margin: 10px 0;
+}
+.tpl-box .mask .mask-btn-group .btn.btn-open{
+    background: #2589ff;
+}
+.tpl-box .mask .mask-btn-group .btn.btn-kf{
+    border: 1px solid #fff;
+}
+</style>
+{/block}
+{block name="main"}
+	<div class="platform-box">
+		<div class="item">
+			<div class="item-head">
+				<div class="item-head-icon wap-icon">
+					<img src="/public/platform/static/images/custom-icon-wap.png">
+				</div>
+				<div class="item-head-title">移动端(H5、公众号端)</div>
+			</div>
+			<div class="item-box">
+				<div class="item-box-qr">
+					<img src="https://vslai-com-cn.oss-cn-hangzhou.aliyuncs.com/upload/qrCode/26/qrCode.png" class="img">
+				</div>
+				<div class="item-box-link">
+					<div class="input-group">
+					  <input type="text" readonly class="form-control input" value="https://app.vslai.com.cn/wap/" />
+					  <span class="input-group-addon link-text mobile-link copy" data-clipboard-text="https://app.vslai.com.cn/wap/" title="复制链接">复制链接</span>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="item">
+			<div class="item-head">
+				<div class="item-head-icon mp-icon">
+					<img src="/public/platform/static/images/custom-icon-mp.png">
+				</div>
+				<div class="item-head-title">小程序端</div>
+			</div>
+			<div class="item-box">
+				<div class="item-box-qr">
+					<img src="https://vslai-com-cn.oss-cn-hangzhou.aliyuncs.com/upload/qrCode/26/qrCode.png" class="img">
+				</div>
+				<div class="item-box-link">
+					<div class="input-group">
+					  <input type="text" readonly class="form-control input" value="https://app.vslai.com.cn/wap/" />
+					  <span class="input-group-addon link-text mp-link copy" data-clipboard-text="https://app.vslai.com.cn/wap/" title="复制链接">复制链接</span>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="item">
+			<div class="item-head">
+				<div class="item-head-icon pc-icon">
+					<img src="/public/platform/static/images/custom-icon-pc.png">
+				</div>
+				<div class="item-head-title">电脑端</div>
+			</div>
+			<div class="item-box">
+				<div class="item-box-link">
+					<div class="input-group">
+					  <input type="text" readonly class="form-control input" value="https://app.vslai.com.cn/" />
+					</div>
+				</div>
+				<div class="item-box-btn-group">
+					<a class="btn btn-copy copy" href="javascript:;" data-clipboard-text="https://app.vslai.com.cn/wap/" >复制链接</a>
+					<a class="btn btn-open" href="https://app.vslai.com.cn/" target="_blank">前往访问</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="platform-box tpl-box">
+		<div class="item">
+			<div class="item-head">
+				<div class="item-head-title">移动端</div>
+				<div class="item-head-icon wap-icon">
+					<img src="/public/platform/static/images/custom-icon-wx.png">
+				</div>
+				<div class="item-head-icon wap-icon">
+					<img src="/public/platform/static/images/custom-icon-h5.png">
+				</div>
+			</div>
+			<div class="item-box">
+				<div class="box">
+					<img class="pic" src="/public/platform/static/images/custom-tpl-default.png">
+				</div>
+			</div>
+		</div>
+		<div class="item">
+			<div class="item-head">
+				<div class="item-head-title">小程序端</div>
+				<div class="item-head-icon mp-icon">
+					<img src="/public/platform/static/images/custom-icon-mp.png">
+				</div>
+			</div>
+			<div class="item-box">
+				<div class="box">
+					<img class="pic" src="/public/platform/static/images/custom-tpl-default.png">
+				</div>
+			</div>
+		</div>
+
+		<div class="item">
+			<div class="item-head">
+				<div class="item-head-title">APP端</div>
+				<div class="item-head-icon mp-icon">
+					<img src="/public/platform/static/images/custom-icon-app.png">
+				</div>
+			</div>
+			<div class="item-box">
+				<div class="box">
+					<img class="pic" src="/public/platform/static/images/custom-tpl-default.png">
+				</div>
+			</div>
+		</div>
+
+		<div class="item">
+			<div class="item-head">
+				<div class="item-head-title">电脑端</div>
+				<div class="item-head-icon pc-icon">
+					<img src="/public/platform/static/images/custom-icon-pc.png">
+				</div>
+			</div>
+			<div class="item-box">
+				<div class="box">
+					<img class="pic" src="/public/platform/static/images/custom-tpl-default.png">
+				</div>
+			</div>
+			<div class="mask">
+				<div class="message">当前版本未包含电脑端</div>
+				<div class="mask-btn-group">
+					<a href="https://tb.53kf.com/code/client/fe6f8c99d694387455de7d72b5a4c85a9/1" target="_blank" class="btn btn-open">前往开通</a>
+					<a href="https://tb.53kf.com/code/client/fe6f8c99d694387455de7d72b5a4c85a9/1" target="_blank" class="btn btn-kf">联系客服</a>
+				</div>
+			</div>
+		</div>
+	</div>
+{/block}
+{block name="script"}
+<script>
+require(['util'], function (util) {
+	util.copy();
+	$('#asd').click(function(){
+		util.iconsDialog()
+	})
+})
+</script>
+{/block}

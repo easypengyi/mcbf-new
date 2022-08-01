@@ -1,0 +1,513 @@
+{block name="resource"}
+<style>
+    .label-danger a{padding-top:5px;}
+</style>
+{/block}
+{block name="main"}
+<!-- page -->
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">订单编号</label>
+                    <div class="v__controls">
+                        <input type="text" id="order_no" class="v__control_input" placeholder="请输入订单编号" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">会员信息</label>
+                    <div class="v__controls">
+                        <input type="text" class="v__control_input" id="user" autocomplete="off" placeholder="手机号码/会员ID/用户名/昵称">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">下单时间</label>
+                    <div class="v__controls v-date-input-control">
+                        <label for="orderTime">
+                            <input type="text" class="v__control_input pr-30" id="orderTime" placeholder="请选择时间" autocomplete="off" data-types="datetime">
+                            <i class="icon icon-calendar"></i>
+                            <input type="hidden" id="orderStartDate">
+                            <input type="hidden" id="orderEndDate">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
+                        <a class="btn btn-success ml-15 dataExcel">导出EXCEL</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="screen-title">
+    <span class="text">订单列表</span>
+</div>
+<div class="mb-10 flex flex-pack-justify">
+    <div class="">
+        <a class="btn btn-primary import" href="javascript:void(0);">导表发货</a>
+    </div>
+</div>
+<div class="flex-auto-center mb-20 bg-info border-info">
+    <div class="flex-1 padding-10">
+        <h3 class="">发货表格里面的“物流编号”可通过“系统 > 物流公司”处查看，物流编号填写错误会直接导致发货失败</h3>
+    </div>
+</div>
+<table class="table v-table table-auto-center mb-10">
+    <thead>
+    <tr class="order-list-item">
+        <th class="col-md-3">商品</th>
+        <th class="col-md-1">单价</th>
+        <th class="col-md-1">数量</th>
+        <th class="col-md-2">买家/收货人</th>
+        <th class="col-md-1">订单状态</th>
+        <th class="col-md-2 pr-14 ">实收</th>
+    </tr>
+    </thead>
+</table>
+<div class="tables" id="list">
+
+</div>
+
+<input type="hidden" id="page_index">
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+<!-- page end -->
+<input type="hidden" id="merchant_expire" value="{$merchant_expire}">
+{/block}
+
+
+{block name="script"}
+<script type="text/javascript">
+    require(['utilAdmin', 'jqueryForm'], function (utilAdmin) {
+
+        utilAdmin.initPage(LoadingInfo);
+        utilAdmin.layDate('#orderTime',true,function(value, date, endDate){
+            var h=date.hours<10 ?"0"+date.hours : date.hours;
+            var m=date.minutes<10 ?"0"+date.minutes : date.minutes;
+            var s=date.seconds<10 ?"0"+date.seconds : date.seconds;
+            var h1=endDate.hours<10 ?"0"+endDate.hours : endDate.hours;
+            var m1=endDate.minutes<10 ?"0"+endDate.minutes : endDate.minutes;
+            var s1=endDate.seconds<10 ?"0"+endDate.seconds : endDate.seconds;
+            var date1=date.year+'-'+date.month+'-'+date.date+' '+h+":"+m+":"+s;
+            var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+h1+":"+m1+":"+s1;
+
+            if(value){
+                $('#orderStartDate').val(date1);
+                $('#orderEndDate').val(date2);
+            }
+            else{
+                $('#orderStartDate').val('');
+                $('#orderEndDate').val('');
+            }
+
+        });
+
+        function LoadingInfo(page_index) {
+            $("#page_index").val(page_index);
+            var order_no = $("#order_no").val();
+            var start_create_date = $("#orderStartDate").val();
+            var end_create_date = $("#orderEndDate").val();
+            var user = $("#user").val();
+
+            $.ajax({
+                type: "post",
+                url: "{$orderListUrl}",
+                async: true,
+                data: {
+                    "page_index": page_index,
+                    "page_size": $("#showNumber").val(),
+                    "order_no": order_no,
+                    "start_create_date": start_create_date,
+                    "end_create_date": end_create_date,
+                    "user": user,
+                },
+                success: function (data) {
+                    var html = '';
+                    if (data['data'] == undefined || data['data'].length == 0) {
+                        html += '<table class="table v-table table-auto-center mb-10"><tbody><tr align="center"><td colspan="7" class="h-200">暂无符合条件的订单</td></tr></tbody></table>';
+                        $("#list").html(html);
+                        return true;
+                    }
+
+                    $.each(data['data'], function (k_order, v_order) {
+                        var order_id = v_order['order_id'];//订单id
+                        var order_no = v_order['order_no'];//订单编号
+                        var create_time = utilAdmin.timeStampTurnTime(v_order['create_time']);//下单时间
+                        var shipping_type_name = v_order['shipping_type_name'];//配送方式
+                        var order_type_name = v_order['order_type_name'];//订单类型
+                        var order_money = v_order['order_money'];//订单金
+                        var shipping_money = v_order['shipping_money'] - v_order['promotion_free_shipping'];//运费
+                        var order_status = v_order['order_status'];
+                        var status_name = v_order['status_name'];
+                        var receiver_name = v_order['receiver_name']; //买家姓名
+                        var receiver_mobile = v_order['receiver_mobile']; //买家电话
+                        var promotion_status = v_order['promotion_status'];// 标识售后订单是否整单进行售后
+                        var microshop = v_order['shopkeeper_id'];//微店订单
+                        var coin_after = v_order['coin_after'];
+                        html += '<table class="table v-table table-auto-center mb-10"><tbody><tr>';
+                        html += '<td colspan="7" class="text-left bg-f9">';
+                        html += '<span class="mr-15-oList">订单号：' + order_no + '</span>';
+                        html += '<span class="mr-15-oList">下单时间：' + create_time + '</span>';
+                        if (shipping_type_name) {
+                            html += '<span class="mr-15-oList">配送方式：' + shipping_type_name + ' </span>';
+                        }
+                        if (order_type_name) {
+                            html += '<span class="mr-15-oList">订单类型：<span class="label" style="background:#fb6638">' + order_type_name + ' </span></span>';
+                        }
+                        if(microshop>0 && v_order['order_type']!=2 && v_order['order_type']!=3 && v_order['order_type']!=4 ){
+                            html += '<span class="label" style="background:#fb6638">微店订单</span>';
+                        }
+                        html += '</td>';
+
+                        var buyer_info = false;
+                        var row = v_order["order_item_list"].length;
+                        var refund_require_money = 0;
+                        var refund_deduction_point = 0;
+                        $.each(v_order['order_item_list'], function (k_order_goods, v_order_goods) {
+                            refund_require_money = refund_require_money + Number(v_order_goods['refund_require_money']);//总退款金额
+                            //总退款积分
+                            if((v_order['shipping_status']==1 || v_order['shipping_status']==2 || v_order['shipping_status']==3) && v_order_goods['deduction_freight_point']>0){
+                                refund_deduction_point = refund_deduction_point + Number(v_order_goods['deduction_point']) - Number(v_order_goods['deduction_freight_point']);
+                            }else{
+                                refund_deduction_point = refund_deduction_point + Number(v_order_goods['deduction_point']);
+                            }
+                        })
+                        refund_require_money = refund_require_money.toFixed(2); //这是JavaScript浮点运算的一个bug，js自身的问题
+                        $.each(v_order['order_item_list'], function (k_order_goods, v_order_goods) {
+                            var order_goods_id = v_order_goods['order_goods_id'];
+                            var pic_cover_micro = v_order_goods['picture']['pic_cover_mid'];//商品图
+                            var goods_id = v_order_goods['goods_id'];//商品id
+                            var goods_name = v_order_goods['goods_name'];
+                            var price = v_order_goods['price'];//商品价格
+                            var num = v_order_goods['num'];//购买数量
+                            var spec_info = v_order_goods['spec'];
+                            var refund_status = v_order_goods['refund_status'];
+                            var new_refund_operation = v_order_goods['new_refund_operation'];
+                            if((v_order['shipping_status']==1 || v_order['shipping_status']==2 || v_order['shipping_status']==3) && v_order_goods['deduction_freight_point']>0){
+                                var deduction_point = v_order_goods['deduction_point'] - v_order_goods['deduction_freight_point'];
+                            }else{
+                                var deduction_point = v_order_goods['deduction_point'];
+                            }
+                            html += '<tr><td class="col-md-3">';
+                            html += '<div class="media text-left">';
+                            html += '<div class="media-left"><img src="' + __IMG(pic_cover_micro) + '" width="60" height="60"></div>';
+                            html += '<div class="media-body break-word">';
+                            html += '<div class="line-2-ellipsis">';
+                            html += '<a href="' + __URLS('SHOP_MAIN/goods/goodsinfo&goodsid=' + goods_id) + '" target="_blank">' + goods_name + '</a>';
+                            html += '</div>';
+                            html += '<div class="small-muted line-2-ellipsis">';
+                            if(spec_info){
+                                $.each(spec_info, function (spec_k, spec_v) {
+                                    html += spec_v['spec_name'] + ':' + spec_v['spec_value_name'] + ' ';
+                                })
+                            }
+                            html += '</div>';
+                            html += '<div>';
+                            if (refund_status != 0 && promotion_status != 1 && new_refund_operation) {
+                                //售后
+                                $.each(new_refund_operation, function (k_op, v_op) {
+                                    html += '<a href="javascript:void(0);" data-order-id="' + order_id + '" data-order-goods-id="' + order_goods_id + '" data-refund_require_money="' + v_order_goods['refund_require_money'] + '" data-refund_deduction_point="' + deduction_point + '" class="text-primary block ' + v_op["no"] + '">' + v_op['name'] + '</a>';
+                                })
+                            }
+                            html += '</div>';
+                            html += '</div>';
+                            html += '</div></td>';
+                            html += '<td class="col-md-1">￥' + price + '</td>';
+                            html += '<td class="col-md-1">' + num + '</td>';
+                            if (buyer_info == false) {
+                                if (row > 1) {
+                                    html += '<td  rowspan="' + row + '" class="border-left col-md-2">';
+                                } else {
+                                    html += '<td  rowspan="' + row + '" class="col-md-2">';
+                                }
+                                if(v_order['shipping_type'] == '2'){
+                                    html += '<a href="' + __URL('ADMIN_MAIN/member/memberDetail?member_id=' + v_order['buyer_id']) + '" class="text-primary block mt-04" target="_blank">' + v_order['buyer_name'] + '</a>' + v_order['user_name'] + '<br>' + v_order['user_tel'] + '';
+                                }else{
+                                    html += '<a href="' + __URL('ADMIN_MAIN/member/memberDetail?member_id=' + v_order['buyer_id']) + '" class="text-primary block mt-04" target="_blank">' + v_order['buyer_name'] + '</a>' + receiver_name + '<br>' + receiver_mobile + '';
+                                }
+                                html += '</td>';
+                                html += '<td rowspan="' + row + '" class="col-md-1">';
+                                // if (order_status == '3' || order_status == '4') {
+                                //     html += '<span class="label label-success">' + status_name + '</span>';
+                                // } else {
+                                //     html += '<span class="label label-danger">' + status_name + '</span>';
+                                // }
+                                if(coin_after==1){
+                                    status_name = '链上处理中';
+                                }
+                                if(order_status == '0'){
+                                    html += '<span class="label label-red">' + status_name + '</span>';
+                                }else if(order_status == '1'){
+                                    html += '<span class="label label-skyBlue">' + status_name + '</span>';
+                                }else if(order_status == '2'){
+                                    html += '<span class="label label-orange">' + status_name + '</span>';
+                                }else if(order_status == '3' || order_status == '4'){
+                                    html += '<span class="label label-green">' + status_name + '</span>';
+                                }else if(order_status == '5'){
+                                    html += '<span class="label label-grey">' + status_name + '</span>';
+                                }else{
+                                    html += '<span class="label label-orange2">' + status_name + '</span>';
+                                }
+
+                                html += '<a href="' + __URL('ADMIN_MAIN/order/orderdetail?order_id=' + order_id) + '" class="text-primary block mt-04" target="_blank">订单详情</a>';
+                                html += '</td>';
+                                if(merchant_expire==1){
+                                    html += '<td rowspan="' + row + '" class="col-md-2">';
+                                    html += '无权操作';
+                                    html += '</td>';
+                                }else{
+                                    html += '<td rowspan="' + row + '" class="col-md-2 ">';
+                                    if(v_order['presell_id']){
+                                        html += '定金：￥' + v_order['first_money'] + '<br> 尾款：￥' + v_order['final_money'] + '<br>';
+                                    }else if(v_order['order_type'] == 10){
+                                        if(v_order['goods_money'] == 0){
+                                            html += '商品总额：'+ v_order['order_point'] +'积分<br />';
+                                        }else{
+
+                                            html += '商品总额：'+ v_order['order_point'] +'积分 + ￥' + v_order['goods_money'] + '<br>';
+                                        }
+                                    }else{
+                                        html += '商品总额：￥' + v_order['goods_money'] + '<br>';
+                                    }
+                                    if(v_order['deduction_money']>0){
+                                        html += '积分抵扣：￥' + v_order['deduction_money'] + '<br>';
+                                    }
+                                    html += '优惠：￥' + v_order['order_promotion_money'] + '<br>';
+                                    html += '运费：￥' + shipping_money + '<br>';
+                                    if (v_order['invoice_tax'] > 0) {
+                                        html += '税费：￥' + v_order['invoice_tax'] + '';
+                                    }
+                                    if(v_order['presell_id']){
+                                        if(v_order['money_type']==1){
+                                            html += '<br>实收金额：￥' + v_order['pay_money'] + '<br>';
+                                        }else if(v_order['money_type']==2){
+                                            html += '<br>实收金额：￥' + order_money + '<br>';
+                                        }
+                                    }else if(v_order['order_type'] == 10){
+                                        if(order_money == 0){
+                                            html += '<br>实收金额：'+ v_order['order_point'] +'积分<br />';
+                                        }else{
+                                            html += '<br>实收金额：'+ v_order['order_point'] +'积分 +  ￥' + order_money + '<br>';
+                                        }
+                                    }else{
+                                        html += '<br>实收金额：￥' + order_money + '<br>';
+                                    }
+                                    html += '</td>';
+                                }
+
+                                html += '</tr>';
+
+                                buyer_info = true;
+                            } // end if buyer_info
+                        })// end order_goods each
+                        if(v_order['commissionA']|| v_order['commissionB'] || v_order['commissionC'] || v_order['global_bonus'] || v_order['area_bonus'] || v_order['team_bonus'] || v_order['profitA']|| v_order['profitB'] || v_order['profitC']){
+                            html += '<tr class="title-tr">';
+                            html += '<td colspan="7" class="text-left">';
+                            if (v_order['commissionA_id']) {
+                                if(v_order['commissionA']){
+                                    html += '<span class="label label-soft mr-15-oList">一级佣金：' + v_order['commissionA'] + '元</span>';
+                                }
+                                if(v_order['pointA']){
+                                    html += '<span class="label label-soft mr-15-oList">一级积分：' + v_order['pointA'] + '积分</span>';
+                                }
+                            }
+                            if (v_order['commissionB_id']) {
+                                if(v_order['commissionB']){
+                                    html += '<span class="label label-soft mr-15-oList">二级佣金：' + v_order['commissionB'] + '元</span>';
+                                }
+                                if(v_order['pointB']){
+                                    html += '<span class="label label-soft mr-15-oList">二级积分：' + v_order['pointB'] + '积分</span>';
+                                }
+                            }
+                            if (v_order['commissionC_id']) {
+                                if(v_order['commissionC']){
+                                    html += '<span class="label label-soft mr-15-oList">三级佣金：' + v_order['commissionC'] + '元</span>';
+                                }
+                                if(v_order['pointC']){
+                                    html += '<span class="label label-soft mr-15-oList">三级积分：' + v_order['pointC'] + '积分</span>';
+                                }
+                            }
+                            if (v_order['global_bonus']) {
+                                html += '<span class="label label-success mr-15-oList">全球分红：' + v_order['global_bonus'] + '元</span>';
+                            }
+                            if (v_order['area_bonus']) {
+                                html += '<span class="label label-success mr-15-oList">区域分红：' + v_order['area_bonus'] + '元</span>';
+                            }
+                            if (v_order['team_bonus']) {
+                                html += '<span class="label label-success mr-15-oList">团队分红：' + v_order['team_bonus'] + '元</span>';
+                            }
+                            if (v_order['profitA_id'] && v_order['profitA']) {
+                                html += '<span class="label label-soft mr-15-oList">一级收益：' + v_order['profitA'] + '元</span>';
+                            }
+                            if (v_order['profitB_id'] && v_order['profitB']) {
+                                html += '<span class="label label-soft mr-15-oList">二级收益：' + v_order['profitB'] + '元</span>';
+                            }
+                            if (v_order['profitC_id'] && v_order['profitC']) {
+                                html += '<span class="label label-soft mr-15-oList">三级收益：' + v_order['profitC'] + '元</span>';
+                            }
+                            html += '</td>';
+                            html += '</tr>';
+                        }
+                        html +='</tbody></table>';
+                    })// end data.data each
+
+                    $('#page').paginator('option', {
+                        totalCounts: data['total_count']  // 动态修改总数
+                    });
+                    $("#list").html(html);
+
+                    utilAdmin.tips();
+                }
+            });
+        }
+
+        $('.search').on('click', function () {
+            utilAdmin.initPage(LoadingInfo);
+        });
+
+        $("#search_text").keypress(function (e) {
+            if (e.keyCode == 13) {
+                LoadingInfo(1);
+            }
+        });
+
+
+        //弹窗
+        $(function () {
+            // 自定义导出
+            $('.dataExcel').on('click',function(){
+                // var tip1 = document.getElementById("tip1").innerText;
+                // var tip1 = parseInt(tip1)+parseInt(1);
+                // var total_tips2=tip1>99?"99+":tip1;
+
+                var url='url:'+__URL(ADMINMAIN + '/order/importDeliveryDataExcel');
+                utilAdmin.confirm('订单导出',url,function(){
+                    var ids = '';
+                    $(".excel-list .field-item").each(function(){
+                        var id = $(this).data('id');
+                        ids += id + ',';
+                    });
+                    var order_no = $("#order_no").val();
+                    var start_create_date = $("#orderStartDate").val();
+                    var end_create_date = $("#orderEndDate").val();
+                    var user = $("#user").val();
+                    var filter = $("#filter").is(':checked') ? 1: 0;//是否过滤售后商品
+                    if(ids.length==0){
+                        utilAdmin.message('请添加模板字段');
+                        return false;
+                    }
+                    $.ajax({
+                        type: "get",
+                        url: "{$orderDataExcelUrl}",
+                        async: true,
+                        data: {
+                            "order_no": order_no,
+                            "start_create_date": start_create_date,
+                            "end_create_date": end_create_date,
+                            "user": user,
+                            "ids": ids,
+                            "filter":filter
+                        },
+                        success: function (data) {
+                            if (data["code"] == 0) {
+                                // document.getElementById("tip1").innerText = total_tips2;
+                                utilAdmin.message(data["message"], 'success', LoadingInfo($('#page_index').val()));
+                            } else {
+                                utilAdmin.message(data["message"], 'danger', LoadingInfo($('#page_index').val()));
+                            }
+                        }
+                    })
+                    // window.location.href = __URL("{$adminOrderDataExcelUrl}" +
+                    //     "?order_no=" + order_no +
+                    //     "&start_create_date=" + start_create_date +
+                    //     "&end_create_date=" + end_create_date +
+                    //     "&user=" + user +
+                    //     "&ids=" + ids
+                    // );
+                },'xlarge');
+            });
+
+            //导表发货
+            $(".import").click(function () {
+                var html = '';
+                html = '<form action="{$uploadFileUrl}" class="form-horizontal padding-15" id="batch_form" onsubmit="return false" enctype="multipart/form-data" method="post" >';
+                html += '<div class="form-group">';
+                html += '<div class="pull-left col-md-3">示例模板：</div>';
+                html += '<div class="pull-left col-md-7">';
+                html += '<p><a href="{:__URL(SHOP_MAIN)}/public/deliver-goods.xlsx" class="text-primary mb-04">Excel发货模版.xlsx</a></p>';
+                html += '</div>';
+                html += '</div>';
+
+                html += '<div class="form-group ">';
+                html += '<div class="pull-left col-md-3"><span class="text-bright">*</span>Excel文件：</div>';
+                html += '<div class="col-md-9"><div class="input-group"><input class="excelPackage form-control" disabled="" type="text"><span class="input-group-btn">' +
+                    '<button class="btn btn-info btn-file J-btnwx">上传文件<input id="excel_file" class="fileuploads" type="file" name="excel" multiple></button>' +
+                    '</span></div>';
+                html += '<p class="help-block mb-0">支持xlsx、xls、csv格式文件。</p></div></div>';
+                html += '</div>';
+                html += '</form>';
+
+                //提交文件
+                utilAdmin.confirm('导表发货',html,function(){
+                    if (!check_excel()) {
+                        return false;
+                    }
+                    $("#batch_form").ajaxSubmit({
+                        type: "post",
+                        dataType: "text",
+                        url: "{$uploadFileUrl}",
+                        success: function (file) {
+                            var data = JSON.parse(file);
+                            if (data.code == '1') {
+                                utilAdmin.message(data.message, 'success', function(){
+                                    location.reload();
+                                });
+                            } else {
+                                utilAdmin.message(data.message, 'danger');
+                            }
+                        }
+                    });
+
+                })
+            })
+        });
+
+        $("body").on('change', '#excel_file',function () {
+            var path = $(this).val(),
+                extStart = path.lastIndexOf('.'),
+                ext = path.substring(extStart, path.length).toUpperCase();
+            if (path === '') {
+                return false;
+            }
+            //判断格式
+            if (ext !== '.XLSX' && ext !== '.XLS' && ext !== '.CSV') {
+                $(this).val('');
+                utilAdmin.message('请上传正确格式的文件', 'danger');
+                return false;
+            }
+            $('.excelPackage').val(path);
+        });
+
+        function check_excel() {
+            var xls = $("#excel_file").val();
+            if (xls.length == 0)
+            {
+                utilAdmin.message('请上传Excel文件', 'danger');
+                return false;
+            }
+            return true;
+        }
+    })
+</script>
+
+{/block}

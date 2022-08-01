@@ -1,0 +1,423 @@
+{block name="main"}
+			<!-- page -->
+            <ul class="nav nav-tabs v-nav-tabs add_tab1" role="tablist">
+                <li role="presentation" class="active"><a href="#membercard_setting" aria-controls="membercard_setting" role="tab" data-toggle="tab" class="flex-auto-center">基础设置</a></li>
+                <li role="presentation"><a href="#wx_membercard" aria-controls="wx_membercard" role="tab" data-toggle="tab" class="flex-auto-center">微信会员卡</a></li>
+                <li role="presentation"><a href="#content_setting" aria-controls="content_setting" role="tab" data-toggle="tab" class="flex-auto-center">会员卡协议</a></li>
+                <li role="presentation"><a href="#copy_setting" aria-controls="copy_setting" role="tab" data-toggle="tab" class="flex-auto-center">文案样式</a></li>
+            </ul>
+            <form class="form-horizontal pt-15 form-validate widthFixedForm">
+                <div id="myTabContent" class="tab-content">
+                    <div role="tabpanel" class="tab-pane fade in active tab-1" id="membercard_setting" >
+                        <div class="form-group">
+                            <label class="col-md-2 control-label"><span class="text-bright">*</span>会员卡</label>
+                            <div class="col-md-5">
+                                <div class="switch-inline">
+                                    <input type="checkbox" id="is_use" name="is_use" {if condition="$info['is_use'] eq 1"} checked {/if}>
+                                    <label for="is_use" class=""></label>
+                                    <div class="mb-0 help-block">开启后，会员可领取会员卡，享受会员等级的福利</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label"><span class="text-bright">*</span>会员卡logo</label>
+                            <div class="col-md-5">
+                                <div class="picture-list" id="membercard_logo" required></div>
+                                <p class="help-block mb-0">商城会员卡显示的logo，图片建议尺寸：300*300像素，大小不超过2M</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div>
+                                <label class="col-md-2 control-label"><span class="text-bright">*</span>卡号前缀</label>
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" id="membercard_prefix" required name="membercard_prefix" maxlength="4" value="{if $info['membercard_prefix']}{$info['membercard_prefix']}{/if}" {if $info['membercard_prefix']}disabled{/if}>
+                                    <p class="help-block mb-0">前缀最多4位，会员卡号为12位数，前缀保存后将无法修改</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div role="tabpanel" class="tab-pane fade in tab-2" id="wx_membercard">
+                        <div class="" id="wechat_card">
+                            <div class="form-group">
+                                <label class="col-md-2 control-label"><span class="text-bright">*</span> 是否开启</label>
+                                <div class="col-md-5">
+                                    <div class="switch-inline">
+                                        <input type="checkbox" id="wxcard_switch" name="wxcard_switch" id="wxcard_switch" {if condition="$info['is_wxcard'] eq 1"} checked {/if} {if condition="$info['is_wxcard'] eq 1"} onclick="return false;" {/if}>
+                                        <label for="wxcard_switch" class=""></label>
+                                    </div>
+                                    <div class="mb-0 help-block">开启后,用户可以领取微信会员卡,保存后此选项则无法修改。<br><span class="red">注意：需要在公众号后台开启微信卡券</span></div>
+                                </div>
+                            </div>
+                            <div class="wxCard-container flex flex-pack-center mb-20 hovers">
+                                <div class="wxCard-view">
+                                    <div class="wxCard-bg"></div>
+                                    <div class="view-main">
+                                        <div class="view-main-logo" >
+                                            <img src="/public/platform/images/wx_logo.png" alt="">
+                                        </div>
+                                        <div class="padding-15 flex flex-pack-justify word_white mb-20" >
+                                            <div></div>
+                                            <div>...</div>
+                                        </div>
+                                        <div class="view-main-content">
+                                            <div class="wxCard_company">广州领客信息科技股份有限公司</div>
+                                            <div class="wxCard_title line-1-ellipsis">会员卡名称</div>
+                                            <div class="padding-15 wxCard_imagesTexts">
+                                                <div class="item-head">
+                                                    <img src="http://fpoimg.com/850x350" class="max-w-auto">
+                                                    <p class="line-1-ellipsis wxCard_describe">详情简述</p>
+                                                </div>
+                                            </div>
+                                            <div class="wxCard_items clearfix">公众号<span class="pull-right" style="padding-top: 2px"><i class="icon icon-right-arrow"></i></span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="wxCard-editor">
+                                    <div class="editor-main">
+
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label"><span class="text-bright">*</span>商户名称</div>
+                                            <div class="col-sm-9">
+                                                <input class="form-control input-sm diy-bind" id="shop_name" name="shop_name" value="{if $info.wxcard_info.shop_name}{$info.wxcard_info.shop_name}{/if}" maxlength="12" placeholder="请输入商户名称" {if $info.wxcard_info.shop_name}disabled{/if}>
+                                                <p class="help-block mb-0">商户名称不能为空且长度不超过12个汉字</p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label"><span class="text-bright">*</span>商户logo</div>
+                                            <div class="col-sm-9">
+                                                    <div class="picture-list" id="shop_logo"></div>
+                                                    <p class="help-block mb-0">图片建议尺寸：300*300像素，大小不超过2M</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label"><span class="text-bright">*</span>会员卡封面</div>
+                                            <div class="col-sm-9">
+                                                <div>
+                                                    <label class="radio-inline">
+                                                        <input type="radio" name="membercard_cover" class="membercard_cover" value="1" {if condition="$info.wxcard_info.membercard_cover eq 1"}checked{/if} {if $info.wxcard_info.membercard_cover} disabled {/if}>颜色
+                                                    </label>
+                                                    <label class="radio-inline">
+                                                        <input type="radio" name="membercard_cover" class="membercard_cover" value="2" {if condition="$info.wxcard_info.membercard_cover eq 2"}checked{/if} {if $info.wxcard_info.membercard_cover} disabled {/if}>图片
+                                                    </label>
+                                                </div>
+                                                <div class="date-input-control color hide" style="width: 100%;margin-top: 5px">
+                                                    <input class="form-control input-sm diy-bind cart_color" id="cart_color" readonly name="cart_color" value="{if $info.wxcard_info.card_color}{$info.wxcard_info.card_color}{/if}" style="color:{$info.wxcard_info.card_color};background:{$info.wxcard_info.card_color}" {if $info.wxcard_info.card_color}disabled{/if}>
+                                                    <i class="icon icon-bottom"></i>
+                                                    <div class="wx_colorBox">
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color010" data-colorNmme="#63b359"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color020" data-colorNmme="#2c9f67"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color030" data-colorNmme="#509fc9"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color040" data-colorNmme="#5885cf"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color050" data-colorNmme="#9062c0"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color060" data-colorNmme="#d09a45"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color070" data-colorNmme="#e4b138"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color080" data-colorNmme="#ee903c"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color081" data-colorNmme="#f08500"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color082" data-colorNmme="#a9d92d"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color090" data-colorNmme="#dd6549"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color100" data-colorNmme="#cc463d"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color101" data-colorNmme="#cf3e36"></a>
+                                                        <a href="javascript:void(0);" class="wx_colorBox_item" data-color="Color102" data-colorNmme="#5E6671"></a>
+                                                    </div>
+                                                </div>
+                                                <div style="margin-top: 5px" class="pic hide">
+                                                    <div class="picture-list" id="background_logo"></div>
+                                                    <p class="help-block mb-0">图片建议尺寸：1000*600像素以下</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label"><span class="text-bright">*</span>特权说明</div>
+                                            <div class="col-sm-9">
+                                                <textarea class="form-control" name="prerogative" id="prerogative" rows="6" {if $info.wxcard_info.prerogative}disabled{/if}>{if $info.wxcard_info.prerogative}{$info.wxcard_info.prerogative}{/if}</textarea>
+                                                <p class="help-block mb-0">特权说明长度不超过1024个字</p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label"><span class="text-bright">*</span>使用须知</div>
+                                            <div class="col-sm-9">
+                                                <textarea class="form-control" name="description" id="description" rows="6" {if $info.wxcard_info.description}disabled{/if}>{if $info.wxcard_info.description}{$info.wxcard_info.description}{/if}</textarea>
+                                                <p class="help-block mb-0">使用须知长度不超过1024个字</p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label"><span class="text-bright">*</span>商家电话</div>
+                                            <div class="col-sm-9">
+                                                <input class="form-control input-sm diy-bind" id="shop_phone" name="shop_phone" value="{if $info.wxcard_info.shop_phone}{$info.wxcard_info.shop_phone}{/if}" {if $info.wxcard_info.shop_phone}disabled{/if}>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label">商户服务</div>
+                                            <div class="col-sm-10">
+                                                <div class="checkbox_three">
+                                                    <label class="checkbox-inline"><input type="checkbox" name="store_service" value="BIZ_SERVICE_FREE_WIFI">免费wifi</label>
+                                                    <label class="checkbox-inline"><input type="checkbox" name="store_service" value="BIZ_SERVICE_WITH_PET">可带宠物</label>
+                                                    <label class="checkbox-inline"><input type="checkbox" name="store_service" value="BIZ_SERVICE_FREE_PARK">免费停车</label>
+                                                    <label class="checkbox-inline"><input type="checkbox" name="store_service" value="BIZ_SERVICE_DELIVER">可外卖</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div role="tabpanel" class="tab-pane fade in tab-3" id="content_setting">
+                        <div class="form-group">
+                            <div>
+                                <label class="col-md-2 control-label"><span class="text-bright">*</span>协议名称</label>
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" value="{if $info['content_title']}{$info['content_title']}{/if}" id="content_title" required name="content_title">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label"><span class="text-bright">*</span>协议内容</label>
+                            <div class="col-md-9">
+                                <div id="UE-protocol" data-content='{if $info.content}{$info.content}{/if}'></div>
+                            </div>
+                        </div>
+                        <div class="form-group"></div>
+                    </div>
+                    <div role="tabpanel" class="tab-pane fade in tab-4" id="copy_setting">
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">会员卡</label>
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="membercard" placeholder="会员卡"  value="{if $info.membercard}{$info.membercard}{/if}" >
+                                </div>
+                                <div class="mb-0 help-block">前端关于“会员卡”文案将以设定好的文案代替，空则为默认</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">PLUS专享</label>
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="plus" placeholder="PLUS专享"   value="{if $info.plus}{$info.plus}{/if}" >
+                                </div>
+                                <div class="mb-0 help-block">前端关于“PLUS专享”文案将以设定好的文案代替，空则为默认</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group"></div>
+                    <div class="form-group">
+                        <label class="col-md-2 control-label"></label>
+                        <div class="col-md-8">
+                            <button class="btn btn-primary add" type="submit">保存</button>
+                            <a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+			<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util'],function(util){
+        loading();
+        function loading(){
+            var membercard_logo = "{$info.membercard_logo}";
+            if (membercard_logo) {
+                $('#membercard_logo').html('<a href="javascript:void(0);" class="close-box"><i class="icon icon-danger" title="删除"></i><img src="' + membercard_logo + '"></a>');
+            } else {
+                $('#membercard_logo').html('<a href="javascript:void(0);" class="plus-box" data-toggle="singlePicture"><i class="icon icon-plus"></i></a>');
+            }
+            var shop_logo = "{$info.wxcard_info.shop_logo}";
+            if (shop_logo) {
+                $('#shop_logo').html('<a href="javascript:void(0);" class="close-box"><img src="' + shop_logo + '"></a>');
+            } else {
+                $('#shop_logo').html('<a href="javascript:void(0);" class="plus-box" data-toggle="singlePicture"><i class="icon icon-plus"></i></a>');
+            }
+            var background_logo = "{$info.wxcard_info.background_logo}";
+            if (background_logo) {
+                $('#background_logo').html('<a href="javascript:void(0);" class="close-box"><img src="' + background_logo + '"></a>');
+            } else {
+                $('#background_logo').html('<a href="javascript:void(0);" class="plus-box" data-toggle="singlePicture"><i class="icon icon-plus"></i></a>');
+            }
+            var wxcard_info = "{$info.wxcard_info}"
+            if(wxcard_info) {
+                $('.wxCard-container').removeClass('hovers');
+            }
+            var membercard_cover = "{$info.wxcard_info.membercard_cover}";
+            if(membercard_cover == 1) {
+                $('.color').removeClass('hide');
+            }else{
+                $('.pic').removeClass('hide');
+            }
+            var store_service = "{$info.wxcard_info.store_service}";
+            if(store_service != '') {
+                $("input[name='store_service']").attr('disabled','disabled');
+            }
+            store_service = store_service.split(',');
+            for (var i = 0; i < store_service.length; i++) {
+                $('[name="store_service"][value="' + store_service[i] + '"]').prop("checked", true);
+            }
+        }
+        util.validate($('.form-validate'), function (form) {
+            //基础设置
+            var is_use = $("input[name='is_use']").is(':checked')? 1 : 0;
+            var membercard_logo = $("#membercard_logo").find('img').attr('src');
+            var membercard_prefix = $("input[name='membercard_prefix']").val();
+
+            if(membercard_logo == undefined) {
+                util.message('会员卡logo不能为空','danger');
+                return false;
+            }
+            if(membercard_prefix.length > 4) {
+                util.message('卡号前缀最多4位','danger');
+                return false;
+            }
+
+            //会员卡协议
+            var content_title = $("input[name='content_title']").val();
+            var content = $('#UE-protocol').data('content');
+
+            if(content == '') {
+                util.message('申请协议不能为空','danger');
+                return false;
+            }
+
+            //文案样式
+            var membercard = $('#membercard').val();
+            if(membercard == ''){
+                membercard= '会员卡';
+            }
+            var plus = $('#plus').val();
+            if(plus == ''){
+                plus= 'PLUS专享';
+            }
+
+            //微信会员卡
+            var wxcard_info = new Object();
+            var store_service = [];
+            $("input[name ='store_service']:checked").each(function () {
+                store_service.push($(this).val());
+            });
+            var is_wxcard = $("input[name='wxcard_switch']").is(':checked') ? 1 : 0;  //是否开启微信会员卡
+
+            if (is_wxcard == 1) {
+                wxcard_info.shop_name = $("#shop_name").val();    //商户名称
+
+                var shop_logo = $("#shop_logo").find('img').attr('src');    //商户logo
+                if(shop_logo == undefined) {
+                    util.message('商户logo不能为空','danger');
+                    return false;
+                }
+                wxcard_info.shop_logo = shop_logo;
+
+                var membercard_cover = $("input[name='membercard_cover']:checked").val(); //会员卡封面类型
+                wxcard_info.membercard_cover = membercard_cover;
+                if(membercard_cover == 1) {
+                    var card_color = $("#cart_color").val();
+                    if(card_color == '') {
+                        util.message('会员卡封面颜色不能为空','danger');
+                        return false;
+                    }
+                    wxcard_info.card_color = card_color;
+                }else if(membercard_cover == 2) {
+                    var background_logo = $("#background_logo").find('img').attr('src');
+                    if(background_logo == undefined) {
+                        util.message('会员卡背景图不能为空','danger');
+                        return false;
+                    }
+                    wxcard_info.background_logo = background_logo;
+                }
+
+                wxcard_info.prerogative = $("#prerogative").val();             //特权说明
+                wxcard_info.description = $("#description").val();             //使用须知
+                wxcard_info.shop_phone = $("#shop_phone").val();             //商家电话
+                wxcard_info.store_service = store_service;    //商户服务
+            }
+
+            $.ajax({
+                type:"post",
+                url:"{$saveSettingUrl}",
+                data:{
+                    'is_use':is_use,
+                    'membercard_logo':membercard_logo,
+                    'membercard_prefix':membercard_prefix,
+
+                    'content_title':content_title,
+                    'content':content,
+
+                    'membercard':membercard,
+                    'plus':plus,
+
+                    'is_wxcard':is_wxcard,
+                    'wxcard_info':wxcard_info,
+                },
+                async:true,
+                success:function (data) {
+                    if (data['code']>0) {
+                        util.message(data["message"], 'success', "{:__URL('ADDONS_MAINmembercardSetting')}");
+                    }else{
+                        util.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+
+        //处理微信会员卡
+        $('#wxcard_switch').on('change',function () {
+            if($("input[name='wxcard_switch']").is(':checked')) {
+                $('.wxCard-container').removeClass('hovers');
+
+                $("#shop_name").attr('required', 'required');
+                $("#shop_logo").attr('required', 'required');
+                $("#prerogative").attr('required', 'required');
+                $("#description").attr('required', 'required');
+                $(".membercard_cover").attr('required', 'required');
+            }else{
+                $('.wxCard-container').addClass('hovers');
+
+                $("#shop_name").removeAttr('required');
+                $("#shop_logo").removeAttr('required');
+                $("#prerogative").removeAttr('required');
+                $("#description").removeAttr('required');
+                $(".membercard_cover").removeAttr('required');
+            }
+        });
+
+        // 双向绑定数据
+        $('#shop_name').bind('input propertychange change', function () {
+            var val = $(this).val();
+            $('.wxCard_company').html(val);
+        });
+        $('#wxCard_des').bind('input propertychange change', function () {
+            var val = $(this).val();
+            $('.wxCard_describe').html(val);
+        });
+        // 点击选择卡券颜色使颜色变化
+        $('.wx_colorBox').on('click', '.wx_colorBox_item', function () {
+            var color = $(this).attr('data-colornmme');
+            $('#cart_color').val(color);
+            $('#cart_color').attr('style', 'color:' + color);
+            $('.cart_color').css('background', color);
+            $('.wxCard-view .view-main').css('background', color);
+            $('.wx_colorBox').hide();
+        });
+        $('.cart_color').on('click', function () {
+            $('.wx_colorBox').show();
+        });
+        $(document).click(function (e) {
+            var target = $(e.target);
+            if (target.closest(".cart_color").length == 0) {
+                $('.wx_colorBox').hide();
+            }
+        });
+
+        $('body').on('click','.membercard_cover',function () {
+            var membercard_cover = $("input[name='membercard_cover']:checked").val();
+            if(membercard_cover == 1) {
+                $('.color').removeClass('hide');
+                $('.pic').addClass('hide');
+            }else{
+                $('.pic').removeClass('hide');
+                $('.color').addClass('hide');
+            }
+        });
+
+    })
+</script>
+{/block}

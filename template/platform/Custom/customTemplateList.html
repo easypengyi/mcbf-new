@@ -1,0 +1,476 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+<style>
+.tpl-box{
+  display: flex;
+  padding-right: 20px;
+  margin: 0 -20px;
+  flex-wrap: wrap;
+}
+.tpl-box .item{
+  border: 1px solid #eee;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 286px;
+  margin: 10px 20px;
+	margin-right: 0px;
+	position: relative;
+}
+.tpl-box .item-head{
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  background: #F9F9FB;
+  height: 40px;
+}
+.tpl-box .item-head .item-head-title{
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+.tpl-box .item-head .item-head-title .right-title{
+  color: #007fbb;
+  font-weight: 400;
+}
+.tpl-box .item-box{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 0;
+  position: relative;
+  padding-bottom: 177.866%;
+}
+
+.tpl-box .item-box .box{
+	width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.tpl-box .item-box .pic{
+	width: 100%;
+  height: 100%;
+}
+.tpl-box .item-box .item-box-btn-group .btn{
+  height: 40px;
+  line-height: 26px;
+  margin: 0 14px;
+}
+.tpl-box .mask{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 1;
+	background: rgba(0,0,0,.5);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: .3s;
+}
+.tpl-box .mask .message{
+    color: #fff;
+    font-size: 16px;
+    margin: 10px 0;
+}
+.tpl-box .mask .mask-btn-group{
+    display: flex;
+    flex-direction: column;
+}
+.tpl-box .mask .mask-btn-group .btn{
+    color: #fff;
+    margin: 10px 0;
+    width: 140px;
+    padding: 10px;
+}
+.tpl-box .item:hover .mask{
+	opacity: 1;
+}
+.tpl-box .mask .mask-btn-group .btn.btn-custom{
+   
+}
+.tpl-box .mask .mask-btn-group .btn.btn-use{
+    
+}
+.tpl-box .mask .mask-btn-group .btn.btn-del{
+    
+}
+
+.tpl-box .item-foot{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 10px 10px;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+}
+.tpl-box .item-foot .item-foot-cell{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 30px;
+}
+.tpl-box .item-foot .item-foot-cell .cell-left{
+	display: flex;
+  align-items: center;
+}
+.tpl-box .item-foot .item-foot-cell .cell-right{
+	color: #999;
+}
+.tpl-box .item-foot .item-foot-cell .cell-right.text-useing{
+	color: #01BB02;
+}
+.tpl-box .item-foot .item-foot-cell .text{}
+.tpl-box .item-foot .item-foot-cell .imgs{
+    display: flex;
+    flex-wrap: nowrap;
+}
+.tpl-box .item-foot .item-foot-cell .imgs img{
+    width: 20px;
+    height: 20px;
+    margin: 0 3px;
+}
+.tpl-box .item-foot .item-foot-cell .text{}
+.tpl-box .item-add .item-head{
+	background: transparent;
+}
+.tpl-box .box-add{
+	  width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+.tpl-box .box-add .box-add-icon{
+	  width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 50px;
+    border: 1px dashed #999;
+    margin: 10px;
+    color: #999;
+    cursor: pointer;
+}
+.tpl-box .box-add .box-add-text{}
+</style>
+{/block}
+{block name="main"}
+<form class="v-filter-container" id="page-form">
+  <div class="filter-fields-wrap">
+    <div class="filter-item clearfix">
+      <div class="filter-item__field">
+        <div class="v__control-group">
+          <label class="v__control-label">页面名称</label>
+          <div class="v__controls">
+              <input type="text" name="name" class="v__control_input" placeholder="请输入页面名称">
+          </div>
+        </div>
+        <div class="v__control-group">
+          <label class="v__control-label">页面类型</label>
+          <div class="v__controls">
+            <select name="type" class="v__control_input">
+              <option value="">全部</option>
+              <option value="1">商城首页</option>
+              <option value="2">店铺首页</option>
+              <option value="3">商品详情</option>
+              <option value="4">会员中心</option>
+              <option value="5">分销中心</option>
+              <option value="9">积分商城</option>
+            </select>
+          </div>
+        </div>
+        <div class="v__control-group">
+          <label class="v__control-label">页面端口</label>
+          <div class="v__controls">
+            <select name="port" class="v__control_input">
+              <option value="">全部</option>
+              <option value="1">移动端</option>
+              <option value="2">小程序端</option>
+              <option value="3">APP端</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="filter-item clearfix">
+      <div class="filter-item__field">
+        <div class="v__control-group">
+          <label class="v__control-label"></label>
+          <div class="v__controls">
+            <a class="btn btn-primary search"><i class="icon icon-search"></i>搜索</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<div class="tpl-box" id="tpl-list">
+	<div class="item item-add">
+		<div class="item-head"></div>
+		<div class="item-box">
+			<div class="box">
+				<div class="box-add">
+					<div class="box-add-icon" id="add-page">
+						<i class="icon icon-add"></i>
+					</div>
+					<div class="box-add-text">新增页面</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="item">
+		<div class="item-head">
+			<div class="item-head-title">
+				<span>页面名称</span>
+				<span class="right-title">商城首页</span>
+			</div>
+		</div>
+		<div class="item-box">
+			<div class="box">
+				<img class="pic" src="/public/platform/static/images/custom-tpl-default.png">
+			</div>
+		</div>
+		<div class="item-foot">
+			<div class="item-foot-cell">
+				<div class="cell-left">
+					<div class="text">使用端口：</div>
+					<div class="imgs">
+						<img src="/public/platform/static/images/custom-icon-wx.png"/>
+						<img src="/public/platform/static/images/custom-icon-h5.png"/>
+						<img src="/public/platform/static/images/custom-icon-mp.png"/>
+						<img src="/public/platform/static/images/custom-icon-app.png"/>
+					</div>
+				</div>
+				<div class="cell-right text-useing">使用中</div>
+			</div>
+			<div class="item-foot-cell">
+				<div class="cell-left">
+					<div class="text">更新时间：</div>
+					<div>2020-10-10 10:10:10</div>
+				</div>
+			</div>
+		</div>
+		<div class="mask">
+			<div class="mask-btn-group">
+				<a href="javascript:;" class="btn btn-primary btn-custom" data-id="1">装修</a>
+			</div>
+		</div>
+	</div>
+	<div class="item">
+		<div class="item-head">
+			<div class="item-head-title">
+				<span>页面名称</span>
+				<span class="right-title">商品详情页</span>
+			</div>
+		</div>
+		<div class="item-box">
+			<div class="box">
+				<img class="pic" src="/public/platform/static/images/custom-tpl-default.png">
+			</div>
+		</div>
+		<div class="item-foot">
+			<div class="item-foot-cell">
+				<div class="cell-left">
+					<div class="text">使用端口：</div>
+					<div class="imgs">
+						<img src="/public/platform/static/images/custom-icon-wx.png"/>
+						<img src="/public/platform/static/images/custom-icon-h5.png"/>
+						<img src="/public/platform/static/images/custom-icon-mp.png"/>
+						<img src="/public/platform/static/images/custom-icon-app.png"/>
+					</div>
+				</div>
+				<div class="cell-right text-useing">使用中</div>
+			</div>
+			<div class="item-foot-cell">
+				<div class="cell-left">
+					<div class="text">更新时间：</div>
+					<div>2020-10-10 10:10:10</div>
+				</div>
+			</div>
+		</div>
+		<div class="mask">
+			<div class="mask-btn-group">
+				<a href="javascript:;" class="btn btn-primary btn-custom" data-id="1">装修</a>
+			</div>
+		</div>
+	</div>
+	<div class="item">
+		<div class="item-head">
+			<div class="item-head-title">
+				<span>页面名称</span>
+				<span class="right-title">会员中心</span>
+			</div>
+		</div>
+		<div class="item-box">
+			<div class="box">
+				<img class="pic" src="/public/platform/static/images/custom-tpl-default.png">
+			</div>
+		</div>
+		<div class="item-foot">
+			<div class="item-foot-cell">
+				<div class="cell-left">
+					<div class="text">使用端口：</div>
+					<div class="imgs">
+						<img src="/public/platform/static/images/custom-icon-wx.png"/>
+						<img src="/public/platform/static/images/custom-icon-h5.png"/>
+						<img src="/public/platform/static/images/custom-icon-mp.png"/>
+						<img src="/public/platform/static/images/custom-icon-app.png"/>
+					</div>
+				</div>
+				<div class="cell-right text-useing">使用中</div>
+			</div>
+			<div class="item-foot-cell">
+				<div class="cell-left">
+					<div class="text">更新时间：</div>
+					<div>2020-10-10 10:10:10</div>
+				</div>
+			</div>
+		</div>
+		<div class="mask">
+			<div class="mask-btn-group">
+				<a href="javascript:;" class="btn btn-primary btn-custom" data-id="1">装修</a>
+			</div>
+		</div>
+	</div>
+	<div class="item">
+		<div class="item-head">
+			<div class="item-head-title">
+				<span>页面名称</span>
+				<span class="right-title">分销中心</span>
+			</div>
+		</div>
+		<div class="item-box">
+			<div class="box">
+				<img class="pic" src="/public/platform/static/images/custom-tpl-default.png">
+			</div>
+		</div>
+		<div class="item-foot">
+			<div class="item-foot-cell">
+				<div class="cell-left">
+					<div class="text">使用端口：</div>
+					<div class="imgs">
+						<img src="/public/platform/static/images/custom-icon-wx.png"/>
+						<img src="/public/platform/static/images/custom-icon-h5.png"/>
+						<img src="/public/platform/static/images/custom-icon-mp.png"/>
+						<img src="/public/platform/static/images/custom-icon-app.png"/>
+					</div>
+				</div>
+				<div class="cell-right text-useing">使用中</div>
+			</div>
+			<div class="item-foot-cell">
+				<div class="cell-left">
+					<div class="text">更新时间：</div>
+					<div>2020-10-10 10:10:10</div>
+				</div>
+			</div>
+		</div>
+		<div class="mask">
+			<div class="mask-btn-group">
+				<a href="javascript:;" class="btn btn-primary btn-custom" data-id="1">装修</a>
+			</div>
+		</div>
+	</div>
+	<div class="item">
+		<div class="item-head">
+			<div class="item-head-title">
+				<span>页面名称</span>
+				<span class="right-title">店铺首页</span>
+			</div>
+		</div>
+		<div class="item-box">
+			<div class="box">
+				<img class="pic" src="/public/platform/static/images/custom-tpl-default.png">
+			</div>
+		</div>
+		<div class="item-foot">
+			<div class="item-foot-cell">
+				<div class="cell-left">
+					<div class="text">使用端口：</div>
+					<div class="imgs">
+						<img src="/public/platform/static/images/custom-icon-wx.png"/>
+						<img src="/public/platform/static/images/custom-icon-h5.png"/>
+						<img src="/public/platform/static/images/custom-icon-mp.png"/>
+						<img src="/public/platform/static/images/custom-icon-app.png"/>
+					</div>
+				</div>
+				<div class="cell-right">未使用</div>
+			</div>
+			<div class="item-foot-cell">
+				<div class="cell-left">
+					<div class="text">更新时间：</div>
+					<div>2020-10-10 10:10:10</div>
+				</div>
+			</div>
+		</div>
+		<div class="mask">
+			<div class="mask-btn-group">
+				<a href="javascript:;" class="btn btn-info btn-use" data-id="1">使用该模板</a>
+				<a href="javascript:;" class="btn btn-primary btn-custom" data-id="1">装修</a>
+				<a href="javascript:;" class="btn btn-danger btn-del" data-id="1">删除</a>
+			</div>
+		</div>
+	</div>
+</div>
+{/block}
+{block name="script"}
+<script>
+require(['util'], function (util) {
+	// search
+	$('.search').click(function(){
+		var name = $('#page-form').find('input[name ="name"]').val()
+		var type = $('#page-form').find('select[name ="type"]').val()
+		var port = $('#page-form').find('select[name ="port"]').val()
+		console.log(name,type,port)
+	})
+	// 新增页面
+	$('#add-page').click(function(){
+		util.confirm('新增页面','<form class="form-horizontal padding-15" id="addpage-form"><div class="form-group"><label class="col-md-3 control-label">页面名称</label><div class="col-md-8"><input class="form-control" name="page-name" placeholder="请输入页面名称"/></div></div><div class="form-group"><label class="col-md-3 control-label">页面类型</label><div class="col-md-8"><select name="page-type" class="form-control"><option value="">全部</option><option value="1">商城首页</option><option value="2">店铺首页</option><option value="3">商品详情</option><option value="4">会员中心</option><option value="5">分销中心</option><option value="9">积分商城</option></select></div></div><div class="form-group"><label class="col-md-3 control-label">发布端口</label><div class="col-md-8"><div><label class="checkbox-inline"><input type="checkbox" name="page-port" value="1">公众号、H5</label><label class="checkbox-inline"><input type="checkbox" name="page-port" value="2">小程序</label><label class="checkbox-inline"><input type="checkbox" name="page-port" value="3">APP</label></div></div></div></form>',function(){
+			var form = this.$content.find('#addpage-form')
+			var pageName = form.find('input[name ="page-name"]').val();// 页面名称
+			var pageType = form.find('select[name ="page-type"]').val()// 页面类型
+			var ports = form.find('input[name ="page-port"]:checked')
+			var portArr = []
+			var pagePort = '' // 发布端口
+			$.each(ports,function(){
+				portArr.push($(this).val())
+			})
+			pagePort = portArr.join(',')
+			console.log(pageName,pageType,pagePort)
+			return false
+		},'',function(){
+			// 创建之后的方法，可填充数据
+			// console.log(this.$content)
+		})
+	})
+	// 前往装修
+	$('#tpl-list').on('click','.btn-custom',function(){
+		var itemid = $(this).data('id')
+		console.log(itemid)
+	})
+	// 使用模板
+	$('#tpl-list').on('click','.btn-use',function(){
+		var itemid = $(this).data('id')
+		console.log(itemid)
+	})
+	// 删除模板
+	$('#tpl-list').on('click','.btn-del',function(){
+		var itemid = $(this).data('id')
+		console.log(itemid)
+	})
+})
+</script>
+{/block}

@@ -1,0 +1,94 @@
+{block name="main"}
+
+
+
+<div class="tab-content pt-15">
+    <div role="tabpanel" class="tab-pane fade in active" id="basic" >
+        <form class="form-horizontal form-validate1 widthFixedForm">
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>小程序直播</label>
+                <div class="col-md-5">
+                    <div class="switch-inline">
+                        <input type="checkbox" id="is_mplive_use" name="is_mplive_use" {if $basic_setting['is_mplive_use'] == 1}checked{/if}>
+                        <label for="is_mplive_use" class=""></label>
+                    </div>
+                    <p class="help-block">关闭后则小程序无法正常观看直播</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>直播列表数据</label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="living" class="" value="1" {if $basic_setting['living'] == 1}checked{/if}> 进行中
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="unstart" class="" value="2" {if $basic_setting['unstart'] == 2}checked{/if}> 未开始
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="stop" class="" value="3" {if $basic_setting['stop'] == 3}checked{/if}> 暂停中
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="ended" class="" value="4" {if $basic_setting['ended'] == 4}checked{/if}> 已结束
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="error" class="" value="5" {if $basic_setting['error'] == 5}checked{/if}> 异常
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="past" class="" value="6" {if $basic_setting['past'] == 6}checked{/if}> 已过期
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>直播列表自动更新</label>
+                <div class="col-md-5">
+                    <div class="switch-inline">
+                        <input type="checkbox" id="is_auto_update" name="is_auto_update" {if $basic_setting['is_auto_update'] == 1}checked{/if}>
+                        <label for="is_auto_update" class=""></label>
+                    </div>
+                    <p class="help-block">小程序直播列表每天限制请求500次，如果直播间数量大于100的建议关闭自动更新，通过“直播列表”手动更新。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label">直播回放天数</label>
+                <div class="col-md-5">
+                    <div class="input-group col-md-3">
+                        <input type="number" name="mplive_replay_day" min="1" max="100" step="1" class="form-control valid" id="mplive_replay_day" value="{$basic_setting['mplive_replay_day']}" min="0" placeholder="请输入限时" required="">
+                        <div class="input-group-addon">天</div>
+                    </div>
+                    <p class="help-block">请输入1-100之间的数字，直播回放最大保留100天，需要勾选上方“已结束”直播列表数据状态才能在直播广场显示。</p>
+                </div>
+
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-8">
+                    <button class="btn btn-primary basic_set" type="submit">保存</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util', 'insertContent'],function(util){
+        util.validate($('.form-validate1'), function (form) {
+            var post_data = $('.form-validate1').serializeArray();
+            $.ajax({
+                type: "post",
+                url: "{$saveMpliveBasicSetting}",
+                data: post_data,
+                async: true,
+                success: function (data) {
+                    if (data["code"] > 0) {
+                        util.message(data['message'], 'success');
+                    } else {
+                        util.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+    })
+</script>
+{/block}

@@ -1,0 +1,978 @@
+<div class="links-dialog">
+    <ul class="nav nav-tabs v-nav-tabs pt-15" role="tablist">
+        <li role="presentation" class="active"><a href="#mall" aria-controls="mall" role="tab" data-toggle="tab" class="flex-auto-center">商城页面</a></li>
+        <li role="presentation"><a href="#active" aria-controls="active" role="tab" data-toggle="tab" class="flex-auto-center" id="active_link">活动链接</a></li>
+        <li role="presentation"><a href="#diy" aria-controls="diy" role="tab" data-toggle="tab" class="flex-auto-center">自定义页</a></li>
+        <li role="presentation"><a href="#category" aria-controls="category" role="tab" data-toggle="tab" class="flex-auto-center">商品分类</a></li>
+        <li role="presentation"><a href="#shopGoods" aria-controls="shopGoods" role="tab" data-toggle="tab" class="flex-auto-center">商品</a></li>
+        <li role="presentation"><a href="#links" aria-controls="links" role="tab" data-toggle="tab" class="flex-auto-center">链接</a></li>
+        <li role="presentation"><a href="#mplinks" aria-controls="mplinks" role="tab" data-toggle="tab" class="flex-auto-center">小程序</a></li>
+    </ul>
+    <div class="tab-content min-h-200">
+        <div role="tabpanel" class="tab-pane fade in active" id="mall">
+            <div class="" id="custom">
+                <div class="linkDialog-title">商城基础</div>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/mall/index">商城首页</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/goods/category">商品分类</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/goods/list" data-shop="true">商品列表</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/mall/cart">购物车</a>
+                {if $config['shop']} 
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/shop/list">店铺街</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/shop/business/index">商家入驻</a>
+                {/if} 
+                {if $config['store']} 
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/store/list">门店列表</a>
+                {/if}
+
+                <div class="linkDialog-title">会员中心</div>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/member/index">会员中心</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/member/level">会员等级</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/order/list">订单列表</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/property/index">会员资产</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/property/balance">余额</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/property/withdraw">余额提现</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/property/recharge">余额充值</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/property/transfer">余额转账</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/property/exchange">余额兑换</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/property/log/list">余额明细</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/property/points">积分</a>
+                {if $config['coupontype']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/coupon/list">优惠券列表</a>
+                {/if}
+                {if $config['giftvoucher']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/giftvoucher/list">礼品券列表</a>
+                {/if}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/consumercard/list">消费卡列表</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/property/account/list">提现账户</a>            
+                {if $config['shop']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/shop/collect">店铺收藏</a>
+                {/if}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/goods/collect">商品收藏</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/member/address/list">收货地址</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/member/set">账号设置</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/message/index">消息列表</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/course/list">课程列表</a>
+                {if $config['membercard']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/membercard/index">会员卡</a>
+                {/if}
+                {if $config['paygrade']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/level/index">付费等级</a>
+                {/if}
+
+                {if $config['seckill'] ||  $config['bargain'] || $config['presell'] || $config['groupshopping'] || $config['coupontype'] || $config['signin'] || $config['memberprize'] }
+                <div class="linkDialog-title">营销活动</div>
+                {/if}
+                {if $config['seckill']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/seckill/list" data-shop="true">秒杀列表</a>
+                {/if}
+                {if $config['bargain']}
+                    {eq name="type" value="2"}
+                    <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/bargain/list" data-shop="true">砍价列表</a>
+                {else/}
+                    <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/bargain/list" data-shop="true">砍价列表</a>
+                    {/eq}
+                {/if}
+                {if $config['presell']}
+                <!--<a href="javascript:void(0);" class="btn btn-default selectedPage" data-link="/packages/presell/list" data-shop="true">预售列表</a>-->
+                {/if}
+                {if $config['groupshopping']}
+                {eq name="type" value="2"}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/assemble/list" data-shop="true">拼团列表</a>
+                {else/}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/assemble/list" data-shop="true">拼团列表</a>
+                {/eq}
+                {/if}
+                {if $config['coupontype']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/coupon/index">领券中心</a>
+                {/if}
+                {if $config['signin']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/signin/index">签到中心</a>
+                {/if}
+                {if $config['memberprize']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/prize/list">奖品列表</a>
+                {/if}
+
+                {if $config['distribution']}
+                <div class="linkDialog-title">分销业务</div>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/distribute/index">分销中心</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/distribute/level">分销等级</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/distribute/order">分销订单</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/distribute/detail">分销佣金</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/distribute/withdraw">佣金提现</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/distribute/log">佣金明细</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/distribute/team">分销团队</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/distribute/customer">分销客户</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/distribute/qrcode">分销推广码</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/distribute/ranking">排行榜</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/distribute/credential">授权证书</a>
+                {/if}
+                {if $config['areabonus'] || $config['globalbonus'] || $config['teambonus']}
+                <div class="linkDialog-title">分红业务</div>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/bonus/index">分红中心</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/bonus/detail">分红金额</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/bonus/log">分红明细</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/bonus/order">分红订单</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/bonus/delivery/list">发货订单</a>
+                {if $config['teambonus']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/bonus/level?type=1">团队队长等级</a>
+                {/if}
+                {if $config['areabonus']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/bonus/level?type=2">区域代理等级</a>
+                {/if}
+                {if $config['globalbonus']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/bonus/level?type=3">全球股东等级</a>
+                {/if}
+                {/if}
+
+                {if $config['integral']}
+                <div class="linkDialog-title">积分商城</div>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/integral/index">商城首页</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/integral/goods/category">商品分类</a>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/integral/goods/list">商品列表</a>
+                {/if}
+
+                {if $config['credential']}
+                <div class="linkDialog-title">授权证书</div>
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/credential/index">查询证书</a>
+                {/if}
+
+                {if $config['channel'] ||  $config['microshop'] || $config['anticounterfeiting'] || $config['thingcircle'] || $config['taskcenter'] || $config['helpcenter'] } 
+                <div class="linkDialog-title">其他模块</div>
+                {/if}
+                {if $config['channel']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/channel/index">微商中心</a>
+                {/if}
+                {if $config['microshop']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/microshop/index">微店中心</a>
+                {/if}
+                {if $config['taskcenter']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/task/index">任务中心</a>
+                {/if}
+                {if $config['thingcircle']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/thingcircle/index">好物圈</a>
+                {/if}
+                {if $config['anticounterfeiting']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/anticounterfeiting/index">防伪溯源</a>
+                {/if}
+                {if $config['helpcenter']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/help/index">帮助中心</a>
+                {/if}
+                {if ($config['mplive']) && ($platform eq 'mini')}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/mplive/index">小程序直播</a>
+                {/if}
+                {if $config['friendscircle']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/friendster/index">朋友圈素材</a>
+                {/if}
+                {if $config['paygrade']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/friendster/index">付费等级</a>
+                {/if}
+                {if $config['merchants']}
+                <a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/pages/merchant/index">招商中心</a>
+                {/if}
+            </div>
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="active">
+            {if $config['coupontype']}
+            <div class="coupon_receive hidden" data-value="{$config['coupontype']}">
+                <div class="linkDialog-title">优惠券</div>
+                <div id="coupon_receive">
+                </div>
+            </div>
+            {/if}
+            {if $config['giftvoucher']}
+            <div class="voucher_receive hidden" data-value="{$config['giftvoucher']}">
+                <div class="linkDialog-title">礼品券</div>
+                <div id="voucher_receive">
+                </div>
+            </div>
+            {/if}
+            {if $config['wheelsurf']}
+            <div class="wheelsurf_receive hidden" data-value="{$config['wheelsurf']}">
+                <div class="linkDialog-title">大转盘</div>
+                <div id="wheelsurf_receive">
+                </div>
+            </div>
+            {/if}
+            {if $config['smashegg']}
+            <div class="smashegg_receive hidden" data-value="{$config['smashegg']}">
+                <div class="linkDialog-title">砸金蛋</div>
+                <div id="smashegg_receive">
+                </div>
+            </div>
+            {/if}
+            {if $config['scratchcard']}
+            <div class="scratchcard_receive hidden" data-value="{$config['scratchcard']}">
+                <div class="linkDialog-title">刮刮乐</div>
+                <div id="scratchcard_receive">
+                </div>
+            </div>
+            {/if}
+            {if $config['voucherpackage']}
+            <div class="voucherpackage_receive hidden" data-value="{$config['voucherpackage']}">
+                <div class="linkDialog-title">券包</div>
+                <div id="voucherpackage_receive">
+                </div>
+            </div>
+            {/if}
+            {if $config['groupshopping']}
+            <div class="groupshopping_receive hidden" data-value="{$config['groupshopping']}">
+                <div class="linkDialog-title">拼团</div>
+                <div id="groupshopping_receive">
+                </div>
+            </div>
+            {/if}
+            {if $config['presell']}
+            <div class="presell_receive hidden" data-value="{$config['presell']}">
+                <div class="linkDialog-title">预售</div>
+                <div id="presell_receive">
+                </div>
+            </div>
+            {/if}
+            {if $config['bargain']}
+            <div class="bargain_receive hidden" data-value="{$config['bargain']}">
+                <div class="linkDialog-title">砍价</div>
+                <div id="bargain_receive">
+                </div>
+            </div>
+            {/if} 
+<!--            {if $config['integral']}-->
+<!--            <div class="integral_receive hidden" data-value="{$config['integral']}">-->
+<!--                <div class="linkDialog-title">积分商城</div>-->
+<!--                <div id="integral_receive">-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            {/if}-->
+        </div>
+
+        <div role="tabpanel" class="tab-pane fade" id="diy">
+            <p class="form-control-static">请选择要跳转的页面</p>
+            <div class="" id="diy_custom">
+
+            </div>
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="category">
+            <p class="form-control-static">请选择要跳转的分类页<span class="pull-right small-muted">你选择的分类是：<b id="selectedSort"></b></span></p>
+            <div class="category-group flex">
+                <div class="list flex-1" id="sort1"></div>
+                <div class="list flex-1" id="sort2"></div>
+                <div class="list flex-1" id="sort3"></div>
+            </div>
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="shopGoods">
+            <p class="form-control-static">请选择要跳转的商品</p>
+            <form class="form-horizontal">
+                <div class="input-group mb-10">
+                    <input type="text" class="form-control" id="search_text" placeholder="请输入商品名称">
+                    <span class="input-group-btn"><button type="button" class="btn btn-primary" id="search_goods">搜索</button></span>
+                </div>
+                <div class="links-list">
+                </div>
+            </form>
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="links">
+            <p class="form-control-static">请输入要跳转的链接</p>
+            <form class="form-horizontal padding-15">
+                <div class="form-group">
+                    <label class="col-md-2 control-label">链接</label>
+                    <div class="col-md-9">
+                        <input type="text" id="link" class="form-control" placeholder="请输入链接，以http或https开头">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div role="tabpanel" class="tab-pane fade" id="mplinks">
+            <form class="form-horizontal padding-15">
+                <div class="form-group">
+                    <label class="col-md-2 control-label">appid</label>
+                    <div class="col-md-9">
+                        <input type="text" name="mp_appid" class="form-control" placeholder="请输入要跳转的小程序appid">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2 control-label">路径</label>
+                    <div class="col-md-9">
+                        <input type="text" name="mp_path" class="form-control" placeholder="如：pages/index/index ；不填写则为小程序首页；开头请勿带‘/’">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <input type="hidden" id="portName">
+    <input type="hidden" id="platformName">
+    <input type="hidden" id="selectedData">
+</div>
+<script>
+
+require(['util'],function(util) {
+    var projectName = $('#web_project_addr').val()||'shopvslai';
+    var portName = $('#portName').val()||'platform';
+    // var platformName = $('#platformName').val()||'h5';//h5、mp、app
+    if(typeof PLATFORMMAIN === 'undefined'){
+        PLATFORMMAIN = ''
+    }
+    if(typeof ADMINMAIN === 'undefined'){
+        ADMINMAIN = ''
+    }
+    var shopurls = {
+        //vslai、dds一样的url （除了小程序应用，其他应用现在都是一样URL）
+        categoryUrl:__URL(portName + '/Customtemplate/getShopCategory'),
+        couponUrl:__URL(portName + '/addons/execute/addons/coupontype/controller/Coupontype/action/couponTypeList'),
+        giftUrl:__URL(portName +'/addons/execute/addons/giftvoucher/controller/Giftvoucher/action/giftvoucherList'),
+        wheelsurfUrl:__URL(portName +'/addons/execute/addons/wheelsurf/controller/wheelsurf/action/wheelsurfList'),
+        smasheggUrl:__URL(portName +'/addons/execute/addons/smashegg/controller/smashegg/action/smashegglist'),
+        scratchcardUrl:__URL(portName +'/addons/execute/addons/scratchcard/controller/scratchcard/action/scratchcardlist'),
+        voucherpackageUrl:__URL(portName +'/addons/execute/addons/voucherpackage/controller/voucherpackage/action/voucherpackagelist'),
+        groupshoppingUrl:__URL(portName +'/addons/execute/addons/groupshopping/controller/groupshopping/action/groupshoppinglist'),
+        presellUrl:"{:__URL('ADDONS_MAINpresellList')}",
+        bargainUrl:__URL(portName +'/addons/execute/addons/bargain/controller/bargain/action/bargainlisturl'),
+        // integralUrl:__URL(portName +'/addons/execute/addons/integral/controller/integral/action/selfintegralgoodslist'),
+        /** 区分vsl、dds **/
+        // valai url
+        shopvslai:{
+            platform :{
+                goodsUrl:__URL(portName + '/shop/getSearchGoods'),
+            },
+            admin : {
+                goodsUrl:__URL(portName + '/config/getSearchGoods')
+            }
+        },
+        // dds url
+        shopdds:{
+            platform :{
+                goodsUrl:__URL(portName + '/shop/getSearchGoods')
+            },
+            admin : {
+                goodsUrl:__URL(portName + '/config/getSearchGoods')
+            }
+        }
+
+        // // valai url
+        // shopvslai:{
+        //     platform :{
+        //         categoryUrl:__URL(portName + '/custom_template_api/getshopcategory'),
+        //         diyUrl:{
+        //             h5:__URL(portName + '/config/customtemplatelist?template_type=diy'),
+        //             mp:__URL(portName +'/addons/execute/addons/miniprogram/controller/Miniprogram/action/miniProgramCustomList?template_type=diy'),
+        //             app:__URL(portName +'/addons/execute/addons/appshop/controller/Appshop/action/decorationList?template_type=diy')
+        //         },
+        //         goodsUrl:__URL(portName + '/shop/getSearchGoods'),
+        //         couponUrl:__URL(portName + '/addons/execute/addons/coupontype/controller/Coupontype/action/couponTypeList'),
+        //         giftUrl:__URL(portName +'/addons/execute/addons/giftvoucher/controller/Giftvoucher/action/giftvoucherList'),
+        //         wheelsurfUrl:__URL(portName +'/addons/execute/addons/wheelsurf/controller/wheelsurf/action/wheelsurfList'),
+        //         smasheggUrl:__URL(portName +'/addons/execute/addons/smashegg/controller/smashegg/action/smashegglist'),
+        //         scratchcardUrl:__URL(portName +'/addons/execute/addons/scratchcard/controller/scratchcard/action/scratchcardlist'),
+        //         voucherpackageUrl:__URL(portName +'/addons/execute/addons/voucherpackage/controller/voucherpackage/action/voucherpackagelist'),
+        //         integralUrl:__URL(portName +'/addons/execute/addons/integral/controller/integral/action/selfintegralgoodslist'),
+        //     },
+        //     admin : {
+        //         categoryUrl:__URL(portName + '/custom_template_api/getshopcategory'),
+        //         diyUrl:{
+        //             h5:__URL(portName + '/config/customtemplatelist?template_type=diy'),
+        //             mp:__URL(portName +'/addons/execute/addons/miniprogram/controller/Miniprogram/action/miniProgramCustomList?template_type=diy'),
+        //             app:''
+        //         },
+        //         goodsUrl:__URL(portName + '/config/getSearchGoods'),
+        //         couponUrl:__URL(portName +'/addons/execute/addons/coupontype/controller/Coupontype/action/couponTypeList'),
+        //         giftUrl:__URL(portName +'/addons/execute/addons/giftvoucher/controller/Giftvoucher/action/giftvoucherList'),
+        //         wheelsurfUrl:__URL(portName +'/addons/execute/addons/wheelsurf/controller/wheelsurf/action/wheelsurfList'),
+        //         smasheggUrl:__URL(portName +'/addons/execute/addons/smashegg/controller/smashegg/action/smashegglist'),
+        //         scratchcardUrl:__URL(portName +'/addons/execute/addons/scratchcard/controller/scratchcard/action/scratchcardlist'),
+        //         voucherpackageUrl:__URL(portName +'/addons/execute/addons/voucherpackage/controller/voucherpackage/action/voucherpackagelist'),
+        //         integralUrl:__URL(portName +'/addons/execute/addons/integral/controller/integral/action/selfintegralgoodslist'),
+        //     }
+        // },
+        // // dds url
+        // shopdds:{
+        //     platform :{
+        //         categoryUrl:__URL(portName + '/custom_template_api/getshopcategory'),
+        //         diyUrl:{
+        //             h5:__URL(portName + '/config/customtemplatelist?template_type=diy'),
+        //             mp:__URL(portName +'//Miniprogram/miniProgramCustomList?template_type=diy'),
+        //             app:__URL(portName +'/addons/execute/addons/appshop/controller/Appshop/action/decorationList?template_type=diy')
+        //         },
+        //         goodsUrl:__URL(portName + '/shop/getSearchGoods'),
+        //         couponUrl:__URL(portName +'/addons/execute/addons/coupontype/controller/Coupontype/action/couponTypeList'),
+        //         giftUrl:__URL(portName +'/addons/execute/addons/giftvoucher/controller/Giftvoucher/action/giftvoucherList'),
+        //         wheelsurfUrl:__URL(portName +'/addons/execute/addons/wheelsurf/controller/wheelsurf/action/wheelsurfList'),
+        //         smasheggUrl:__URL(portName +'/addons/execute/addons/smashegg/controller/smashegg/action/smashegglist'),
+        //         scratchcardUrl:__URL(portName +'/addons/execute/addons/scratchcard/controller/scratchcard/action/scratchcardlist'),
+        //         voucherpackageUrl:__URL(portName +'/addons/execute/addons/voucherpackage/controller/voucherpackage/action/voucherpackagelist'),
+        //         integralUrl:__URL(portName +'/addons/execute/addons/integral/controller/integral/action/selfintegralgoodslist'),
+        //     },
+        //     admin : {
+        //         categoryUrl:__URL(portName + '/custom_template_api/getshopcategory'),
+        //         diyUrl:{
+        //             h5:__URL(portName + '/config/customtemplatelist?template_type=diy'),
+        //             mp:__URL(portName +'/Miniprogram/miniProgramCustomList?template_type=diy'),
+        //             app:''
+        //         },
+        //         goodsUrl:__URL(portName + '/config/getSearchGoods'),
+        //         couponUrl:__URL(portName +'/addons/execute/addons/coupontype/controller/Coupontype/action/couponTypeList'),
+        //         giftUrl:__URL(portName +'/addons/execute/addons/giftvoucher/controller/Giftvoucher/action/giftvoucherList'),
+        //         wheelsurfUrl:__URL(portName +'/addons/execute/addons/wheelsurf/controller/wheelsurf/action/wheelsurfList'),
+        //         smasheggUrl:__URL(portName +'/addons/execute/addons/smashegg/controller/smashegg/action/smashegglist'),
+        //         scratchcardUrl:__URL(portName +'/addons/execute/addons/scratchcard/controller/scratchcard/action/scratchcardlist'),
+        //         voucherpackageUrl:__URL(portName +'/addons/execute/addons/voucherpackage/controller/voucherpackage/action/voucherpackagelist'),
+        //         integralUrl:__URL(portName +'/addons/execute/addons/integral/controller/integral/action/selfintegralgoodslist'),
+        //     }
+        // }
+    };
+    var same_urls = shopurls
+    var diff_urls = shopurls[projectName]
+    getGoodsCategory()
+    getCustomOfDiy();
+	
+    //营销活动链接
+    $("#active_link").on('click', function () {
+        if ($(".coupon_receive").data('value') == 1){
+            getCustomOfCoupon();//优惠券
+        }
+        if ($(".voucher_receive").data('value') == 1){
+            getCustomOfVoucher();//礼品券
+        }
+        if ($(".wheelsurf_receive").data('value') == 1){
+            getCustomOfWheelsurf();//大转盘
+        }
+        if ($(".smashegg_receive").data('value') == 1){
+            getCustomOfSmashegg();//砸金蛋
+        }
+        if ($(".scratchcard_receive").data('value') == 1){
+            getCustomOfScratchcard();//刮刮乐
+        }
+        if ($(".voucherpackage_receive").data('value') == 1){
+            getCustomOfVoucherpackage();//券包
+        }
+        if ($(".groupshopping_receive").data('value') == 1){
+            getCustomOfgroupshopping();//拼团
+        }
+        if ($(".presell_receive").data('value') == 1){
+            getCustomOfPresell();//预售
+        }
+        if ($(".bargain_receive").data('value') == 1){
+            getCustomOfBargain();//砍价
+        }
+        // if ($(".integral_receive").data('value') == 1){
+        //     getCustomOfIntegral();//积分商城
+        // }
+    })
+
+    var dataJson;
+    var l1 = 0,
+        l2 = 0;
+    var cname1, cname2, cname3;
+    var canClose = !1;
+    var shop_id = parseInt('{$shop_id}')
+
+    // 获取分类数据
+    function getGoodsCategory(){
+        $.ajax({
+            type: "post",
+            data: {},
+            url: same_urls.categoryUrl,
+            success: function (res) {
+                dataJson = res;
+                fillData();
+            }
+        });
+    }
+    //获取自定义页面链接
+    function getCustomOfDiy() {
+        // if (platformName=='h5') {
+        //     var ports = 1;
+        // } else if (platformName=='mp'){
+        //     var ports = 2;
+        // } else {
+        //     var ports = 3;
+        // }
+        $.ajax({
+            type: "post",
+            url: __URL(portName +'/Customtemplate/customtemplatelist?template_type=diy'),
+            data: {
+                "template_type": 'diy'
+            },
+            success: function (data) {
+                var html = "";
+                if (data['data'].length > 0) {
+                    for (var i = 0; i < data['data'].length; i++) {
+                        var curr = data['data'][i];
+                        html += '<a href="javascript:void(0);" class="btn btn-default selectedPage pagelinkborder" data-link="/packages/mall/diy?page_id=' +curr.id + '">' + curr.template_name + '</a> ';
+                    }
+                } else {
+                    html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+                }
+                $("#diy_custom").html(html);
+            }
+        });
+    };
+    //获取优惠券链接
+    function getCustomOfCoupon() {
+        $.ajax({
+            type: "post",
+            url: same_urls.couponUrl,
+            data: {
+                "page_size": 0,
+                "end_receive_time": true //领取结束时间大于当前时间才行
+            },
+            success: function (data) {
+                if (data.data.length > 0) {
+                    var html = "";
+                    if (data['addon_status']['wap_status'] == 1) {
+                        if (data['data'].length > 0) {
+                            for (var i = 0; i < data['data'].length; i++) {
+                                var curr = data['data'][i];
+                                html += '<a href="javascript:void(0);" class="btn btn-default selectedCouponPage pagelinkborder" data-link="/packages/coupon/receive?coupon_type_id='+curr.coupon_type_id+'">' + curr.coupon_name + '</a> ';
+                            }
+                        } else {
+                            html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+                        }
+                    }
+                    $("#coupon_receive").html(html);
+                    $(".coupon_receive").removeClass('hidden');
+                }
+            }
+        });
+    };
+    //获取礼品券链接
+    function getCustomOfVoucher() {
+        $.ajax({
+            type: "post",
+            url: same_urls.giftUrl,
+            data: {
+                "page_size": 0,
+                "end_receive_time": true //领取结束时间大于当前时间才行
+            },
+            success: function (data) {
+                if (data.data.length > 0) {
+                    var html = "";
+                    if (data['addon_status']['wap_status'] == 1) {
+                        if (data['data'].length > 0) {
+                            for (var i = 0; i < data['data'].length; i++) {
+                                var curr = data['data'][i];
+                                html += '<a href="javascript:void(0);" class="btn btn-default selectedVoucherPage pagelinkborder" data-link="/packages/giftvoucher/receive?gift_voucher_id='+curr.gift_voucher_id+'">' + curr.giftvoucher_name + '</a> ';
+                            }
+                        } else {
+                            html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+                        }
+                    }
+                    $("#voucher_receive").html(html);
+                    $(".voucher_receive").removeClass('hidden');
+                }
+            }
+        });
+    };
+    //获取大转盘链接
+    function getCustomOfWheelsurf() {
+        $.ajax({
+            type: "post",
+            url: same_urls.wheelsurfUrl,
+            data: {
+                "page_size": 0,
+                "state": '1,2' /*待开始，已开始*/
+            },
+            success: function (data) {
+                if (data.data.length > 0 ){
+                    var html = "";
+                    if (data['addon_status']['wap_status'] == 1) {
+                        if (data['data'].length > 0) {
+                            for (var i = 0; i < data['data'].length; i++) {
+                                var curr = data['data'][i];
+                                html += '<a href="javascript:void(0);" class="btn btn-default selectedWheelsurf pagelinkborder" data-link="/packages/wheelsurf/index?wheelsurf_id='+curr.wheelsurf_id+'">' + curr.wheelsurf_name + '</a> ';
+                            }
+                        } else {
+                            html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+                        }
+                    }
+                    $("#wheelsurf_receive").html(html);
+                    $(".wheelsurf_receive").removeClass('hidden');
+                }
+            }
+        });
+    };
+    //获取砸金蛋链接
+    function getCustomOfSmashegg() {
+        $.ajax({
+            type: "post",
+            url: same_urls.smasheggUrl,
+            data: {
+                "page_size": 0,
+                "state": '1,2' /*待开始，已开始*/
+            },
+            success: function (data) {
+                if (data.data.length > 0 ){
+                    var html = "";
+                    if (data['addon_status']['wap_status'] == 1) {
+                        if (data['data'].length > 0) {
+                            for (var i = 0; i < data['data'].length; i++) {
+                                var curr = data['data'][i];
+                                html += '<a href="javascript:void(0);" class="btn btn-default selectedSmashegg pagelinkborder" data-link="/packages/smashegg/index?smash_egg_id='+curr.smash_egg_id+'">' + curr.smashegg_name + '</a> ';
+                            }
+                        } else {
+                            html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+                        }
+                    }
+                    $("#smashegg_receive").html(html);
+                    $(".smashegg_receive").removeClass('hidden');
+                }
+            }
+        });
+    };
+    //获取刮刮乐链接
+    function getCustomOfScratchcard() {
+        $.ajax({
+            type: "post",
+            url: same_urls.scratchcardUrl,
+            data: {
+                "page_size": 0,
+                "state": '1,2' /*待开始，已开始*/
+            },
+            success: function (data) {
+                if (data.data.length > 0 ){
+                    var html = "";
+                    if (data['addon_status']['wap_status'] == 1) {
+                        if (data['data'].length > 0) {
+                            for (var i = 0; i < data['data'].length; i++) {
+                                var curr = data['data'][i];
+                                html += '<a href="javascript:void(0);" class="btn btn-default selectedScratchcard pagelinkborder" data-link="/packages/scratchcard/index?scratch_card_id='+curr.scratch_card_id+'">' + curr.scratchcard_name + '</a> ';
+                            }
+                        } else {
+                            html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+                        }
+                    }
+                    $("#scratchcard_receive").html(html);
+                    $(".scratchcard_receive").removeClass('hidden');
+                }
+            }
+        });
+    };
+    //获取券包链接
+    function getCustomOfVoucherpackage() {
+        $.ajax({
+            type: "post",
+            url: same_urls.voucherpackageUrl,
+            data: {
+                "page_size": 0,
+                "end_time": Date.parse(new Date())/1000 /*待开始，已开始*/
+            },
+            success: function (data) {
+                if (data.data.length > 0 ){
+                    var html = "";
+                    if (data['addon_status']['wap_status'] == 1) {
+                        if (data['data'].length > 0) {
+                            for (var i = 0; i < data['data'].length; i++) {
+                                var curr = data['data'][i];
+                                html += '<a href="javascript:void(0);" class="btn btn-default selectedVoucherpackage pagelinkborder" data-link="/packages/voucherpackage/index?voucher_package_id='+curr.voucher_package_id+'">' + curr.voucher_package_name + '</a> ';
+                            }
+                        } else {
+                            html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+                        }
+                    }
+                    $("#voucherpackage_receive").html(html);
+                    $(".voucherpackage_receive").removeClass('hidden');
+                }
+            }
+        });
+    };
+    //获取拼团链接
+    function getCustomOfgroupshopping() {
+        $.ajax({
+            type: "post",
+            url: same_urls.groupshoppingUrl,
+            data: {
+                "page_size": 0,
+                "group_type": 1,/*进行中*/
+            },
+            success: function (data) {
+                if (data.data.length > 0 ){
+                    var html = "";
+                    if (data.data) {
+                        if (data['data'].length > 0) {
+                            for (var i = 0; i < data['data'].length; i++) {
+                                var curr = data['data'][i];
+                                html += '<a href="javascript:void(0);" class="btn btn-default selectedGroupshopping pagelinkborder" data-link="/packages/goods/detail?goods_id='+curr.goods_id+'">' + curr.group_name + '</a> ';
+                            }
+                        } else {
+                            html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+                        }
+                    }
+                    $("#groupshopping_receive").html(html);
+                    $(".groupshopping_receive").removeClass('hidden');
+                }
+            }
+        });
+    };
+    //获取预售链接
+    function getCustomOfPresell() {
+        $.ajax({
+            type: "post",
+            url: same_urls.presellUrl,
+            data: {
+                "page_size": 0,
+                "status": 1,/*进行中*/
+            },
+            success: function (data) {
+                if (data.data.length > 0 ){
+                    var html = "";
+                    if (data.data) {
+                        if (data['data'].length > 0) {
+                            for (var i = 0; i < data['data'].length; i++) {
+                                var curr = data['data'][i];
+                                html += '<a href="javascript:void(0);" class="btn btn-default selectedPresell pagelinkborder" data-link="/packages/goods/detail?goods_id='+curr.goods_id+'">' + curr.name + '</a> ';
+                            }
+                        } else {
+                            html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+                        }
+                    }
+                    $("#presell_receive").html(html);
+                    $(".presell_receive").removeClass('hidden');
+                }
+            }
+        });
+    };
+    //获取砍价链接
+    function getCustomOfBargain() {
+        $.ajax({
+            type: "post",
+            url: same_urls.bargainUrl,
+            data: {
+                "page_size": 0,
+                "bargain_type": 'going',/*进行中*/
+            },
+            success: function (data) {
+                if (data.data.length > 0 ){
+                    var html = "";
+                    if (data.data) {
+                        if (data['data'].length > 0) {
+                            for (var i = 0; i < data['data'].length; i++) {
+                                var curr = data['data'][i];
+                                html += '<a href="javascript:void(0);" class="btn btn-default selectedBargain pagelinkborder" data-link="/packages/goods/detail?goods_id='+curr.goods_id+'">' + curr.bargain_name + '</a> ';
+                            }
+                        } else {
+                            html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+                        }
+                    }
+                    $("#bargain_receive").html(html);
+                    $(".bargain_receive").removeClass('hidden');
+                }
+            }
+        });
+    };
+    // //获取积分商城链接
+    // function getCustomOfIntegral() {
+    //     $.ajax({
+    //         type: "post",
+    //         url: same_urls.integralUrl,
+    //         data: {
+    //             "page_size": 0,
+    //             "type": 1,/*出售中*/
+    //         },
+    //         success: function (data) {
+    //             if (data.data.length > 0 ){
+    //                 var html = "";
+    //                 if (data.data) {
+    //                     if (data['data'].length > 0) {
+    //                         for (var i = 0; i < data['data'].length; i++) {
+    //                             var curr = data['data'][i];
+    //                             html += '<a href="javascript:void(0);" class="btn btn-default selectedIntegral" data-link="/packages/integral/goods/detail?goods_id='+curr.goods_id+'">' + curr.goods_name + '</a> ';
+    //                         }
+    //                     } else {
+    //                         html += '<div class="padding-15" style="text-align: center">暂无符合条件的数据记录</div>';
+    //                     }
+    //                 }
+    //                 $("#integral_receive").html(html);
+    //                 $(".integral_receive").removeClass('hidden');
+    //             }
+    //         }
+    //     });
+    // };
+
+
+    // 搜索商品
+    $("#search_goods").on('click', function () {
+        $.ajax({
+            type: "post",
+            data: {
+                "search_text": $("#search_text").val()
+            },
+            url: diff_urls[portName].goodsUrl,
+            success: function (res) {
+                var data = res['data'];
+                var html = "";
+                if (data.length > 0) {
+                    for (var i = 0; i < data.length; i++) {
+                        var curr = data[i];
+                        html += '<div class="item">';
+                        html += '<div class="media">';
+                        html += '<div class="media-left">';
+                        if (curr["picture_info"] != null) {
+                            html += '<img src="' + __IMG(curr["picture_info"]['pic_cover_micro']) + '" alt="" width="60" height="60">';
+                        } else {
+                            html += '<img src="http://fpoimg.com/60x60?text=60x60" alt="" width="60" height="60">'
+                        }
+                        html += '</div>';
+                        html += '<div class="media-body max-w-300">';
+                        html += '<div class="line-2-ellipsis">' + curr["goods_name"] + '</div>';
+                        html += '<div class="line-1-ellipsis text-danger">' + curr['price'] + '</div>';
+                        html += '<div class="line-1-ellipsis">' + curr['shop_name'] + '</div>';
+                        html += '</div>';
+                        html += '</div>';
+                        html += '<a href="javascript:void(0);" class="btn btn-default selectedGoods pagelinkborder" data-id="' + curr["goods_id"] + '">选择</a>';
+                        html += '</div>';
+                    }
+                } else {
+                    html += '暂无符合条件的数据记录';
+                }
+                $("#shopGoods").find(".links-list").html(html);
+            }
+        });
+    })
+    // 选中商品
+    $('.links-dialog').on('click','.selectedGoods', function () {
+        selecteddata('goods', '/packages/goods/detail?goods_id=' + $(this).data('id'))
+    })
+    // 选中页面
+    $('.links-dialog').on('click','.selectedPage',function(){
+        var link = $(this).data('link')
+        if($(this).data('shop')&&shop_id){
+            link = link+'?shop_id='+shop_id
+        }
+        $(this).siblings().removeClass('btn-primary');
+        $(this).addClass('btn-primary');
+        selecteddata('page',link)
+    })
+    // 优惠券选中页面
+    $('.links-dialog').on('click','.selectedCouponPage',function(){
+        $(this).siblings().removeClass('btn-primary');
+        $(this).addClass('btn-primary');
+        selecteddata('page',$(this).data('link'))
+    })
+    // 礼品券选中页面
+    $('.links-dialog').on('click','.selectedVoucherPage',function(){
+        $(this).siblings().removeClass('btn-primary');
+        $(this).addClass('btn-primary');
+        selecteddata('page',$(this).data('link'))
+    })
+    // 大转盘选中页面
+    $('.links-dialog').on('click','.selectedWheelsurf',function(){
+        $(this).siblings().removeClass('btn-primary');
+        $(this).addClass('btn-primary');
+        selecteddata('page',$(this).data('link'))
+    })
+    // 砸金蛋选中页面
+    $('.links-dialog').on('click','.selectedSmashegg',function(){
+        $(this).siblings().removeClass('btn-primary');
+        $(this).addClass('btn-primary');
+        selecteddata('page',$(this).data('link'))
+    })
+    // 刮刮乐选中页面
+    $('.links-dialog').on('click','.selectedScratchcard',function(){
+        $(this).siblings().removeClass('btn-primary');
+        $(this).addClass('btn-primary');
+        selecteddata('page',$(this).data('link'))
+    })
+    // 券包选中页面
+    $('.links-dialog').on('click','.selectedVoucherpackage',function(){
+        $(this).siblings().removeClass('btn-primary');
+        $(this).addClass('btn-primary');
+        selecteddata('page',$(this).data('link'))
+    })
+    // 拼团选中页面
+    $('.links-dialog').on('click','.selectedGroupshopping',function(){
+        $(this).siblings().removeClass('btn-primary');
+        $(this).addClass('btn-primary');
+        selecteddata('page',$(this).data('link'))
+    })
+    // 预售选中页面
+    $('.links-dialog').on('click','.selectedPresell',function(){
+        $(this).siblings().removeClass('btn-primary');
+        $(this).addClass('btn-primary');
+        selecteddata('page',$(this).data('link'))
+    })
+    // 砍价选中页面
+    $('.links-dialog').on('click','.selectedBargain',function(){
+        $(this).siblings().removeClass('btn-primary');
+        $(this).addClass('btn-primary');
+        selecteddata('page',$(this).data('link'))
+    })
+    // // 积分商城选中页面
+    // $('.links-dialog').on('click','.selectedIntegral',function(){
+    //     $(this).siblings().removeClass('btn-primary');
+    //     $(this).addClass('btn-primary');
+    //     selecteddata('page',$(this).data('link'))
+    // })
+
+
+    $('#sort1').on('click', '.item', function() {
+        $(this).addClass('active').siblings().removeClass('active');
+        $('#sort3').html('');
+        fillData($(this).index());
+        l1 = $(this).index();
+        cname1 = $(this).text();
+        cid1 = $(this).data('id');
+        canClose = !1;
+        // console.log('一级分类id==>',cid1);
+        $('#selectedSort').html(cname1);
+        selecteddata('category','/pages/goods/list?category_id=' + cid1 + '&text=' + cname1);
+    });
+    $('#sort2').on('click', '.item', function() {
+        $(this).addClass('active').siblings().removeClass('active');
+        fillData(l1, $(this).index());
+        l2 = $(this).index();
+        cname2 = $(this).text();
+        cid2 = $(this).data('id');
+        canClose = !1;
+        // console.log('一级分类id==>',cid1 + '；二级分类id==>' + cid2);
+        $('#selectedSort').html(cname1 +' > '+ cname2);
+        selecteddata('category','/pages/goods/list?category_id=' + cid2 + '&text=' + cname2);
+    });
+    $('#sort3').on('click', '.item', function() {
+        $(this).addClass('active').siblings().removeClass('active');
+        cname3 = $(this).text();
+        cid3 = $(this).data('id');
+        canClose = !0;
+        // console.log('一级分类id==>',cid1 + '；二级分类id==>' + cid2 + '；三级分类id==>' + cid3);
+        $('#selectedSort').html(cname1 +' > '+ cname2 +' > '+ cname3);
+        selecteddata('category','/pages/goods/list?category_id=' + cid3  + '&text=' + cname3);
+    });
+    function fillData(l1, l2) {
+        var temp_html = "";
+        if (typeof(dataJson.data) != 'undefined' && arguments.length == 0) {
+            $.each(dataJson.data, function(i, e) {
+                temp_html += '<a href="javascript:void(0);" class="item" data-id="' + e.category_id + '">' + e.short_name + '</a>';
+            });
+        } else if (typeof(dataJson.data[l1].child_list) != 'undefined' && arguments.length == 1) {
+            $.each(dataJson.data[l1].child_list, function(i, e) {
+                temp_html += '<a href="javascript:void(0);" class="item" data-id="' + e.category_id + '">' + e.short_name + '</a>';
+            });
+        } else if (typeof(dataJson.data[l1].child_list[l2].child_list) != 'undefined' && arguments.length == 2) {
+            $.each(dataJson.data[l1].child_list[l2].child_list, function(i, e) {
+                temp_html += '<a href="javascript:void(0);" class="item" data-id="' + e.category_id + '">' + e.short_name + '</a>';
+            });
+        }
+        $('.category-group .list:eq(' + arguments.length + ')').html(temp_html);
+    }
+
+    // 直接输入链接焦点离开事件
+    $("#link").on('blur', function () {
+        selecteddata2link('link', $(this).val());
+    })
+    $('#mplinks input[name=mp_appid]').on('blur',function(){
+        $('#selectedData').data('link','')
+        $('#selectedData').data('mp_appid',$(this).val())
+    })
+    $('#mplinks input[name=mp_path]').on('blur',function(){
+        $('#selectedData').data('link','')
+        $('#selectedData').data('mp_path',$(this).val())
+    })
+    function selecteddata(type,params){
+        // console.log(__URLS(APPMAIN),type,params)
+        $('#selectedData').data('link',params)
+        $('#selectedData').data('mp_appid','')
+        $('#selectedData').data('mp_path','')
+    }
+    function selecteddata2link(type,params){
+        $('#selectedData').data('link',params)
+        $('#selectedData').data('mp_appid','')
+        $('#selectedData').data('mp_path','')
+    }
+})
+</script>

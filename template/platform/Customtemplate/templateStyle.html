@@ -1,0 +1,178 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+<style>
+.theme-tabs{
+	display: flex;
+	flex-wrap: wrap;
+}
+.theme-tabs .tabs-item{
+    width: 120px;
+    height: 54px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    margin: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.theme-tabs .tabs-item .icon{
+	position: absolute;
+	right: -3px;
+	bottom: -4px;
+	color: #2589ff;
+	display: none;
+}
+.theme-tabs .tabs-item.on{
+    border-color: #2589ff;
+    position: relative;
+}
+.theme-tabs .tabs-item.on .icon{
+	display: block;
+}
+.theme-tabs .tabs-item .color{
+	position: relative;
+	width: 40px;
+	height: 20px;
+	border-radius: 20px;
+	overflow: hidden;
+}
+.theme-tabs .tabs-item .color:after{
+	content: '';
+	display: block;
+	position: absolute;
+	background: #f5f5f5;
+	width: 20px;
+	height: 20px;
+	right: 0;
+}
+.theme-tabs .tabs-item .color:before{
+	content: '';
+	display: block;
+	position: absolute;
+	background: #ebedf0;
+	width: 20px;
+	height: 20px;
+	left: 0;
+}
+.theme-tabs .tabs-item .text{
+    margin-left: 10px;
+    font-size: 12px;
+    color: #666;
+}
+.theme-tabs .tabs-item.red .color:after{
+	background: linear-gradient(to right, #ff6034, #ee0a24);
+}
+.theme-tabs .tabs-item.red .color:before{
+	background: #ff8917;
+}
+.theme-tabs .tabs-item.green .color:after{
+	background: linear-gradient(to right, #0ed4ae, #06e285);
+}
+.theme-tabs .tabs-item.green .color:before{
+	background: #4e4e61;
+}
+.theme-tabs .tabs-item.pink .color:after{
+	background: linear-gradient(to right, #e63b87, #e73c5d);
+}
+.theme-tabs .tabs-item.pink .color:before{
+	background: #f09b38;
+}
+.theme-tabs .tabs-item.golden .color:after{
+	background: linear-gradient(to right, #eccc91, #d0a767);
+}
+.theme-tabs .tabs-item.golden .color:before{
+	background: #f09b38;
+}
+.theme-tabs .tabs-item.black .color:after{
+	background: linear-gradient(to right, #4c453e, #181716);
+}
+.theme-tabs .tabs-item.black .color:before{
+	background: #c39960;
+}
+.theme-tabs .tabs-item.orange .color:after{
+	background: linear-gradient(to right, #ef9336, #ec622b);
+}
+.theme-tabs .tabs-item.orange .color:before{
+	background: #f5bf41;
+}
+.theme-tabs .tabs-item.blue .color:after{
+	background: linear-gradient(to right, #0da0fe, #2072f4);
+}
+.theme-tabs .tabs-item.blue .color:before{
+	background: #534e61;
+}
+.theme-tabs .tabs-item.violet .color:after{
+	background: linear-gradient(to right, #ec34fd, #a606c8);
+}
+.theme-tabs .tabs-item.violet .color:before{
+	background: #f09b38;
+}
+.theme-imgs{
+	margin: 20px 0 20px;
+}
+.theme-imgs .img{
+	width: 900px;
+	height: 483.72px;
+}
+.theme-foot{
+	margin: 10px;
+}
+</style>
+{/block}
+{block name="main"}
+<div class="theme-tabs">
+    {foreach name="theme_data" item="vo" key="k"}
+        <div class="tabs-item {$vo.color} {eq name="k" value="$theme_id"} on {/eq}" data-type="{$vo.color}" data-theme_id="{$k}">
+            <div class="color"></div>
+            <div class="text">{$vo.name}</div>
+            <i class="icon icon-success"></i>
+        </div>
+    {/foreach}
+</div>
+<div class="theme-imgs">
+	<img class="img" src="/public/platform/static/images/theme/red.png"/>
+</div>
+<div class="theme-foot">
+	<a class="btn btn-primary J-submit">保存</a>
+</div>
+{/block}
+{block name="script"}
+<script>
+require(['util'], function (util) {
+	var curr_theme = "{$theme_color}";// 当前主题色
+	var theme_id = "{$theme_id}";// 当前主题色id
+	toggleTheme()
+	$('.theme-tabs').on('click','.tabs-item',function(){
+		curr_theme = $(this).data('type');
+        theme_id = $(this).data('theme_id');
+		toggleTheme()
+	})
+	function toggleTheme(){
+		$('.theme-tabs .tabs-item').each(function(i,e){
+			if($(e).data('type')==curr_theme){
+				$(e).addClass('on')
+			}else{
+				$(e).removeClass('on')
+			}
+		})
+		$('.theme-imgs .img').attr('src','/public/platform/static/images/theme/'+curr_theme+'.png')
+	}
+	// 保存
+	$('.J-submit').click(function(){
+        $.ajax({
+            type:"post",
+            url:"{:__URL('PLATFORM_MAIN/Customtemplate/saveThemeId')}",
+            data:{'theme_id':theme_id},
+            success: function (data) {
+                if (data["code"] > 0) {
+                    util.message( data["message"],'success');
+                }else{
+                    util.message( data["message"],'danger');
+                }
+            }
+        })
+	})
+})
+</script>
+{/block}

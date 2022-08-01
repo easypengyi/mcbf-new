@@ -1,0 +1,187 @@
+{block name="main"}
+			<!-- page -->
+			<div class="tab-content">
+				<div role="tabpanel" class="tab-pane fade in active" id="base">
+					<form class="form-horizontal form-validate  pt-15 widthFixedForm">
+						<div class="screen-title2" data-id="t2">
+							<span class="text">基本设置</span>
+						</div>
+						<div class="form-group">
+							<label class="col-md-2 control-label"><span class="text-bright">*</span>卡密库名称</label>
+							<div class="col-md-8">
+								<input type="text" class="form-control" name="electroncard_base_name" id="electroncard_base_name" autocomplete="off" value="{if $data.electroncard_base_name}{$data.electroncard_base_name}{/if}">
+								<div class="mb-0 help-block">例如：话费充值卡、系统激活码等</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-2 control-label"><span class="text-bright">*</span>卡密库分类</label>
+							<div class="col-md-5">
+								<select class="form-control" id="electroncard_base_category" name="electroncard_base_category" required >
+									<option value="">请选择</option>
+									{if $category_list}
+									{foreach name="category_list" item="vo"}
+									<option value="{$vo.id}" {if $data.electroncard_base_category_id}{if $data.electroncard_base_category_id == $vo.id}selected{/if}{/if}>{$vo.category_name}</option>
+									{/foreach}
+									{/if}
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-2 control-label"><span class="text-bright">*</span>备注</label>
+							<div class="col-md-8">
+								<textarea class="form-control" name="memo" id="memo" rows="7">{if $data.memo}{$data.memo}{/if}</textarea>
+								<div class="mb-0 help-block">备注将在后台卡密库详情展示</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-2 control-label"><span class="text-bright">*</span>使用说明</label>
+							<div class="col-md-8">
+								<textarea class="form-control" name="description" id="description" rows="7">{if $data.memo}{$data.description}{/if}</textarea>
+								<div class="mb-0 help-block">使用说明将在订单详情页展示，帮助会员更好的理解和使用卡密产品</div>
+							</div>
+						</div>
+
+						<div class="screen-title2" data-id="t2">
+							<span class="text">卡密库数据结构<span class="text-bright">（保存后不可修改）</span></span>
+						</div>
+						<div class="form-group">
+							<label class="col-md-2 control-label"><span class="text-bright">*</span>数据去重</label>
+							<div class="col-md-5">
+								<div class="switch-inline">
+									<input type="checkbox" id="data_different" name="data_different" {if condition="$data.is_data_different eq 1"} checked {/if} {if $id} disabled {/if}>
+									<label for="data_different" class=""></label>
+									<div class="mb-0 help-block">开启后，该卡密库每次添加新卡密数据时若与已存在的数据重复，则无法添加</div>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-2 control-label"></label>
+							<div class="col-md-9 electroncard-base-sortable">
+								<div class="divTable electroncardBaseTable">
+									<div class="divThead">
+										<div class="divTh">字段显示名称</div>
+										<div class="divTh">操作</div>
+									</div>
+									{if !$id}
+									<div class="divTbody ui-sortable info-prize" data-sort="1">
+										<div class="divTr" data-sort="1" id="curr-list">
+											<div class="divTd divTd1">
+												<input type="text" class="form-control" name="electroncard_base_name1" id="electroncard_base_name1"  required placeholder="例：激活码">
+											</div>
+											<div class="divTd">
+											</div>
+										</div>
+									</div>
+									{/if}
+									{if $data.key_name}
+									{foreach $data.key_name as $k => $v}
+									<div class="divTbody ui-sortable info-prize" data-sort="">
+										<div class="divTr">
+											<div class="divTd divTd1">
+												<input type="text" class="form-control" name="electroncard_base_name" id="" value="{$v}" disabled>
+											</div>
+											<div class="divTd">
+												<a href="javascript:;" class="btn-operation text-red1 del-rule">删除</a>
+											</div>
+										</div>
+									</div>
+									{/foreach}
+									{/if}
+									{if !$id}
+									<div class="help-block">
+										<a class="btn btn-primary" href="javascript:;" id="J-add" style="margin-left: 10px;">增加一个字段</a>
+									</div>
+									{/if}
+								</div>
+								<div class="mb-0 help-block">默认的字段将作为Key值，用于卡密搜索，不能删除，数据结构保存后不可修改</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-md-2 control-label"></label>
+							<div class="col-md-8">
+								<button class="btn btn-primary add" type="submit">保存</button>
+								<a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+			<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['utilAdmin'],function(utilAdmin) {
+        loading();
+        function loading(){
+
+		}
+
+        utilAdmin.validate($('.form-validate'), function (form) {
+        	var id = "{$id}";
+			var data = {};
+
+			if(!id) {
+				data.key_list=[];
+				var obj = $(".info-prize");
+				var sort = 0;
+				for (var i=0;i<obj.length;i++) {
+					sort++;
+					data.key_list.push($('#electroncard_base_name'+sort).val());
+				}
+				var data_different = $("input[name='data_different']").is(':checked')?1:0;
+			}
+
+			var electroncard_base_name = $("#electroncard_base_name").val();
+			var electroncard_base_category = $("#electroncard_base_category").val();
+			var memo = $("#memo").val();
+			var description = $("#description").val();
+
+			data.electroncard_base_name = electroncard_base_name;
+			data.electroncard_base_category = electroncard_base_category;
+			data.memo = memo;
+			data.description = description;
+			data.data_different = data_different;
+			data.id = id;
+
+			$(".add").attr('disabled','disabled');
+            $.ajax({
+                type: "post",
+                url: "{$addOrUpdateElectroncardBaseUrl}",
+                data: data,
+                async: true,
+                success: function (data) {
+                    if (data['code'] > 0) {
+                        utilAdmin.message(data["message"], 'success', "{:__URL('admin/Menu/addonmenu?addons=electroncardBase')}");
+                    } else {
+                        utilAdmin.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+
+		var sort = 1;
+		$('#J-add').click(function () {
+			sort++;
+			var html = '';
+			html += '<div class="divTbody ui-sortable info-prize" data-specid="" id="curr-list'+sort+'" data-sort="'+sort+'">';
+			html += '<div class="divTr" id="curr-list" data-sort='+sort+'>';
+			html += '<div class="divTd divTd1">';
+			html += '<input type="text" class="form-control" name="electroncard_base_name'+sort+'" id="electroncard_base_name'+sort+'" required placeholder="例：激活码">';
+			html += '</div>';
+
+			html += '<div class="divTd">';
+			html += '<a href="javascript:delRule('+sort+');" class="btn-operation text-red1 del-rule">删除</a>';
+			html += '</div>';
+
+			html += '</div>';
+			html += '</div>';
+			$('#J-add').before(html);
+		});
+    });
+	function delRule(sign){
+		$('#curr-list'+sign).remove();
+		sign = sign - 1;
+		$('#curr-list'+sign).addClass('active');
+	}
+</script>
+{/block}

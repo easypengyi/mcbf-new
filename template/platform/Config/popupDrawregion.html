@@ -1,0 +1,212 @@
+<div class="popup-dialog draw-region-dialog" id="draw-region">
+    <div class="popup-view">
+        <div class="box">
+            <img src="" class="region-bg" id="region-bg">
+            <div class="view-main" id="region-view">
+            </div>
+        </div>
+    </div>
+    <div class="popup-edit">
+        <div class="editor-inner">
+            
+        </div>
+    </div>
+    <input type="hidden" id="regionData">
+    <input type="hidden" id="modalData">
+</div>
+
+<script type="text/html" id="tpl_show_region">
+    <%each data as item itemid%>
+    <div class="item drag" id="box" data-id="<%itemid%>" style="width:<%item.width%>px;height:<%item.height%>px;top:<%item.top%>px;left:<%item.left%>px;">
+        <div class="text">热区<%item.index%></div>
+        <div class="coor"> </div>
+        <%if item.imgurl%>
+        <img src="<%item.imgurl%>">
+        <%/if%>
+    </div>
+    <%/each%>
+</script>
+<script type="text/html" id="tpl_edit_region">
+    <div class="alert alert-info alert-sm" role="alert">确定后需保存才生效</div>
+    <div class="form-items">
+        <div class="inner" id="form-items">
+            <%each data as child itemid %>
+            <div class="item" data-id="<%itemid%>">
+                <span class="btn-del" title="删除"></span>
+                <div class="item-image">
+                    <img src="<%child.imgurl%>"  class="changePath" id="pimg-<%itemid%>" />
+                </div>
+                <div class="item-form">
+                    <div class="input-group mb-10">
+                        <input type="text" class="form-control input-sm changePath diy-bind" data-bind-parent="data" data-bind-child="<%itemid%>" data-bind="imgurl" id="cimg-<%itemid%>" placeholder="请选择图片" value="<%child.imgurl%>" />
+                        <span class="input-group-addon btn btn-default singlePicture" data-toggle="selectImg" data-input="#cimg-<%itemid%>" data-img="#pimg-<%itemid%>">选择图片</span>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">热区<%child.index%></span>
+                        <input type="text" class="form-control input-sm diy-bind" data-bind-parent="data" readonly data-bind-child="<%itemid%>" data-bind="linkurl" readonly id="curl-<%itemid%>" placeholder="请选择链接" value="<%child.linkurl%>" />
+                        <span class="input-group-addon btn btn-default" data-toggle="selectUrl" data-input="#curl-<%itemid%>">选择链接</span>
+                    </div>
+                </div>
+            </div>
+            <%/each%>
+        </div>
+        <div class="btn btn-block btn-default" id="addRagion"><i class="icon icon-add1"></i> 添加热区</div>
+    </div>   
+</script>
+
+<script>
+
+var getId = function (S, N) {
+    var date = +new Date();
+    var id = S + (date + N);
+    return id
+};
+
+
+
+require(['util','tpl','jquery-ui'],function(util,tpl) {
+    var modal = $('#modalData').data('modal')
+    var items = $('#regionData').data('items')
+    items.data = items.data||{} //绘制数据
+    $('#region-bg').attr('src',items.params.backgroundImage)
+    var initView = function(){
+        setTtems()
+        var showHtml = tpl("tpl_show_region",items)
+        $(".popup-view .view-main").html(showHtml)
+        $("#region-view .drag").draggable({
+            containment: '#region-view',
+            stop: function(event,ui) {
+                var itemid = $(this).data('id')
+                items.data[itemid].top = ui.position.top
+                items.data[itemid].left = ui.position.left
+                setTtems()
+            } 
+          }).resizable({
+            containment: "#region-view",
+            minHeight: 20,
+            minWidth: 20,
+            stop:function(event,ui){
+                var itemid = $(this).data('id')
+                items.data[itemid].width = ui.size.width
+                items.data[itemid].height = ui.size.height
+                setTtems()
+            }
+          })
+    }
+
+    var initEditor = function(){
+        var editHtml = tpl("tpl_edit_region",items)
+        $(".popup-edit .editor-inner").html(editHtml)
+
+        // 双向绑定数据
+        $(".popup-edit .editor-inner").find(".diy-bind").bind('input propertychange change', function () {
+            var _this = $(this);
+            var bind = _this.data("bind");
+            var bindchild = _this.data('bind-child');
+            var value = '';
+            var tag = this.tagName;
+            if (tag == 'INPUT') {
+                value = _this.val();
+            } else if (tag == 'SELECT') {
+                value = _this.find('option:selected').val()
+            }
+            value = $.trim(value);
+            items.data[bindchild][bind] = value
+            initView()
+        })
+
+        // 选择图片
+        $('[data-toggle="selectImg"]').unbind('click').click(function () {
+            var _this = $(this);
+            if(_this.data('disabled') == 'disabled'){
+                return false
+            }
+            var cimg = _this.parents('.item').find('input' + _this.data('input'));
+            var pimg = _this.parents('.item').find('img' + _this.data('img'));
+            util.confirm('素材空间',modal.popupPicUrl[modal.portName],function(e){
+                var data = this.$content.find('#selectedData').data();
+                if(util.isEmpty(data) || util.isEmpty(data['id'])){
+                    util.message('请选择图片')
+                    return false;
+                }
+                var path = data.path[0];
+                cimg.val(path).change();
+                pimg.attr('src', path);
+              },'col-md-11')
+        })
+
+        // 选择链接
+        $('[data-toggle="selectUrl"]').unbind('click').click(function () {
+            var _this = $(this);
+            if(_this.data('disabled') == 'disabled'){
+                return false
+            }
+            var curlId = _this.data('input');
+            var elm = _this.parent().find('input' + curlId);
+            util.confirm('选择页面链接','url:'+__URL(modal.popupLinkUrl[modal.portName]+'&platform='+modal.diff[modal.platform].name+'&template_type=' + modal.type),function(e){
+              var link = this.$content.find('#selectedData').data('link')
+              if(util.isEmpty(link)){
+                  util.message('请选择链接')
+                  return false;
+              }
+              elm.val(link).change();
+            },'large',function(){
+                this.$content.find('#platformName').val(modal.platform)
+                this.$content.find('#portName').val(modal.portName)
+            })
+        })
+        $("#addRagion").unbind('click').click(function () {
+            var newChild = {};
+            var index = 0;
+            var temp = {
+                C01234567890: {
+                    imgurl: '',
+                    linkurl: '',
+                    top:0,
+                    left:0,
+                    width:80,
+                    height:80,
+                    index:0
+                }
+            }
+            $.each(temp, function (i, t) {
+              if (index == 0) {
+                newChild = t;
+                index++
+              }
+            });
+            if (newChild) {
+              var childName = getId("C", 0);
+              if (typeof (items.data) === 'undefined') {
+                items.data = {}
+              }
+              newChild = $.extend(true, {}, newChild);
+              items.data[childName] = newChild;
+            }
+            initView()
+            initEditor()
+        });
+        $(".form-items .item .btn-del").unbind('click').click(function () {
+            var childid = $(this).closest(".item").data('id');
+            delete items.data[childid];
+            util.alert("确定删除吗", function () {
+                initView()
+                initEditor(false)
+            })
+        })
+    }
+
+    var setTtems = function(){
+        var index = 1
+        $.each(items.data,function(i,e){
+            e.index = index;
+            index++;
+        })
+        $('#regionData').data('items',items)
+    }
+
+    initView()
+    initEditor()
+})
+
+</script>

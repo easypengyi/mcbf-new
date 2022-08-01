@@ -1,0 +1,92 @@
+<div class="goods-diglog" id="goods-dialog">
+  <ul class="nav nav-tabs v-nav-tabs pt-15" role="tablist">
+    <li role="presentation" class="active"><a href="#list" aria-controls="list" role="tab" data-toggle="tab"
+        class="flex-auto-center">商品列表</a></li>
+    <div class="input-group search-input-group pull-right">
+      <input type="text" class="form-control" name="goods-name" placeholder="商品名称">
+      <span class="input-group-btn"><button class="btn btn-primary search">搜索</button></span>
+    </div>
+  </ul>
+  <div class="dialog-box tab-content">
+    <div role="tabpanel" class="tab-pane fade in active" id="list">
+      <div class="table-box" style="height: 380px;overflow-y: auto;">
+        <table class="table v-table table-auto-center">
+          <thead>
+            <tr>
+              <th>商品列表</th>
+              <th>价格</th>
+              <!--<th>状态</th>-->
+              <!--<th width="130">操作</th>-->
+            </tr>
+          </thead>
+          <tbody id="content"></tbody>
+        </table>
+      </div>
+      <nav aria-label="Page navigation" class="clearfix">
+        <ul id="page_goods" class="pagination pull-right"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+<script type="text/html" id="goods_tpl_content">
+  <%each data as item %>
+  <tr>
+      <td>
+          <div class="media text-left" style="margin-left:80px;">
+              <div class="media-left">
+                  <p>
+                      <img src="<%item.goods_cover_img%>" style="width:60px;height:60px;">
+                  </p>
+              </div>
+              <div class="media-body break-word">
+                  <div class="line-2-ellipsis line-title"><%item.goods_name%></div>
+                  <!--<div class="small-muted line-2-ellipsis"></div>-->
+              </div>
+          </div>
+
+      </td>
+      <%if item.price_type == 1%>
+      <td>￥<%item.price%></td>
+      <%/if%>
+      <%if item.price_type == 2%>
+      <td>￥<%item.price%> ~ ￥<%item.price2%></td>
+      <%/if%>
+      <%if item.price_type == 3%>
+      <td>原价：￥<%item.price%> <br > 现价：￥<%item.price2%></td>
+      <%/if%>
+      <!--<td>-->
+          <!--<a href="javascript:void(0);" class="text-<%if item.isselect == '0'%>primary<%else%>danger<%/if%> curr_btn" isselect="<%item.isselect%>" data-mp_goods_id="<%item.mp_goods_id%>" ><%if item.isselect == '0'%>推荐<%else%>取消推荐<%/if%></a>-->
+      <!--</td>-->
+  </tr>
+  <%/each%>
+</script>
+<script>
+  require(['util', 'tpl'], function (util, tpl) {
+    var url = '{$getMpLiveSelectedGoods}';
+    util.initPage(getGoodsList, 'page_goods');
+    // 搜索
+    $('.search').on('click', function () {
+       getGoodsList(1)
+    })
+    function getGoodsList(page) {
+      var val = $('input[name="goods-name"]').val();
+      var roomid = '{$roomid}';
+      $.ajax({
+        type: "post",
+        url: url,
+        async: true,
+        data: {
+          "page_index": page,
+          "goods_name": val || '',
+          "roomid": roomid,
+        },
+        success: function (data) {
+          $('#goods-dialog #content').html(tpl('goods_tpl_content', data));
+          $('#page_goods').paginator('option', {
+            totalCounts: data.total_count
+          });
+        }
+      });
+    }
+  })
+</script>

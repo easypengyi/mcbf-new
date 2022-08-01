@@ -1,0 +1,157 @@
+{block name="main"}
+        <!-- page -->
+        <ul id="pay_gift_tab" class="nav nav-tabs v-nav-tabs fs-12">
+            <li role="presentation" class="active"><a href="javascript:void(0)" data-toggle="tab" class="flex-auto-center" aria-expanded="true" data-table="1">基础配置</a></li>
+            <li role="presentation"><a href="javascript:void(0)" data-toggle="tab" class="flex-auto-center" aria-expanded="false" data-table="2">等级中心介绍</a></li>
+            <li role="presentation"><a href="javascript:void(0)" data-toggle="tab" class="flex-auto-center" aria-expanded="false" data-table="3">购买协议</a></li>
+        </ul>
+        <form class="form-horizontal pt-15">
+            <div class="form-group table1">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>是否开启</label>
+                <div class="col-md-5">
+                    <div class="switch-inline">
+                        <input type="checkbox" name="is_paygrade" id="is_paygrade" {if $is_use==1}checked{/if}>
+                        <label for="is_paygrade" class=""></label>
+                    </div>
+                    <div class="mb-0 help-block">开启后前端会员可进入等级中心购买对应的等级</div>
+                </div>
+            </div>
+            <div class="form-group table1">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>支持等级</label>
+                <div class="col-md-5 addgoods-sortable">
+                    <div class="divTable goodsTable">
+                        <div class="divThead">
+                        	<div class="divTh" style="width: 10%;"><input type="checkbox" value="option1" class="checkAll"></div>
+                            <div class="divTh" style="width: 60%;">等级类型</div>
+                            <div class="divTh" style="width: 30%;">操作</div>
+                        </div>
+                        <div class="divTbody ui-sortable" id="grade-list">
+                        	{volist name="$grade_list" id="gr"}
+	                        <div class="divTr">
+	                        	<div class="divTd" style="width: 10%;"><input type="checkbox" value="{$gr['pay_grade_id']}" name="sub" {if($gr['is_use']==1)}checked{/if}></div>
+		                        <div class="divTd" style="width: 60%;">{$gr['grade_name']}</div>
+		                        <div class="divTd fs-0" style="width: 30%;">
+		                        <a href="javascript:void(0);" class="btn-operation moveItem ui-sortable-handle">拖动排序</a>
+		                        </div>
+	                        </div>
+	                        {/volist}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group table2" style="display: none;">
+                <label class="col-md-2 control-label">介绍名称</label>
+                <div class="col-md-5">
+                    <input type="text" id="introduce_name" class="form-control" name="introduce_name" value="{if($config_info['config_id'])}{$config_info['introduce_name']}{else}等级中心介绍{/if}">
+                </div>
+            </div>
+            <div class="form-group table2" style="display: none;">
+                <label class="col-md-2 control-label">介绍内容</label>
+                <div class="col-md-9" >
+                    <div class="UE-box">
+                        <div id="UE-detail" data-content='{$config_info["introduce_content"]}'></div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group table3" style="display: none;">
+                <label class="col-md-2 control-label">协议名称</label>
+                <div class="col-md-5">
+                    <input type="text" id="agreement_name" class="form-control" name="agreement_name" value="{if($config_info['config_id'])}{$config_info['agreement_name']}{else}微商来购买等级协议{/if}">
+                </div>
+            </div>
+            <div class="form-group table3" style="display: none;">
+                <label class="col-md-2 control-label">协议内容</label>
+                <div class="col-md-9" >
+                    <div class="UE-box">
+                        <div id="UE-detail2" data-content='{$config_info["agreement_content"]}'></div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group"></div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-8">
+                    <button class="btn btn-primary save" id="save" type="button">保存</button>
+                    <a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+                </div>
+            </div>
+            <input type="hidden" id="config_id" name="config_id" value="{if($config_info['config_id'])}{$config_info['config_id']}{else}0{/if}" autocomplete="off"/>
+        </form>
+
+        <!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util','jquery-ui'],function(util){
+        $("#save").on("click",function () {
+        	var config_id = $("#config_id").val();
+        	var is_paygrade = $("input[name='is_paygrade']").is(':checked')?1:0;
+        	var introduce_name = $("#introduce_name").val();
+        	var introduce_content = $("#UE-detail").data("content");
+        	var agreement_name = $("#agreement_name").val();
+        	var agreement_content = $("#UE-detail2").data("content");
+        	var pay_grade_list = [];
+        	var sort = 0;
+            $("#grade-list input[type ='checkbox']").each(function(){
+            	var pay_grade_id = $(this).val();
+            	var is_use = $(this).prop("checked")?1:0;
+           		var list = {'pay_grade_id':pay_grade_id,'is_use':is_use};
+           		pay_grade_list.unshift(list);
+            })
+            $.ajax({
+                type:'POST',
+                dataType:'json',
+                url:'{$saveSettingUrl}',
+                data:{
+                	'config_id': config_id,
+                	'is_paygrade': is_paygrade,
+                	'introduce_name': introduce_name,
+                	'introduce_content': introduce_content,
+                	'agreement_name': agreement_name,
+                	'agreement_content': agreement_content,
+                	'pay_grade_list': pay_grade_list
+                },
+                success:function (data) {
+                    if (data['code'] > 0) {
+                        util.message(data["message"], 'success', "{:__URL('ADDONS_MAINpaygradeSetting')}");
+                    } else {
+                        util.message(data["message"], 'danger');
+                    }
+                }
+            });
+        })
+        //切换
+        $("#pay_gift_tab").on("click", ".flex-auto-center", function () {
+        	var tab = $(this).data('table');
+        	$(".table"+tab).show();
+        	if(tab == 1){
+        		$(".table2").hide();
+        		$(".table3").hide();
+        	}else if(tab == 2){
+        		$(".table1").hide();
+        		$(".table3").hide();
+        	}else if(tab == 3){
+        		$(".table1").hide();
+        		$(".table2").hide();
+        	}
+        })
+        //全选
+        $('body').on('click','.checkAll',function () {
+            $("#grade-list input[type = 'checkbox']").prop("checked", this.checked);
+        })
+        //拖动排序
+        $("#grade-list").sortable({
+            opacity: 0.8,
+            placeholder: "highlight",
+            handle:'.moveItem',
+            revert: 100,
+            start: function (event, ui) {
+                var height = ui.item.height();
+                $(".highlight").css({"height": height + "px"});
+                $(".highlight").html('<div class="text-center" style="line-height:'+height+'px;"><i class="icon icon-add1"></i> 拖动到此处</div>');
+            },
+            update: function (event, ui) {}
+        })
+    })
+</script>
+{/block}

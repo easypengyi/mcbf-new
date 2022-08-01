@@ -1,0 +1,137 @@
+{block name="main"}
+<!-- page -->
+<form class="form-validate">
+    <div class="form-horizontal pt-15 " id="baseSetting">
+
+    </div>
+</form>
+
+<!-- page end -->
+{/block}
+{block name="script"}
+
+<script>
+    require(['util', 'insertContent'], function (util) {
+        LoadingInfo(0);
+
+        function LoadingInfo(order) {
+            var id = 52;
+            $.ajax({
+                type:"post",
+                url:"{$baseSettingUrl}",
+                data:{
+                    'id':id,
+                },
+                async:true,
+                success:function (data) {
+                    var html = '<div class="">';
+                    if(data[0]['is_enable']==1){
+                        html += '<div class="form-group"><label class="col-md-2 control-label">站内通知</label><div class="col-md-8"><div class="switch-inline"><input type="checkbox" id="station_is_enable" name="station_is_enable" checked ><label for="station_is_enable" class=""></label></div>';
+                    }else{
+                        html += '<div class="form-group"><label class="col-md-2 control-label">站内通知</label><div class="col-md-8"><div class="switch-inline"><input type="checkbox" name="station_is_enable" id="station_is_enable" ><label for="station_is_enable" class=""></label></div>';
+                    }
+                    html += '<input type="hidden" id="station_template_id" name="station_template_id" value="'+ data[0]['template_id'] + '">';
+                    html += '<p class="help-block">购买电子卡密将通过站内通知推送，目前仅支持小程序与移动端</p></div></div>';
+                    html += '<div class="form-group">'+
+                        '<label class="col-md-2 control-label"></label>'+
+                        '<div class="col-md-4">'+
+                        '<div class="flex">'+
+                        '<textarea  class="form-control bbrr0" rows="10" id="station_template_content" name="station_template_content">'+data[0]['template_content']+'</textarea>'+
+                        '<div class="variate-choice station-variate-choice"><p>可选变量</p><div class="variate-choice-item">';
+                    for (var i = 0; i < data[0]['sign'].length; i++) {
+                        html += '<a class="text-primary block variate-choice-code station-variate-choice-code" href="javascript:void(0);" data-code="'+data[0]['sign'][i]['replace_name']+'">['+data[0]['sign'][i]['item_name']+']</a>';
+                    }
+                    html += '</div></div></div></div></div>';
+
+                    html += '<div class="form-group"><label class="col-md-2 control-label">短信</label><div class="col-md-8"><p class="form-control-static">短信通知请前往“系统 > 短信通知”处开启，点击”<a href="{:__URL(\'PLATFORM_MAIN/config/sysconfig\')}" class="text-primary" >前往开启</a></p></div>';
+                    html += '</div>';
+
+                    if(data[1]['is_enable']==1){
+                        html += '<div class="form-group"><label class="col-md-2 control-label">公众号客服消息</label><div class="col-md-8"><div class="switch-inline"><input type="checkbox" id="wx_is_enable" name="wx_is_enable" checked ><label for="wx_is_enable" class=""></label></div>';
+                    }else{
+                        html += '<div class="form-group"><label class="col-md-2 control-label">公众号客服消息</label><div class="col-md-8"><div class="switch-inline"><input type="checkbox" id="wx_is_enable" name="wx_is_enable" ><label for="wx_is_enable" class=""></label></div>';
+                    }
+                    html += '<input type="hidden" id="wx_template_id" name="wx_template_id" value="'+ data[1]['template_id'] + '">';
+                    html += '<p class="help-block">购买电子卡密将通过该方式推送</p></div></div>';
+                    html += '<div class="form-group">'+
+                        '<label class="col-md-2 control-label"></label>'+
+                        '<div class="col-md-4">'+
+                        '<div class="flex">'+
+                        '<textarea  class="form-control bbrr0" rows="10" id="wx_template_content" name="wx_template_content">'+data[1]['template_content']+'</textarea>'+
+                        '<div class="variate-choice wx-variate-choice"><p>可选变量</p><div class="variate-choice-item">';
+                    for (var i = 0; i < data[1]['sign'].length; i++) {
+                        html += '<a class="text-primary block variate-choice-code wx-variate-choice-code" href="javascript:void(0);" data-code="'+data[1]['sign'][i]['replace_name']+'">['+data[1]['sign'][i]['item_name']+']</a>';
+                    }
+                    html += '</div></div></div></div></div>';
+
+                    html +='<div class="form-group"><label class="col-md-2 control-label"></label><div class="col-md-8"><button class="btn btn-primary" type="submit">保存</button></div></div>';
+
+                    $("#baseSetting").html(html);
+                }
+            });
+        }
+        $('body').on('click','.station-variate-choice-code',function(){
+            var code = $(this).data('code');
+            var contents = $(this).parents('.station-variate-choice').siblings('#station_template_content');
+            contents.insertContent(code);
+        });
+        $('body').on('click','.wx-variate-choice-code',function(){
+            var code = $(this).data('code');
+            var contents = $(this).parents('.wx-variate-choice').siblings('#wx_template_content');
+            contents.insertContent(code);
+        });
+
+        util.validate($('.form-validate'), function (form) {
+            var station = [];
+            var station_template_id = $('#station_template_id').val();
+            var station_is_enable = $("#station_is_enable").is(':checked')?1:0;
+            var station_template_content = $('#station_template_content').val();
+            if(station_is_enable == 1) {
+                if(station_template_content == '') {
+                    util.message('请填写模版内容','danger');
+                    $('#station_template_content').focus();
+                    return false;
+                }
+            }
+            station.push(station_template_id);
+            station.push(station_is_enable);
+            station.push(station_template_content);
+
+            var wx = [];
+            var wx_template_id = $('#wx_template_id').val();
+            var wx_is_enable = $("#wx_is_enable").is(':checked')?1:0;
+            var wx_template_content = $('#wx_template_content').val();
+            if(wx_is_enable == 1) {
+                if(wx_template_content == '') {
+                    util.message('请填写模版内容','danger');
+                    $('#wx_template_content').focus();
+                    return false;
+                }
+            }
+            wx.push(wx_template_id);
+            wx.push(wx_is_enable);
+            wx.push(wx_template_content);
+
+
+            var data = {};
+            var list = [];
+            list.push(station);
+            list.push(wx);
+            data.list = list;
+            $.ajax({
+                type: "post",
+                url:'{$saveSettingUrl}',
+                data: data,
+                success:function (data) {
+                    if (data['code'] > 0) {
+                        util.message(data["message"], 'success',LoadingInfo(0));
+                    } else {
+                        util.message(data["message"], 'danger',LoadingInfo(0));
+                    }
+                }
+            });
+        });
+
+    });
+</script>
+{/block}

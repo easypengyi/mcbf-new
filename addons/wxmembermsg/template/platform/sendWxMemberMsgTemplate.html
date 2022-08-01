@@ -1,0 +1,271 @@
+{block name="main"}
+<!-- page -->
+<form class="form-horizontal form-validate widthFixedForm">
+
+    <div class="form-group">
+        <label class="col-md-2 control-label">模版名称</label>
+        <div class="col-md-5">
+            <input type="text" id="template_name" data-id="{$template_info.id}" class="form-control" name="voucher_package_name"  value="{$template_info.wx_template_name}" disabled>
+        </div>
+    </div>
+    <!--    推送方式-->
+    <div class="form-group sending">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>推送方式</label>
+        <div class="col-md-5">
+            <label class="radio-inline"><input class="type" type="radio" name="type" value="1" {eq name="msg_type_list['send_type']" value="1"}checked{/eq}>按会员等级推送</label>
+            <label class="radio-inline"><input class="type" type="radio" name="type" value="2" {eq name="msg_type_list['send_type']" value="2"}checked{/eq}>按会员标签推送</label>
+            {eq name="distribution" value="1"}
+            <label class="radio-inline"><input class="type" type="radio" name="type" value="3" {eq name="msg_type_list['send_type']" value="3"}checked{/eq}>按分销商等级推送</label>
+            {/eq}
+            <label class="radio-inline"><input class="type" type="radio" name="type" value="4" {eq name="msg_type_list['send_type']" value="4"}checked{/eq}>按会员ID推送</label>
+            <label class="radio-inline"><input class="type" type="radio" name="type" value="5" {if condition="($msg_type_list.send_type == 5) OR ($msg_type_list.send_type == '')"}checked{/if}>推送所有会员</label>
+        </div>
+    </div>
+    <!-- 会员等级 -->
+    <div class="sub_type form-group hide sending" id="user_level">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>会员等级</label>
+        <div class="col-md-5">
+            <div>
+                {volist name="list.user_level" id="vo"}
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="user_level"  class="user_level" value="{$vo.level_id}"
+                        {if $msg_type_list.send_type eq 1 }
+                           {foreach $msg_type_list.send_sub_type as $t1}
+                           {if $t1 eq $vo.level_id} checked="checked" {/if}
+                            {/foreach}
+                        {/if}>
+                    {$vo.level_name}
+                </label>
+                {/volist}
+            </div>
+        </div>
+    </div>
+    <!-- 会员标签 -->
+    <div class="sub_type form-group hide sending" id="user_group">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>会员标签</label>
+        <div class="col-md-5">
+            <div>
+                {volist name="list.user_group" id="vo"}
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="user_group"  class="user_group" value="{$vo.group_id}"
+                        {if $msg_type_list.send_type eq 2 }
+                           {foreach $msg_type_list.send_sub_type as $t2}
+                           {if $t2 eq $vo.group_id} checked="checked" {/if}
+                            {/foreach}
+                        {/if}>
+                    {$vo.group_name}
+                </label>
+                {/volist}
+            </div>
+        </div>
+    </div>
+
+    <!-- 分销商等级 -->
+    {if $distribution}
+    <div class="sub_type form-group hide sending" id="dis_level">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>分销商等级</label>
+        <div class="col-md-5">
+            <div>
+                {volist name="list.dis_level" id="vo"}
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="dis_level"  class="dis_level" value="{$vo.id}"
+                        {if $msg_type_list.send_type eq 3 }
+                            {foreach $msg_type_list.send_sub_type as $t3}
+                            {if $t3 eq $vo.id} checked="checked" {/if}
+                            {/foreach}
+                        {/if}>
+                    {$vo.level_name}
+                </label>
+                {/volist}
+            </div>
+        </div>
+    </div>
+    {/if}
+    <!-- 会员ID -->
+    <div class="sub_type form-group hide sending" id="user_ids">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>会员ID</label>
+        <div class="col-md-8">
+            <textarea onkeyup="javascript:this.value=this.value.replace(/，/ig,',');" class="form-control user_ids" name="user_ids" rows="8"
+                      placeholder="多个会员ID用英文逗号隔开。如： 01,02">{if $msg_type_list.send_type eq 4 }{$msg_type_list.send_sub_type}{/if}</textarea>
+        </div>
+    </div>
+
+    <div class="form-group"></div>
+    <div class="form-group">
+        <label class="col-md-2 control-label"></label>
+        <div class="col-md-8">
+            <button class="btn btn-primary send" type="submit">群发推送</button>
+            <a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+        </div>
+    </div>
+</form>
+<input type="hidden" id="status" value="{$template_info.status}">
+
+
+<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util', 'tpl'], function (util, tpl) {
+        init();
+
+        //选择推送方式交互
+        $('input[name=type]').click(function () {
+            var type = $("input[name='type']:checked").val();
+            switch(type) {
+                case '1':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_level").removeClass('hide');
+                    break;
+                case '2':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_group").removeClass('hide');
+                    break;
+                case '3':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#dis_level").removeClass('hide');
+                    break;
+                case '4':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_ids").removeClass('hide');
+                    break;
+                case '5':
+                    $("div[class^='sub_type']").addClass('hide');
+                    break;
+                default:
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_level").removeClass('hide');
+            }
+        });
+        //提交数据
+        util.validate($('.form-validate'), function (form) {
+            var id   = $("#template_name").data('id');
+            var type = $("input[name='type']:checked").val();
+            var sub_type = '';
+            switch(type) {
+                case '1':
+                    if (!$('input[name="user_level"]').is(":checked")){
+                        util.message("至少选择一项会员等级！",'danger');
+                        return;
+                    }
+                    $('input[name="user_level"]:checked').each(function(){
+                        var id = $(this).val();
+                        sub_type += id + ',';
+                        // sub_type.push(parseInt($(this).val()));
+                    });
+                    break;
+                case '2':
+                    if (!$('input[name="user_group"]').is(":checked")){
+                        util.message("至少选择一项会员标签！",'danger');
+                        return;
+                    }
+                    $('input[name="user_group"]:checked').each(function(){
+                        var id = $(this).val();
+                        sub_type += id + ',';
+                        // sub_type.push(parseInt($(this).val()));
+                    });
+                    break;
+                case '3':
+                    if (!$('input[name="dis_level"]').is(":checked")){
+                        util.message("至少选择一项分销商等级！",'danger');
+                        return;
+                    }
+                    $('input[name="dis_level"]:checked').each(function(){
+                        var id = $(this).val();
+                        sub_type += id + ',';
+                        // sub_type.push(parseInt($(this).val()));
+                    });
+                    break;
+                case '4':
+                    var str = $(".user_ids").val();
+                    var reg         = /(,|，)+$/gi;
+                    var sub_type    = str.replace(reg,"");
+                    if (sub_type.length == 0) {
+                        util.message("会员ID不能为空！",'danger');
+                        return;
+                    }
+                    sub_type_arr =  sub_type.split(",");
+                    if (isRepeat(sub_type_arr)) {
+                        util.message("会员ID有重复！",'danger');
+                        return;
+                    }
+                    break;
+                case '5':
+                    sub_type = 'all';
+                    break;
+            }
+            // 去除最右侧逗号
+            sub_type = (sub_type.substring(sub_type.length-1)==',')?sub_type.substring(0,sub_type.length-1):sub_type;
+            $(".send").html('群发推送中...');
+            $(".send").attr('disabled','disabled');
+            $(".sending").find('*').attr('disabled','disabled');
+            $.ajax({
+                type: "POST",
+                url: "{$sendWxMemberMsgTemplateUrl}",
+                data: {
+                    'id': id,
+                    'type': type,
+                    'sub_type': sub_type
+                },
+                success: function (data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"], 'success', "{:__URL('ADDONS_MAINwxMemberMsgList')}");
+                    } else {
+                        util.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+
+        //是否重复
+        function isRepeat(arr){
+            var hash = {};
+            for(var i in arr) {
+                if(hash[arr[i]])
+                    return true;
+                hash[arr[i]] = true;
+            }
+            return false;
+        }
+
+        //初始化选择
+        function init() {
+            var status = $("#status").val();
+            if (status == 2) {
+                $(".send").html('群发推送中...');
+                $(".send").attr('disabled','disabled');
+                $(".sending").find('*').attr('disabled','disabled');
+            } else {
+                $(".send").html('群发推送');
+                $(".send").removeAttr('disabled','disabled');
+                $(".sending").find('*').removeAttr('disabled','disabled');
+            }
+            var type = $("input[name='type']:checked").val();
+            switch(type) {
+                case '1':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_level").removeClass('hide');
+                    break;
+                case '2':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_group").removeClass('hide');
+                    break;
+                case '3':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#dis_level").removeClass('hide');
+                    break;
+                case '4':
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_ids").removeClass('hide');
+                    break;
+                case '5':
+                    $("div[class^='sub_type']").addClass('hide');
+                    break;
+                default:
+                    $("div[class^='sub_type']").addClass('hide');
+                    $("#user_level").removeClass('hide');
+            }
+        }
+    })
+</script>
+{/block}

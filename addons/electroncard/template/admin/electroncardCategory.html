@@ -1,0 +1,149 @@
+{block name="main"}
+<!-- page -->
+<div class="mb-20 flex flex-pack-justify">
+    <div class="">
+        <a href="javascript:void(0)" class="btn btn-primary J-add"><i class="icon icon-add1"></i> 添加分类</a>
+    </div>
+</div>
+<table class="table v-table table-auto-center" >
+    <thead>
+        <tr class="order-list-item">
+            <th>分类名称</th>
+            <th>关联卡密库数</th>
+            <th class="pr-14 operationLeft">操作</th>
+        </tr>
+    </thead>
+    <tbody style="display: none;" id="add-area">
+        <tr class="add_tr">
+            <td>
+                <div><input type="text" class="form-control J-addname"></div>
+            </td>
+            <td>
+                <!--<a href="javascript:void(0);" class="label label-success J-show" data-show="1" data-id="">使用中</a>-->
+            </td>
+            <td class="fs-0 operationLeft">
+                <a href="javascript:void(0);" class="btn-operation text-red1 J-adddel">删除</a>
+            </td>
+        </tr>
+    </tbody>
+    <tbody id="violation_list">
+
+    </tbody>
+
+</table>
+
+<!-- page end -->
+{/block}
+{block name="script"}
+<script id="shop_curr_list" type="text/html">
+    <%each data as item index%>
+    <tr>
+        <td>
+            <div><input type="text" data-id="<%item.id%>" class="form-control J-name" value="<%item.category_name%>"></div>
+        </td>
+        <td>
+            <div class=""><%item.num%></div>
+        </td>
+        <td class="fs-0 operationLeft">
+            <a href="javascript:void(0);" data-id="<%item.id%>" class="btn-operation text-red1 J-del">删除</a>
+        </td>
+    </tr>
+    <%/each%>
+</script>
+<script>
+    require(['utilAdmin', 'tpl'], function (utilAdmin, tpl) {
+        LoadingInfo(0);
+        $('.J-search').on('click', function () {
+            LoadingInfo(0);
+        });
+        function LoadingInfo(order) {
+            $.ajax({
+                type: "post",
+                url: "{$electroncardCategoryListUrl}",
+                data: {},
+                success: function (data) {
+                    var html = '<tr class="J-noData"><td class="h-200" colspan="4">暂无符合条件的数据记录</td></tr>';
+                    if (data.data) {
+                        if (tpl('shop_curr_list', data)) {
+                            $("#violation_list").html(tpl('shop_curr_list', data));
+                        } else {
+                            $("#violation_list").html(html);
+                        }
+                    } else {
+                        $("#violation_list").html(html);
+                    }
+
+                }
+            });
+        }
+        //删除分类
+        $('#violation_list').on('click', '.J-del', function () {
+            var category_id = $(this).data('id');
+            utilAdmin.alert('确认删除此分类吗 ？', function () {
+                $.ajax({
+                    type: "post",
+                    url: "{$delElectroncardCategoryUrl}",
+                    async: true,
+                    data: {
+                        "category_id": category_id
+                    },
+                    success: function (data) {
+                        if (data["code"] > 0) {
+                            utilAdmin.message(data["message"], 'success', LoadingInfo(0));
+                        } else {
+                            utilAdmin.message(data["message"], 'danger');
+                        }
+                    }
+                });
+            });
+        });
+        $('.J-add').on('click', function () {
+            if($('#violation_list .add_tr').length>0){
+                return;
+            }
+            $('#violation_list').find('.J-noData').remove();
+            $('#violation_list').append($('#add-area').html());
+        });
+        $('#violation_list').on('click','.J-adddel',function () {
+            $(this).parents('tr').remove();
+        });
+
+        //添加类型
+        $('#violation_list').on('change', '.J-addname', function () {
+            var category_name = $(this).val();
+            $.ajax({
+                type: "post",
+                url: "{$addOrUpdateCategoryUrl}",
+                async: true,
+                data: {category_name: category_name, category_id: 0},
+                success: function (data) {
+                    if (data["code"] > 0) {
+                        utilAdmin.message(data["message"], 'success', LoadingInfo(1));
+                    } else {
+                        utilAdmin.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+        //修改违规名称
+        $('#violation_list').on('change', '.J-name', function () {
+            var category_id = $(this).data('id');
+            var category_name = $(this).val();
+            $.ajax({
+                type: "post",
+                url: "{$addOrUpdateCategoryUrl}",
+                async: true,
+                data: {category_id: category_id, category_name: category_name},
+                success: function (data) {
+                    if (data["code"] > 0) {
+                        utilAdmin.message(data["message"], 'success', LoadingInfo(0));
+                    } else {
+                        utilAdmin.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+
+    });
+</script>
+{/block}

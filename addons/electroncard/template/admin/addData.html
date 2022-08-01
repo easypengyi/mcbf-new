@@ -1,0 +1,274 @@
+{block name="main"}
+<!-- page -->
+<div class="tab-content">
+	<div role="tabpanel" class="tab-pane fade in active" id="base">
+		<form class="form-horizontal form-validate  pt-15 widthFixedForm">
+			<div class="form-group">
+				<div class="col-md-10">
+					<div class="flex spec-tips">
+						您正在向<span class="text-red">{$info.electroncard_base_name}</span>添加卡密数据
+					</div>
+					<div class="flex spec-tips">
+						<div style="width: 100px">自动填充规则：</div>
+						<div>
+							<p>1、只有Key值会自动填充，其他字段不会自动填充。</p>
+							<p>2、自动填充仅适用于这些格式：00000001(纯数字)、C00000001(字母开头数字结尾)、C000SDD00001(字母数字混合，以数字结尾)，其他格式请手动填写或者Excel导入。</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<div class="col-md-10">
+					<table class="table v-table table-auto-center">
+						<thead>
+						<tr>
+							{foreach $info.key_name as $k => $v}
+							<th >{$v}</th>
+							{/foreach}
+							<th>操作</th>
+						</tr>
+						</thead>
+						<tbody id="custom-list">
+							<tr id="curr0">
+								{foreach $info.key_name as $k => $v}
+								<td class="key{$k}">
+                                    {if $k == 0}
+									<input type="text" class="form-control card-val" name="key{$k}" id="key0"  required>
+                                    {else}
+                                    <input type="text" class="form-control card-val" name="key{$k}"  required>
+                                    {/if}
+								</td>
+								{/foreach}
+								<td>
+
+								</td>
+							</tr>
+						</tbody>
+						<tfoot>
+
+						<tr>
+							<td colspan="{$num}">
+								<div class="flex">
+									<div class="input-group w-200">
+										<div class="input-group-addon">增加</div>
+										<input type="number" class="form-control" name="num" min="1" max="100" id="num" value="1">
+										<div class="input-group-addon">条数据</div>
+									</div>
+									<a class="btn btn-primary " href="javascript:;" id="J-add" style="margin-left: 10px;">确认增加</a>
+									<a class="btn btn-primary inline-block" href="javascript:;" id="auto-fill" style="margin-left: 10px;">Key自动填充</a>
+									<a class="btn btn-primary inline-block import" href="javascript:;" id="" style="margin-left: 10px;">批量导入数据</a>
+									<a class="btn btn-primary inline-block" href="javascript:;" id="down-tpl" style="margin-left: 10px;">下载模版</a>
+								</div>
+							</td>
+						</tr>
+						</tfoot>
+					</table>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-md-8">
+					<button class="btn btn-primary add" type="submit">保存</button>
+					<a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+	require(['utilAdmin', 'jqueryForm'],function(utilAdmin) {
+		loading();
+		function loading(){
+
+		}
+
+		utilAdmin.validate($('.form-validate'), function (form) {
+			var id = "{$id}";
+			var arr = [];
+			$('#custom-list tr').each(function(i,e){
+				var tds = [];
+				$(e).find('.card-val').each(function(j,td){
+					tds.push($(this).val())
+				});
+				arr.push(tds);
+			});
+
+			var data = {};
+			data.id = id;
+			data.list = arr;
+			$(".add").attr('disabled','disabled');
+			$.ajax({
+				type: "post",
+				url: "{$addElectroncardDataUrl}",
+				data: data,
+				async: true,
+				success: function (data) {
+					if (data['code'] > 0) {
+						utilAdmin.message(data["message"], 'success', "{:__URL('admin/Menu/addonmenu?addons=electroncardBaseDetail&id=')}{$id}");
+					} else {
+						$(".add").removeAttr('disabled',true);
+						utilAdmin.message(data["message"], 'danger');
+					}
+				}
+			});
+		});
+
+		//确认增加
+		$('#J-add').click(function () {
+			var add_num = $('#num').val();
+			if(add_num > 100) {
+				utilAdmin.message('每次最多增加100条数据','danger');
+				return false;
+			}
+
+			//每次增加获取当前有多少条
+			var num = $('#custom-list tr').length;
+			if(add_num > 0) {
+				for (var i=0;i<add_num;i++) {
+					add(num++);
+				}
+			}
+		});
+		//自动填充
+		$('#auto-fill').click(function () {
+			var key = $('#key0').val();
+			if(key == '') {
+				utilAdmin.message('请先录入一个值','danger');
+				return false;
+			}
+			var last_num = key.substr(key.length-1,1);
+			if(!checkNumber(last_num)) {
+				utilAdmin.message('录入的值必须以数字结尾','danger');
+				return false;
+			}
+
+            var num = $('#custom-list tr').length;
+
+            $.ajax({
+                type: "post",
+                url: "{$autoFillUrl}",
+                data: {key:key,num:num},
+                async: true,
+                success: function (data) {
+                    if (data['code'] > 0) {
+                        for (var i=0;i<num;i++) {
+                            $('#key'+i).val(data["data"][i])
+                        }
+                    } else {
+                        utilAdmin.message(data["message"], 'danger');
+                    }
+                }
+            });
+
+		});
+		//删除
+		$('body').on('click','.del',function(){
+			$(this).parent().parent().remove();
+		});
+		//下载模板
+		$('#down-tpl').on('click',function(){
+			var id = "{$id}";
+			window.location.href = ("{$downTplUrl}" +
+					"?id=" + id
+			);
+		});
+		//批量导入数据
+		$(".import").click(function () {
+			var id = "{$id}";
+			var html = '';
+			html = '<form action="{$uploadFileUrl}" class="form-horizontal padding-15" id="batch_form" onsubmit="return check_excel()" enctype="multipart/form-data" method="post" >';
+
+			html += '<div class="form-group ">';
+			html += '<div class="pull-left col-md-3"><span class="text-bright">*</span>Excel文件：</div>';
+			html += '<div class="col-md-9"><div class="input-group"><input class="excelPackage form-control" disabled="" type="text"><span class="input-group-btn">' +
+					'<button class="btn btn-info btn-file J-btnwx">上传文件<input id="excel_file" class="fileuploads" type="file" name="excel" multiple></button>' +
+					'</span></div>';
+			html += '<p class="help-block mb-0">支持xlsx、xls、csv格式文件。</p></div></div>';
+			html += '</div>';
+			html += '</form>';
+
+			//提交文件
+			utilAdmin.confirm('批量导入数据',html,function(){
+				if (!check_excel()) {
+					return false;
+				}
+				$("#batch_form").ajaxSubmit({
+					type: "post",
+					dataType: "text",
+					data: {"id":id},
+					url: "{$uploadFileUrl}",
+					success: function (file) {
+						var data = JSON.parse(file);
+						if (data.code == '1') {
+							utilAdmin.message(data.message, 'success',"{:__URL('admin/Menu/addonmenu?addons=electroncardBaseDetail&id=')}{$id}");
+						} else {
+							utilAdmin.message(data.message, 'danger');
+						}
+					}
+				});
+
+			})
+		});
+
+		$("body").on('change', '#excel_file',function () {
+			var path = $(this).val(),
+					extStart = path.lastIndexOf('.'),
+					ext = path.substring(extStart, path.length).toUpperCase();
+			if (path === '') {
+				return false;
+			}
+			//判断格式
+			if (ext !== '.XLSX' && ext !== '.XLS' && ext !== '.CSV') {
+				$(this).val('');
+				utilAdmin.message('请上传正确格式的文件', 'danger');
+				return false;
+			}
+			$('.excelPackage').val(path);
+		});
+
+		function check_excel() {
+			var xls = $("#excel_file").val();
+			if (xls.length == 0)
+			{
+				utilAdmin.message('请上传Excel文件', 'danger');
+				return false;
+			}
+			return true;
+		}
+	});
+
+	function add(key_num) {
+		var num = "{$num}"-1;
+		var html = '';
+		html += '<tr id="curr'+key_num+'">';
+
+		for (var i=0;i<num;i++) {
+			html += '<td class="key'+i+'">';
+			if(i == 0) {
+                html += '<input type="text" class="form-control card-val" name="key'+i+'" id="key'+key_num+'" required>';
+            }else {
+                html += '<input type="text" class="form-control card-val" name="key'+i+'" required>';
+            }
+
+			html += '</td>';
+		}
+
+		html += '<td>';
+		html += '<a href="javascript:;" class="btn-operation text-red1 del">删除</a>';
+		html += '</td>';
+		html += '</tr>';
+		$('#custom-list').append(html);
+	}
+	//验证字符串是否是数字
+	function checkNumber(number) {
+		var reg = /^[0-9]+.?[0-9]*$/;
+		if (reg.test(number)) {
+			return true;
+		}
+		return false;
+	}
+</script>
+{/block}

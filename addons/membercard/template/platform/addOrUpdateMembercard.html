@@ -1,0 +1,998 @@
+{block name="main"}
+<!-- page -->
+<ul class="nav nav-tabs v-nav-tabs add_tab1" role="tablist">
+    <li role="presentation" class="active"><a href="#membercard_setting" aria-controls="membercard_setting" role="tab" data-toggle="tab" class="flex-auto-center">基础设置</a></li>
+    <li role="presentation"><a href="#member_benefits" aria-controls="member_benefits" role="tab" data-toggle="tab" class="flex-auto-center">会员权益</a></li>
+</ul>
+<form class="form-horizontal form-validate pt-15 widthFixedForm">
+    <div id="myTabContent" class="tab-content">
+        <div role="tabpanel" class="tab-pane fade in active tab-1" id="membercard_setting" >
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>会员卡名称</label>
+                <div class="col-md-5">
+                    <input type="text" class="form-control" name="membercard_name" required maxlength="9"
+                           value="{if $data.membercard_name}{$data.membercard_name}{/if}">
+                    <div class="help-block mb-0">字数上限为9个汉字</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>会员卡样式</label>
+                <div class="col-md-9">
+                    <div>
+                        <label class="radio-inline">
+                            <input type="radio" name="membercard_style" value="1" required {if condition="$data.membercard_style eq 1"}checked{/if}>
+                            <img src="https://pic.vslai.com.cn/upload/common/hyk1.png" width="100px" height="60px" >
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="membercard_style" value="2" required {if condition="$data.membercard_style eq 2"}checked{/if}>
+                            <img src="https://pic.vslai.com.cn/upload/common/hyk2.png" width="100px" height="60px" >
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="membercard_style" value="3" required {if condition="$data.membercard_style eq 3"}checked{/if}>
+                            <img src="https://pic.vslai.com.cn/upload/common/hyk3.png" width="100px" height="60px" >
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="membercard_style" value="4" required {if condition="$data.membercard_style eq 4"}checked{/if}>
+                            <img src="https://pic.vslai.com.cn/upload/common/hyk4.png" width="100px" height="60px" >
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="membercard_style" value="5" required {if condition="$data.membercard_style eq 5"}checked{/if}>
+                            <img src="https://pic.vslai.com.cn/upload/common/hyk5.png" width="100px" height="60px" >
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="membercard_style" value="6" required {if condition="$data.membercard_style eq 6"}checked{/if}>
+                            <img src="https://pic.vslai.com.cn/upload/common/hyk6.png" width="100px" height="60px" >
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="membercard_style" value="7" required {if condition="$data.membercard_style eq 7"}checked{/if}>
+                            <img src="https://pic.vslai.com.cn/upload/common/hyk7.png" width="100px" height="60px" >
+                        </label>
+                        <div class="mb-0 help-block">该样式为商城前端展示的样式</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label">会员卡付费</label>
+                <div class="col-md-5">
+                    <div class="switch-inline">
+                        <input type="checkbox" id="membercard_payment" name="membercard_payment" {if
+                               $data.membercard_payment==1}checked{/if}>
+                        <label for="membercard_payment"></label>
+                    </div>
+                    <div class="help-block mb-0">开启后该卡将需要付费购买才可以领取，建议默认会员卡设置为免费领取</div>
+                </div>
+            </div>
+            <div class="form-group membercard_sku hide">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>售价规格</label>
+                <div class="col-md-9 membercard-sortable">
+                    <div class="divTable memrbercardTable">
+                        <div class="divThead">
+                            <div class="divTh">粒度</div>
+                            <div class="divTh">有效期</div>
+                            <div class="divTh">售价</div>
+                            <div class="divTh">划线价</div>
+                            <div class="divTh"></div>
+                            <div class="divTh">首次购买价</div>
+                            <div class="divTh">操作</div>
+                        </div>
+
+                        {volist name="$data['spec_list']" id="val" key="sort"}
+                        <div class="divTbody ui-sortable info-prize" id="curr-list{$sort}" data-sort="{$sort}" data-specid="{$val['spec_id']}">
+                            <div class="divTr">
+                                <div class="divTd divTd1">
+                                    <select name="time_type{$sort}" class="form-control valid" id="time_type{$sort}" aria-invalid="false" onchange="typeId(this.value,{$sort})">
+                                        <option value="1" {if $val['time_type']==1}selected{/if}>按年</option>
+                                        <option value="2" {if $val['time_type']==2}selected{/if}>按季</option>
+                                        <option value="3" {if $val['time_type']==3}selected{/if}>按月</option>
+                                        <option value="4" {if $val['time_type']==4}selected{/if}>按天</option>
+                                    </select>
+                                </div>
+                                <div class="divTd">
+                                    <div class="input-group">
+                                        <input type="number" class="form-control limit_time" name="limit_time{$sort}" id="limit_time{$sort}" value="{$val['limit_time']}" min="1">
+                                        {if $val['time_type'] == 1}
+                                        <div class="input-group-addon limit_time" id="limit_{$sort}">年</div>
+                                        {elseif $val['time_type'] == 2}
+                                        <div class="input-group-addon limit_time" id="limit_{$sort}">季</div>
+                                        {elseif $val['time_type'] == 3}
+                                        <div class="input-group-addon limit_time" id="limit_{$sort}">月</div>
+                                        {elseif $val['time_type'] == 4}
+                                        <div class="input-group-addon limit_time" id="limit_{$sort}">天</div>
+                                        {/if}
+                                    </div>
+                                </div>
+                                <div class="divTd">
+                                    <div class="input-group">
+                                        <input type="number" class="form-control number-form-control price" name="price{$sort}" id="price{$sort}" value="{$val['price']}" min="0">
+                                        <div class="input-group-addon">元</div>
+                                    </div>
+                                </div>
+                                <div class="divTd divTd4">
+                                    <div class="input-group">
+                                        <input type="number" class="form-control number-form-control market_price" name="market_price{$sort}" id="market_price{$sort}" value="{$val['market_price']}" min="0">
+                                        <div class="input-group-addon">元</div>
+                                    </div>
+                                </div>
+                                <div class="divTd ">
+                                    <input type="checkbox" name="is_first_buy{$sort}" class="is_first_buy" value="1" id="is_first_buy{$sort}" {if($val['is_first_buy']==1)}checked{/if}>
+                                </div>
+                                <div class="divTd divTd5">
+                                    <div class="input-group">
+                                        <input type="number" class="form-control number-form-control first_buy_price" name="first_buy_price{$sort}" id="first_buy_price{$sort}" value="{$val['first_buy_price']}" min="0">
+                                        <div class="input-group-addon">元</div>
+                                    </div>
+                                </div>
+                                <div class="divTd">
+                                    <a href="javascript:delRule({$sort});" class="btn-operation text-red1 del-rule">删除</a>
+<!--                                    <a href="javascript:void(0);" class="btn-operation moveItem ui-sortable-handle">拖动排序</a>-->
+                                </div>
+                            </div>
+                        </div>
+                        {/volist}
+
+                        <div class="help-block">
+                            <a href="javascript:void(0);" class="text-primary" id="J-add"> +增加一个</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>是否上架</label>
+                <div class="col-md-5">
+                    <div class="switch-inline">
+                        <input type="checkbox" id="is_online" name="is_online" {if
+                               $data.is_online==1}checked{/if}>
+                        <label for="is_online"></label>
+                    </div>
+                    <div class="help-block mb-0">会员仅能购买上架的会员卡</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label">是否默认</label>
+                <div class="col-md-5">
+                    <div class="switch-inline">
+                        <input type="checkbox" id="is_default" name="is_default" {if
+                               $data.is_default==1}checked{/if}>
+                        <label for="is_default"></label>
+                    </div>
+                    <div class="help-block mb-0">是否默认</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>权重</label>
+                <div class="col-md-5">
+                    <input type="number" class="form-control" min="1" name="weight" required value="{if $data.weight}{$data.weight}{/if}">
+                    <div class="help-block mb-0">等级权重，数字不能重复，数字越大等级越高</div>
+                </div>
+            </div>
+            <div class="form-group"></div>
+        </div>
+        <div role="tabpanel" class="tab-pane fade in tab-2" id="member_benefits" >
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>会员权益</label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline"><input type="checkbox" name="is_member_discount" class="is_member_discount" value="1" {if $data.is_member_discount==1}checked{/if}>会员折扣</label>
+                    <div class="help-block mb-0">可针对该会员卡的会员定义一个会员折扣</div>
+                    <div class="form-group"></div>
+                    <div class="input-group w-200 hide member_discount">
+                        <input type="number" class="form-control" min="0" max="10" name="member_discount" id="member_discount" value="{if $data.member_discount}{$data.member_discount}{/if}">
+                        <div class="input-group-addon">折</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline"><input type="checkbox" name="is_free_shipping" class="is_free_shipping" value="1" {if $data.is_free_shipping==1}checked{/if}>全场包邮</label>
+                    <div class="help-block mb-0">将对全场所有商品包邮</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-9">
+                    <label class="checkbox-inline"><input type="checkbox" name="coupon" class="coupon" value="1" {if $data.is_give_coupon==1}checked{/if}>开通送优惠券</label>
+                    <div class="help-block mb-0">开通或续费PLUS会员时赠送的优惠券，当优惠券数量不足则不会发放该优惠券</div>
+                    <div class="form-group"></div>
+                    <div class="form-group hide coupon_list">
+                        <table class="table v-table table-auto-center">
+                            <thead>
+                            <tr class="order-list-item">
+                                <th class="col-md-2">优惠券名称</th>
+                                <th class="col-md-1">门槛</th>
+                                <th class="col-md-1">面值</th>
+                                <th class="col-md-1">剩余/发放数量</th>
+                                <th>领取时间</th>
+                                <th>生效时间</th>
+                                <th class="col-md-2 pr-14 operationLeft">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody id="coupon_list">
+                            {if $data.coupon_list}
+                            {foreach $data.coupon_list as $v}
+                            <tr data-id="{$v['coupon_type_id']}">
+                                <td>{$v['coupon_name']}</td>
+                                <td>{$v['coupon_genre']}</td>
+                                <td>{$v['money']}</td>
+                                {if $v['count'] == 0}
+                                <td>无限</td>
+                                {else}
+                                <td>{$v['surplus']}/{$v['count']}</td>
+                                {/if}
+                                <td>{$v['start_receive_time']}~{$v['end_receive_time']}</td>
+                                <td>{$v['start_time']}~{$v['end_time']}</td>
+                                <td class="operationLeft fs-0"><a class="btn-operation del text-red1" href="javascript:;" data-id="{$v['coupon_type_id']}">删除</a></td>
+                            </tr>
+                            {/foreach}
+                            {/if}
+                            </tbody>
+                        </table>
+                        <div class="help-block mb-0">
+                            <a href="javascript:void(0);" class="text-primary" id="add_coupon"> +添加优惠券</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-9">
+                    <label class="checkbox-inline"><input type="checkbox" name="circle_coupon" class="circle_coupon" value="1" {if $data.is_circle_coupon==1}checked{/if}>周期送优惠券</label>
+                    <div class="help-block mb-0">购卡后每隔一个周期赠送一次优惠券，当优惠券数量不足则不会发放该优惠券</div>
+                    <div class="form-group"></div>
+                    <div class="form-group hide circle_coupon_list">
+                        <div class="input-group w-200 circle_num">
+                            <div class="input-group-addon">每隔</div>
+                            <input type="number" class="form-control" min="1" name="circle_num" id="circle_num" value="{if $data.circle_num}{$data.circle_num}{/if}">
+                            <div class="input-group-addon">天</div>
+                        </div>
+                        <div class="form-group"></div>
+                        <table class="table v-table table-auto-center">
+                            <thead>
+                            <tr class="order-list-item">
+                                <th class="col-md-2">优惠券名称</th>
+                                <th class="col-md-1">门槛</th>
+                                <th class="col-md-1">面值</th>
+                                <th class="col-md-1">剩余/发放数量</th>
+                                <th>领取时间</th>
+                                <th>生效时间</th>
+                                <th class="col-md-2 pr-14 operationLeft">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody id="circle_coupon_list">
+                                {if $data.circle_coupon_list}
+                                {foreach $data.circle_coupon_list as $v}
+                                <tr data-id="{$v['coupon_type_id']}">
+                                    <td>{$v['coupon_name']}</td>
+                                    <td>{$v['coupon_genre']}</td>
+                                    <td>{$v['money']}</td>
+                                    {if $v['count'] == 0}
+                                    <td>无限</td>
+                                    {else}
+                                    <td>{$v['surplus']}/{$v['count']}</td>
+                                    {/if}
+                                    <td>{$v['start_receive_time']}~{$v['end_receive_time']}</td>
+                                    <td>{$v['start_time']}~{$v['end_time']}</td>
+                                    <td class="operationLeft fs-0"><a class="btn-operation del text-red1" href="javascript:;" data-id="{$v['coupon_type_id']}">删除</a></td>
+                                </tr>
+                                {/foreach}
+                                {/if}
+                            </tbody>
+                        </table>
+                        <div class="help-block mb-0">
+                            <a href="javascript:void(0);" class="text-primary" id="add_circle_coupon"> +添加优惠券</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline"><input type="checkbox" name="is_give_point" class="is_give_point" value="1" {if $data.is_give_point==1}checked{/if}>额外赠送积分</label>
+                    <div class="help-block mb-0">额外赠送积分分为“倍数”与“固定”两种类型，将在下单购物时一同送出</div>
+                    <div class="form-group"></div>
+                    <div class="point hide">
+                        <label class="radio-inline">
+                            <input type="radio" name="point_type" value="1" {if $data.point_type==1}checked{/if}>倍数
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="point_type" value="2" {if $data.point_type==2}checked{/if}>固定
+                        </label>
+                        <div class="form-group"></div>
+                        <div class="input-group w-200  point_num">
+                            <input type="number" class="form-control" min="0" name="point_num" id="point_num" value="{if $data.point_num}{$data.point_num}{/if}">
+                            <div class="input-group-addon point_words">倍</div>
+                        </div>
+                        <div class="mb-0 help-block">选择倍数则将在原先下单购物时可获得积分乘以设置的倍数，固定则将在原先下单购物时可获得积分加上设置好的积分</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline"><input type="checkbox" name="is_become_distributor" class="is_become_distributor" value="1" {if $data.is_become_distributor==1}checked{/if}>成为分销商</label>
+                    <div class="help-block mb-0">购买会员卡后成为分销商，注意：此项权益将和您的“分销”相结合，“分销”功能关闭也会导致此部分权益不可用</div>
+                </div>
+            </div>
+
+            {if $level_list}
+                <!--额外送佣金-->
+                <div class="form-group">
+                    <label class="col-md-2 control-label"></label>
+                    <div class="col-md-5">
+                        <label class="checkbox-inline"><input type="checkbox" name="is_give_commission" class="is_give_commission" value="1" {if $data.is_give_commission==1}checked{/if}>额外赠送佣金</label>
+                        <div class="help-block mb-0">基于原有的分销规则，额外再赠送佣金，注意：此项权益将和您的“分销”相结合，“分销”功能关闭也会导致此部分权益不可用</div>
+                        <div class="form-group"></div>
+                        <div class="commission hide">
+                            <label class="radio-inline">
+                                <input type="radio" name="commission_type" value="1" {if $data.commission_type==1}checked{/if} checked>固定
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="commission_type" value="2" {if $data.commission_type==2}checked{/if}>比例
+                            </label>
+                            <div class="form-group"></div>
+                            {foreach $level_list as $k=>$v}
+                            <div class="form-group">
+                                <label class="col-md-2"></label>
+                                <input type="hidden" class="commission_level_id{$k} commission_val" name="commission_val" value="{$v.id}">
+                                <div class="col-md-5">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">{$v['level_name']}一级返佣</div>
+                                        <input type="number" name="level_first_rebate_{$k}" id="level_first_rebate_{$k}" class="form-control rebate" min="0"  value="{if $v.id==$data.commission_val[$k][0]}{$data.commission_val[$k][1]}{else}0{/if}"  style="min-width: 100px">
+                                        <div class="input-group-addon"><span class="commission_words">元</span>,{$v['level_name']}二级返佣</div>
+                                        <input type="number" name="level_second_rebate_{$k}" id="level_second_rebate_{$k}" class="form-control rebate" min="0"   value="{if $v.id==$data.commission_val[$k][0]}{$data.commission_val[$k][2]}{else}0{/if}" style="min-width: 100px">
+                                        <div class="input-group-addon"><span class="commission_words">元</span>,{$v['level_name']}三级返佣</div>
+                                        <input type="number" name="level_third_rebate_{$k}" id="level_third_rebate_{$k}" class="form-control rebate" min="0" value="{if $v.id==$data.commission_val[$k][0]}{$data.commission_val[$k][3]}{else}0{/if}" style="min-width: 100px">
+                                        <div class="input-group-addon"><span class="commission_words">元</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            {/foreach}
+                            <div class="mb-0 help-block">分销商身份的付费会员将额外获得以上佣金</div>
+                        </div>
+                    </div>
+                </div>
+                <!--购卡/升级返佣-->
+                <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-5">
+                    <label class="checkbox-inline"><input type="checkbox" name="is_give_commission_buy" class="is_give_commission_buy" value="1" {if $data.is_give_commission_buy==1}checked{/if}>购卡/升级返佣</label>
+                    <div class="help-block mb-0">基于原有的分销规则，额外再赠送佣金，注意：此项权益将和您的“分销”相结合，“分销”功能关闭也会导致此部分权益不可用</div>
+                    <div class="form-group"></div>
+                    <div class="commission_buy hide">
+                        <label class="radio-inline">
+                            <input type="radio" name="commission_buy_type" value="1" {if $data.commission_buy_type==1}checked{/if} checked>固定
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="commission_buy_type" value="2" {if $data.commission_buy_type==2}checked{/if}>比例
+                        </label>
+                        <div class="form-group"></div>
+                        {foreach $level_list as $k=>$v}
+                        <div class="form-group">
+                            <label class="col-md-2"></label>
+                            <input type="hidden" class="commission_buy_level_id{$k} commission_buy_val" name="commission_buy_val" value="{$v.id}">
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <div class="input-group-addon">{$v['level_name']}一级返佣</div>
+                                    <input type="number" name="buy_level_first_rebate_{$k}" id="buy_level_first_rebate_{$k}" class="form-control rebate" min="0"  value="{if $v.id==$data.commission_buy_val[$k][0]}{$data.commission_buy_val[$k][1]}{else}0{/if}"  style="min-width: 100px">
+                                    <div class="input-group-addon"><span class="commission_buy_words">元</span>,{$v['level_name']}二级返佣</div>
+                                    <input type="number" name="buy_level_second_rebate_{$k}" id="buy_level_second_rebate_{$k}" class="form-control rebate" min="0"   value="{if $v.id==$data.commission_buy_val[$k][0]}{$data.commission_buy_val[$k][2]}{else}0{/if}" style="min-width: 100px">
+                                    <div class="input-group-addon"><span class="commission_buy_words">元</span>,{$v['level_name']}三级返佣</div>
+                                    <input type="number" name="buy_level_third_rebate_{$k}" id="buy_level_third_rebate_{$k}" class="form-control rebate" min="0" value="{if $v.id==$data.commission_buy_val[$k][0]}{$data.commission_buy_val[$k][3]}{else}0{/if}" style="min-width: 100px">
+                                    <div class="input-group-addon"><span class="commission_buy_words">元</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        {/foreach}
+                    </div>
+                </div>
+            </div>
+                <!--续费返佣-->
+                <div class="form-group">
+                    <label class="col-md-2 control-label"></label>
+                    <div class="col-md-5">
+                        <label class="checkbox-inline"><input type="checkbox" name="is_give_commission_renew" class="is_give_commission_renew" value="1" {if $data.is_give_commission_renew==1}checked{/if}>续费返佣</label>
+                        <div class="help-block mb-0">基于原有的分销规则，额外再赠送佣金，注意：此项权益将和您的“分销”相结合，“分销”功能关闭也会导致此部分权益不可用</div>
+                        <div class="form-group"></div>
+                        <div class="commission_renew hide">
+                            <label class="radio-inline">
+                                <input type="radio" name="commission_renew_type" value="1" {if $data.commission_renew_type==1}checked{/if} checked>固定
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="commission_renew_type" value="2" {if $data.commission_renew_type==2}checked{/if}>比例
+                            </label>
+                            <div class="form-group"></div>
+                            {foreach $level_list as $k=>$v}
+                            <div class="form-group">
+                                <label class="col-md-2"></label>
+                                <input type="hidden" class="commission_renew_level_id{$k} commission_renew_val" name="commission_renew_val" value="{$v.id}">
+                                <div class="col-md-5">
+                                    <div class="input-group">
+                                        <div class="input-group-addon">{$v['level_name']}一级返佣</div>
+                                        <input type="number" name="renew_level_first_rebate_{$k}" id="renew_level_first_rebate_{$k}" class="form-control rebate" min="0"  value="{if $v.id==$data.commission_renew_val[$k][0]}{$data.commission_renew_val[$k][1]}{else}0{/if}"  style="min-width: 100px">
+                                        <div class="input-group-addon"><span class="commission_renew_words">元</span>,{$v['level_name']}二级返佣</div>
+                                        <input type="number" name="renew_level_second_rebate_{$k}" id="renew_level_second_rebate_{$k}" class="form-control rebate" min="0"   value="{if $v.id==$data.commission_renew_val[$k][0]}{$data.commission_renew_val[$k][2]}{else}0{/if}" style="min-width: 100px">
+                                        <div class="input-group-addon"><span class="commission_renew_words">元</span>,{$v['level_name']}三级返佣</div>
+                                        <input type="number" name="renew_level_third_rebate_{$k}" id="renew_level_third_rebate_{$k}" class="form-control rebate" min="0" value="{if $v.id==$data.commission_renew_val[$k][0]}{$data.commission_renew_val[$k][3]}{else}0{/if}" style="min-width: 100px">
+                                        <div class="input-group-addon"><span class="commission_renew_words">元</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            {/foreach}
+                        </div>
+                    </div>
+                </div>
+            {/if}
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-md-2 control-label"></label>
+        <div class="col-md-8">
+            <button class="btn btn-primary add" type="submit">添加</button>
+            <a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+        </div>
+    </div>
+</form>
+
+<input type="hidden" id="id" value="{$id}">
+<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util'], function (util) {
+        loading();
+
+        function loading() {
+            //售价规格
+            var membercard_payment = "{$data.membercard_payment}";
+            if(membercard_payment == 1) {
+                $(".membercard_sku").removeClass("hide");
+            }
+            //会员折扣
+            var is_member_discount = "{$data.is_member_discount}";
+            if(is_member_discount == 1) {
+                $(".member_discount").removeClass('hide');
+                $("#member_discount").attr('required', 'required');
+            }
+            //开通送优惠券
+            var is_give_coupon = "{$data.is_give_coupon}";
+            if(is_give_coupon == 1) {
+                $(".coupon_list").removeClass('hide');
+            }
+            //周期送优惠券
+            var is_circle_coupon = "{$data.is_circle_coupon}";
+            if(is_circle_coupon == 1) {
+                $(".circle_coupon_list").removeClass('hide');
+                $('#circle_num').attr('required', 'required');
+            }
+            //额外赠送积分
+            var is_give_point = "{$data.is_give_point}";
+            var point_type = "{$data.point_type}";
+            if(is_give_point == 1) {
+                $(".point").removeClass('hide');
+                $("input[name='point_type']").attr('required', 'required');
+                $('#point_num').attr('required', 'required');
+
+                if(point_type == 1) {
+                    $('.point_words').html('倍');
+                }else{
+                    $('.point_words').html('积分');
+                }
+            }
+            //额外赠送佣金
+            var is_give_commission = "{$data.is_give_commission}";
+            var commission_type = "{$data.commission_type}";
+            if(is_give_commission == 1) {
+                $(".commission").removeClass('hide');
+                $("input[name='commission_type']").attr('required', 'required');
+
+                if(commission_type == 1) {
+                    $('.commission_words').html('元');
+                }else{
+                    $('.commission_words').html('%');
+                }
+            }
+            //购卡/升级返佣
+            var is_give_commission_buy = "{$data.is_give_commission_buy}";
+            var commission_buy_type = "{$data.commission_buy_type}";
+            if(is_give_commission_buy == 1) {
+                $(".commission_buy").removeClass('hide');
+                $("input[name='commission_buy_type']").attr('required', 'required');
+
+                if(commission_buy_type == 1) {
+                    $('.commission_buy_words').html('元');
+                }else{
+                    $('.commission_buy_words').html('%');
+                }
+            }
+            //续费返佣
+            var is_give_commission_renew = "{$data.is_give_commission_renew}";
+            var commission_renew_type = "{$data.commission_renew_type}";
+            if(is_give_commission_renew == 1) {
+                $(".commission_renew").removeClass('hide');
+                $("input[name='commission_renew_type']").attr('required', 'required');
+
+                if(commission_renew_type == 1) {
+                    $('.commission_renew_words').html('元');
+                }else{
+                    $('.commission_renew_words').html('%');
+                }
+            }
+        }
+
+        $("input[name='membercard_payment']").change(function () {
+            var membercard_payment = $("input[name='membercard_payment']").is(':checked') ? 1 : 0;
+            if (membercard_payment == 1) {
+                $(".membercard_sku").removeClass("hide");
+                $(".limit_time").attr('required', 'required');
+                $(".price").attr('required', 'required');
+                $(".market_price").attr('required', 'required');
+
+            } else {
+                $(".membercard_sku").addClass("hide");
+                $(".limit_time").removeAttr('required');
+                $(".price").removeAttr('required');
+                $(".market_price").removeAttr('required');
+            }
+        });
+
+
+        util.validate($('.form-validate'), function (form) {
+            //基础设置
+            var membercard_name = $("input[name='membercard_name']").val();
+            var membercard_style = $("input[name='membercard_style']:checked").val();
+            var membercard_payment = $("input[name='membercard_payment']:checked").val() ? 1 : 0;
+            var is_online = $("input[name='is_online']:checked").val() ? 1 : 0;
+            var is_default = $("input[name='is_default']:checked").val() ? 1 : 0;
+            var weight = $("input[name='weight']").val();
+
+            var data = {};
+            data.spec_list=[];
+            $(".info-prize").each(function(){
+                var sort = $(this).data('sort');
+                var is_first_buy = '';
+                if($(this).find('#is_first_buy'+sort).is(":checked")){
+                    is_first_buy='1'
+                }else{
+                    is_first_buy='0'
+                }
+                data.spec_list.push({
+                    spec_id:$(this).data('specid'),
+                    time_type:$(this).find('#time_type'+sort).val(),
+                    limit_time:$(this).find('#limit_time'+sort).val(),
+                    price:$(this).find('#price'+sort).val(),
+                    market_price:$(this).find('#market_price'+sort).val(),
+                    is_first_buy:is_first_buy,
+                    first_buy_price:$(this).find('#first_buy_price'+sort).val() ? $(this).find('#first_buy_price'+sort).val() : 0
+                })
+            });
+            if(membercard_payment == 1) {
+                if(data.spec_list.length == 0) {
+                    util.message('请至少添加一个售价规格', 'danger');
+                    return false;
+                }
+            }
+            if(data.spec_list.length > 4) {
+                util.message('最多添加四个售价规格', 'danger');
+                return false;
+            }
+
+            //会员权益
+            //会员折扣
+            var is_member_discount = $("input[name='is_member_discount']:checked").val() ? 1 : 0;
+            var member_discount = $('#member_discount').val() ? $('#member_discount').val() : 0;
+            if(is_member_discount == 1) {
+                if(member_discount == '') {
+                    util.message('会员折扣不能为空,','danger');
+                    return false;
+                }
+            }
+
+            //是否包邮
+            var is_free_shipping = $("input[name='is_free_shipping']:checked").val() ? 1 : 0;
+
+            //开通送优惠券
+            var is_give_coupon = $("input[name='coupon']:checked").val() ? 1 : 0;
+            var coupon_id_array = [];
+            $("#coupon_list tr").each(function (i) {
+                coupon_id_array.push($(this).data('id'));
+            });
+            if(is_give_coupon == 1) {
+                if(coupon_id_array.length == 0) {
+                    util.message('请选择优惠券','danger');
+                    return false;
+                }
+            }
+
+            //周期送优惠券
+            var is_circle_coupon = $("input[name='circle_coupon']:checked").val() ? 1 : 0;
+            var circle_num = $('#circle_num').val();
+            var circle_coupon_id_array = [];
+            $("#circle_coupon_list tr").each(function (i) {
+                circle_coupon_id_array.push($(this).data('id'));
+            });
+            if(is_circle_coupon == 1) {
+                if(circle_num == '') {
+                    util.message('周期不能为空','danger');
+                    return false;
+                }
+                if(circle_coupon_id_array.length == 0) {
+                    util.message('请选择优惠券','danger');
+                    return false;
+                }
+            }
+
+            //送积分
+            var is_give_point = $("input[name='is_give_point']:checked").val() ? 1 : 0;
+            var point_type = $("input[name='point_type']:checked").val();
+            var point_num = $('#point_num').val();
+            if(is_give_point == 1) {
+                if(point_num == '') {
+                    util.message('积分数量不能为空','danger');
+                    return false;
+                }
+            }
+
+            //成为分销商
+            var is_become_distributor = $("input[name='is_become_distributor']:checked").val() ? 1 : 0;
+
+            //额外赠送佣金
+            var is_give_commission = $("input[name='is_give_commission']:checked").val() ? 1 : 0;
+            var commission_type = $("input[name='commission_type']:checked").val();
+            var obj = $('.commission_val');
+            var commission_val = [];
+            for (var i = 0; i < obj.length; i++) {
+                var level_id = $('.commission_level_id'+i).val();
+                var first_rebate = $('#level_first_rebate_'+i).val()?$('#level_first_rebate_'+i).val():0;
+                var second_rebate = $('#level_second_rebate_'+i).val()?$('#level_second_rebate_'+i).val():0;
+                var third_rebate = $('#level_third_rebate_'+i).val()?$('#level_third_rebate_'+i).val():0;
+                var str = level_id + ',' + first_rebate + ',' + second_rebate + ',' + third_rebate;
+                commission_val.push(str);
+            }
+
+            //购卡/升级返佣
+            var is_give_commission_buy = $("input[name='is_give_commission_buy']:checked").val() ? 1 : 0;
+            var commission_buy_type = $("input[name='commission_buy_type']:checked").val();
+            var obj2 = $('.commission_buy_val');
+            var commission_buy_val = [];
+            for (var i = 0; i < obj2.length; i++) {
+                var buy_level_id = $('.commission_buy_level_id'+i).val();
+                var buy_first_rebate = $('#buy_level_first_rebate_'+i).val()?$('#buy_level_first_rebate_'+i).val():0;
+                var buy_second_rebate = $('#buy_level_second_rebate_'+i).val()?$('#buy_level_second_rebate_'+i).val():0;
+                var buy_third_rebate = $('#buy_level_third_rebate_'+i).val()?$('#buy_level_third_rebate_'+i).val():0;
+                var buy_str = buy_level_id + ',' + buy_first_rebate + ',' + buy_second_rebate + ',' + buy_third_rebate;
+                commission_buy_val.push(buy_str);
+            }
+
+            //续费返佣
+            var is_give_commission_renew = $("input[name='is_give_commission_renew']:checked").val() ? 1 : 0;
+            var commission_renew_type = $("input[name='commission_renew_type']:checked").val();
+            var obj3 = $('.commission_renew_val');
+            var commission_renew_val = [];
+            for (var i = 0; i < obj3.length; i++) {
+                var renew_level_id = $('.commission_renew_level_id'+i).val();
+                var renew_first_rebate = $('#renew_level_first_rebate_'+i).val()?$('#renew_level_first_rebate_'+i).val():0;
+                var renew_second_rebate = $('#renew_level_second_rebate_'+i).val()?$('#renew_level_second_rebate_'+i).val():0;
+                var renew_third_rebate = $('#renew_level_third_rebate_'+i).val()?$('#renew_level_third_rebate_'+i).val():0;
+                var renew_str = renew_level_id + ',' + renew_first_rebate + ',' + renew_second_rebate + ',' + renew_third_rebate;
+                commission_renew_val.push(renew_str);
+            }
+
+            data.membercard_id = "{$id}";
+            data.membercard_name = membercard_name;
+            data.membercard_style = membercard_style;
+            data.membercard_payment = membercard_payment;
+            data.is_online = is_online;
+            data.is_default = is_default;
+            data.weight = weight;
+
+            data.is_member_discount = is_member_discount;
+            data.member_discount = member_discount;
+            data.is_free_shipping = is_free_shipping;
+            data.is_give_coupon = is_give_coupon;
+            data.coupon_id = coupon_id_array;
+            data.is_circle_coupon = is_circle_coupon;
+            data.circle_num = circle_num;
+            data.circle_coupon_id = circle_coupon_id_array;
+            data.is_give_point = is_give_point;
+            data.point_type = point_type;
+            data.point_num = point_num;
+            data.is_become_distributor = is_become_distributor;
+            data.is_give_commission = is_give_commission;
+            data.commission_type = commission_type;
+            data.commission_val = commission_val;
+            data.is_give_commission_buy = is_give_commission_buy;
+            data.commission_buy_type = commission_buy_type;
+            data.commission_buy_val = commission_buy_val;
+            data.is_give_commission_renew = is_give_commission_renew;
+            data.commission_renew_type = commission_renew_type;
+            data.commission_renew_val = commission_renew_val;
+
+            $(".add").attr('disabled','disabled');
+            $.ajax({
+                type: "post",
+                url: "{$addOrUpdateMembercardUrl}",
+                data: data,
+                async: true,
+                success: function (data) {
+                    if (data['code'] > 0) {
+                        util.message(data["message"], 'success', "{:__URL('ADDONS_MAINmembercardList')}");
+                    } else if (data['code'] == -1){
+                        $(".add").removeAttr('disabled',true);
+                        util.message(data["message"], 'danger');
+                    }else if (data['code'] == -2){
+                        $(".add").removeAttr('disabled',true);
+                        util.message('已有默认的会员卡', 'danger');
+                    }else if (data['code'] == -3){
+                        $(".add").removeAttr('disabled',true);
+                        util.message('权重值已存在', 'danger');
+                    }
+                }
+            });
+        });
+
+        $('#time_type').on('change', function () {
+            var time_type = $('#time_type').val();
+            if(time_type == 1) {
+                $('.limit_time').html('年');
+            }else if(time_type == 2) {
+                $('.limit_time').html('季');
+            }else if(time_type == 3) {
+                $('.limit_time').html('月');
+            }else if(time_type == 4) {
+                $('.limit_time').html('天');
+            }
+        });
+
+        var sort = "{$spec_length}";
+        $('#J-add').click(function () {
+            sort++;
+            var html = '';
+            html += '<div class="divTbody ui-sortable info-prize" data-specid="" id="curr-list'+sort+'" data-sort="'+sort+'">';
+            html += '<div class="divTr">';
+            html += '<div class="divTd divTd1">';
+            html += '<select name="time_type'+sort+'" class="form-control valid" id="time_type'+sort+'" aria-invalid="false" onchange="typeId(this.value,'+sort+')">';
+            html += '<option value="1">按年</option>';
+            html += '<option value="2">按季</option>';
+            html += '<option value="3">按月</option>';
+            html += '<option value="4">按天</option>';
+            html += '</select>';
+            html += '</div>';
+            html += '<div class="divTd">';
+            html += '<div class="input-group">';
+            html += '<input type="number" class="form-control limit_time" name="limit_time'+sort+'" id="limit_time'+sort+'" value="" min="1">';
+            html += '<div class="input-group-addon limit_time" id="limit_'+sort+'">年</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="divTd">';
+            html += '<div class="input-group">';
+            html += '<input type="number" class="form-control number-form-control price" name="price'+sort+'" id="price'+sort+'" value="" min="0">';
+            html += '<div class="input-group-addon">元</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="divTd divTd4">';
+            html += '<div class="input-group">';
+            html += '<input type="number" class="form-control number-form-control market_price" name="market_price'+sort+'" id="market_price'+sort+'" value="" min="0">';
+            html += '<div class="input-group-addon">元</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="divTd ">';
+            html += '<input type="checkbox" class="is_first_buy" name="is_first_buy'+sort+'" id="is_first_buy'+sort+'" value="1">';
+            html += '</div>';
+            html += '<div class="divTd divTd5">';
+            html += '<div class="input-group">';
+            html += '<input type="number" class="form-control number-form-control first_buy_price" name="first_buy_price'+sort+'" id="first_buy_price'+sort+'" value="" min="0">';
+            html += '<div class="input-group-addon">元</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="divTd">';
+            html += '<a href="javascript:delRule('+sort+');" class="btn-operation text-red1 del-rule">删除</a>';
+            // html += '<a href="javascript:void(0);" class="btn-operation moveItem ui-sortable-handle">拖动排序</a>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            $('#J-add').before(html);
+        });
+
+        //会员权益
+        //会员折扣
+        $("input[name='is_member_discount']").click(function () {
+            var is_member_discount = $("input[name='is_member_discount']:checked").val() ? 1 : 0;
+            if(is_member_discount == 1) {
+                $(".member_discount").removeClass('hide');
+                $("#member_discount").attr('required', 'required');
+            }else{
+                $(".member_discount").addClass('hide');
+                $("#member_discount").removeAttr('required');
+            }
+        });
+        //开通送优惠券
+        $("input[name='coupon']").click(function () {
+            var coupon = $("input[name='coupon']:checked").val() ? 1 : 0;
+            if(coupon == 1) {
+                $(".coupon_list").removeClass('hide');
+            }else{
+                $(".coupon_list").addClass('hide');
+            }
+        });
+        //周期送优惠券
+        $("input[name='circle_coupon']").click(function () {
+            var circle_coupon = $("input[name='circle_coupon']:checked").val() ? 1 : 0;
+            if(circle_coupon == 1) {
+                $(".circle_coupon_list").removeClass('hide');
+                $('#circle_num').attr('required', 'required');
+            }else{
+                $(".circle_coupon_list").addClass('hide');
+                $('#circle_num').removeAttr('required');
+            }
+        });
+        //添加开通优惠券
+        $('#add_coupon').click(function () {
+            var url= "{:__URL('ADDONS_MAINaddCoupon')}";
+            util.confirm('添加优惠券','url:'+url,function(){
+                var html = '';
+                this.$content.find('input[type=checkbox]:checked').each(function () {
+                    var id = $(this).data('id');
+                    html += '<tr data-id="' + id + '">';
+                    html += '<td>' + $(this).data('name') + '</td>';
+                    if($(this).data('coupon_genre') == 1) {
+                        html += '<td>无门槛券</td>';
+                        html += '<td>' + $(this).data('money')+ '元' + '</td>';
+                    }else if($(this).data('coupon_genre') == 2) {
+                        html += '<td>满减券</td>';
+                        html += '<td>' + $(this).data('money')+ '元' + '</td>';
+                    }else if($(this).data('coupon_genre') == 3) {
+                        html += '<td>折扣券</td>';
+                        html += '<td>' + $(this).data('money')+ '折' + '</td>';
+                    }
+                    if($(this).data('count') == 0) {
+                        html += '<td>无限</td>';
+                    }else{
+                        html += '<td>' + $(this).data('surplus') + '/' + $(this).data('count') + '</td>';
+                    }
+                    html += '<td>' + timeStampTurnTime($(this).data('start_receive_time')) + '~' + timeStampTurnTime($(this).data('end_receive_time')) + '</td>';
+                    html += '<td>' + timeStampTurnTime($(this).data('start_time')) + '~' + timeStampTurnTime($(this).data('end_time')) + '</td>';
+                    html +=	'<td class="operationLeft fs-0"><a class="btn-operation del text-red1" href="javascript:;" data-id='+ id +' >删除</a></td>';
+                    html += '</tr>';
+                });
+                $('#coupon_list').html(html);
+            },'large')
+        });
+        //添加周期优惠券
+        $('#add_circle_coupon').click(function () {
+            var url= "{:__URL('ADDONS_MAINaddCoupon')}";
+            util.confirm('添加优惠券','url:'+url,function(){
+                var html = '';
+                this.$content.find('input[type=checkbox]:checked').each(function () {
+                    var id = $(this).data('id');
+                    html += '<tr data-id="' + id + '">';
+                    html += '<td>' + $(this).data('name') + '</td>';
+                    if($(this).data('coupon_genre') == 1) {
+                        html += '<td>无门槛券</td>';
+                        html += '<td>' + $(this).data('money')+ '元' + '</td>';
+                    }else if($(this).data('coupon_genre') == 2) {
+                        html += '<td>满减券</td>';
+                        html += '<td>' + $(this).data('money')+ '元' + '</td>';
+                    }else if($(this).data('coupon_genre') == 3) {
+                        html += '<td>折扣券</td>';
+                        html += '<td>' + $(this).data('money')+ '折' + '</td>';
+                    }
+                    if($(this).data('count') == 0) {
+                        html += '<td>无限</td>';
+                    }else{
+                        html += '<td>' + $(this).data('surplus') + '/' + $(this).data('count') + '</td>';
+                    }
+                    html += '<td>' + timeStampTurnTime($(this).data('start_receive_time')) + '~' + timeStampTurnTime($(this).data('end_receive_time')) + '</td>';
+                    html += '<td>' + timeStampTurnTime($(this).data('start_time')) + '~' + timeStampTurnTime($(this).data('end_time')) + '</td>';
+                    html +=	'<td class="operationLeft fs-0"><a class="btn-operation del text-red1" href="javascript:;" data-id='+ id +' >删除</a></td>';
+                    html += '</tr>';
+                });
+                $('#circle_coupon_list').html(html);
+            },'large')
+        });
+        //删除优惠券
+        $("#coupon_list").on('click', '.del', function () {
+            $(this).parent().parent().remove();
+        });
+        //删除优惠券
+        $("#circle_coupon_list").on('click', '.del', function () {
+            $(this).parent().parent().remove();
+        });
+        //额外赠送积分
+        $("input[name='is_give_point']").click(function () {
+            var is_give_point = $("input[name='is_give_point']:checked").val() ? 1 : 0;
+            if(is_give_point == 1) {
+                $(".point").removeClass('hide');
+                $("input[name='point_type']").attr('required', 'required');
+                $('#point_num').attr('required', 'required');
+            }else{
+                $(".point").addClass('hide');
+                $("input[name='point_type']").removeAttr('required');
+                $('#point_num').removeAttr('required');
+            }
+        });
+        $("input[name='point_type']").change(function () {
+            var point_type = $("input[name='point_type']:checked").val();
+            if(point_type == 1) {
+                $('.point_words').html('倍');
+            }else{
+                $('.point_words').html('积分');
+            }
+        });
+        //额外赠送佣金
+        $("input[name='is_give_commission']").click(function () {
+            var is_give_commission = $("input[name='is_give_commission']:checked").val() ? 1 : 0;
+            if(is_give_commission == 1) {
+                $(".commission").removeClass('hide');
+                $("input[name='commission_type']").attr('required', 'required');
+            }else{
+                $(".commission").addClass('hide');
+                $("input[name='commission_type']").removeAttr('required');
+            }
+        });
+        $("input[name='commission_type']").change(function () {
+            var commission_type = $("input[name='commission_type']:checked").val();
+            if(commission_type == 1) {
+                $('.commission_words').html('元');
+            }else{
+                $('.commission_words').html('%');
+            }
+        });
+        //购卡/升级返佣
+        $("input[name='is_give_commission_buy']").click(function () {
+            var is_give_commission_buy = $("input[name='is_give_commission_buy']:checked").val() ? 1 : 0;
+            if(is_give_commission_buy == 1) {
+                $(".commission_buy").removeClass('hide');
+                $("input[name='commission_buy_type']").attr('required', 'required');
+            }else{
+                $(".commission_buy").addClass('hide');
+                $("input[name='commission_buy_type']").removeAttr('required');
+            }
+        });
+        $("input[name='commission_buy_type']").change(function () {
+            var commission_buy_type = $("input[name='commission_buy_type']:checked").val();
+            if(commission_buy_type == 1) {
+                $('.commission_buy_words').html('元');
+            }else{
+                $('.commission_buy_words').html('%');
+            }
+        });
+        //续费返佣
+        $("input[name='is_give_commission_renew']").click(function () {
+            var is_give_commission_renew = $("input[name='is_give_commission_renew']:checked").val() ? 1 : 0;
+            if(is_give_commission_renew == 1) {
+                $(".commission_renew").removeClass('hide');
+                $("input[name='commission_renew_type']").attr('required', 'required');
+            }else{
+                $(".commission_renew").addClass('hide');
+                $("input[name='commission_renew_type']").removeAttr('required');
+            }
+        });
+        $("input[name='commission_renew_type']").change(function () {
+            var commission_renew_type = $("input[name='commission_renew_type']:checked").val();
+            if(commission_renew_type == 1) {
+                $('.commission_renew_words').html('元');
+            }else{
+                $('.commission_renew_words').html('%');
+            }
+        });
+
+    });
+    //删除售价规格
+    function delRule(sign){
+        $('#curr-list'+sign).remove();
+        sign = sign - 1;
+        $('#curr-list'+sign).addClass('active');
+    }
+    function typeId(id,sort){
+        if(id == 1) {
+            $('#limit_'+sort).html("年");
+        }else if(id == 2) {
+            $('#limit_'+sort).html("季");
+        }else if(id == 3) {
+            $('#limit_'+sort).html("月");
+        }else if(id == 4) {
+            $('#limit_'+sort).html("天");
+        }
+    }
+</script>
+{/block}

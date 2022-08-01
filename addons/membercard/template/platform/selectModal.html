@@ -1,0 +1,104 @@
+<div class="goods-dialog">
+    <div class="flex flex-pack-end mb-10">
+        <div class="input-group search-input-group pull-right">
+            <input type="text" class="form-control" name="name" placeholder="名称">
+            <span class="input-group-btn"><button class="btn btn-primary search">搜索</button></span>
+        </div>
+    </div>
+    <div class="dialog-box tab-content">
+        <table class="table v-table">
+            <thead>
+            <tr>
+                <th class="text-center">优惠券</th>
+            </tr>
+            </thead>
+            <tbody id="list">
+            </tbody>
+        </table>
+        <nav aria-label="Page navigation" class="clearfix">
+            <ul id="page" class="pagination pull-right"></ul>
+        </nav>
+    </div>
+</div>
+<script id='tpl_list' type='text/html'>
+<%if data!=''%>
+    <%each data as item index%>
+    <tr>
+        <td>
+            <label class="checkbox-inline">
+                <input type="checkbox" data-id="<%item[id]%>" data-name="<%item[name]%>" data-coupon_genre="<%item[coupon_genre]%>"
+                       data-money="<%item[money]%>"  data-discount="<%item[discount]%>" data-count="<%item[count]%>" data-surplus="<%item[surplus]%>" data-start_receive_time="<%item[start_receive_time]%>"
+                       data-end_receive_time="<%item[end_receive_time]%>" data-start_time="<%item[start_time]%>" data-end_time="<%item[end_time]%>"
+                <%if inArray(item[id], selected_id_array)%>checked<%/if%>> <%item[name]%>
+            </label>
+        </td>
+    </tr>
+    <%/each%>
+<%else %>
+    <tr>
+        <td style="text-align: center;">
+            <label>请添加<%if name=='coupon_name'%>优惠券<%else if name=='giftvoucher_name'%>礼品券<%/if%></label>
+        </td>
+    </tr>
+<%/if%>
+</script>
+<script>
+    require(['util', 'tpl'], function (util, tpl) {
+        util.initPage(LoadingInfo)
+
+        tpl.helper("inArray", function (item, array) {
+            return ($.inArray(item, array) === -1) ? false : true;
+        });
+
+        function LoadingInfo(page_index) {
+            var val = $('input[name="name"]').val();
+            $.ajax({
+                type: "post",
+                url: "{$couponListUrl}",
+                async: true,
+                data: {
+                    "page_index": page_index,
+                    "search_text": val,
+                    "not_expired": true,
+                },
+                success: function (data) {
+                    var name = 'coupon_name';
+                    var id = 'coupon_type_id';
+                    var coupon_genre = 'coupon_genre';
+                    var money = 'money';
+                    var discount = 'discount';
+                    var count = 'count';
+                    var surplus = 'surplus';
+                    var start_receive_time = 'start_receive_time';
+                    var end_receive_time = 'end_receive_time';
+                    var start_time = 'start_time';
+                    var end_time = 'end_time';
+
+                    var temp_coupon_type_id_array = [];
+                    var selected_id_array = temp_coupon_type_id_array;
+
+                    $("#list").html(tpl('tpl_list', {
+                        data: data.data,
+                        name: name,
+                        id: id,
+                        coupon_genre: coupon_genre,
+                        money: money,
+                        discount: discount,
+                        count: count,
+                        surplus: surplus,
+                        start_receive_time: start_receive_time,
+                        end_receive_time: end_receive_time,
+                        start_time: start_time,
+                        end_time: end_time,
+                        selected_id_array: selected_id_array
+                    }))
+                }
+            });
+        }
+
+        // 搜索
+        $('.search').on('click', function () {
+            LoadingInfo(1)
+        })
+    })
+</script>

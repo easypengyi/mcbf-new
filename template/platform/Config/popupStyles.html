@@ -1,0 +1,138 @@
+<div class="popup-dialog styles-diglog">
+  <div class="styles-list">
+
+  </div>
+  <input type="hidden" id="styles-type">
+  <input type="hidden" id="styles-diglog-data">
+</div>
+<style>
+  .styles-diglog .styles-list {
+    width: 906px;
+    height: 540px;
+    overflow-y: auto;
+    padding: 20px 0px;
+    margin: 0 auto;
+  }
+
+  .styles-diglog .styles-list .styles-list-item {
+    float: left;
+    margin: 10px;
+    border: 1px solid #dddddd;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .styles-diglog .styles-list .styles-list-item.active {
+    border: 1px solid #2589ff;
+  }
+
+  .popup-dialog.styles-diglog .styles-list .styles-list-item .img {
+    width: 280px;
+    height: 220px;
+  }
+
+  .styles-diglog .styles-list .styles-list-item .icon {
+    color: #2589ff;
+    font-size: 20px;
+    position: absolute;
+    right: -10px;
+    bottom: -10px;
+    z-index: 1;
+  }
+</style>
+<script type="text/html" id="tpl_show_styles">
+    <%each list as item %>
+    <div class="styles-list-item <%item.selected?'active':''%>">
+      <img src="<%item.src%>" class="img" />
+      <%if item.selected %>
+      <i class="icon icon-success"/>
+      <%/if%>
+    </div>
+    <%/each%>
+</script>
+<script>
+  var stylesObj = {
+    goods: [
+      { src: '/public/platform/images/custom/style/goods-style-1.png', val: 1, selected: false },
+      { src: '/public/platform/images/custom/style/goods-style-2.png', val: 2, selected: false },
+      { src: '/public/platform/images/custom/style/goods-style-3.png', val: 3, selected: false },
+      { src: '/public/platform/images/custom/style/goods-style-4.png', val: 4, selected: false },
+    ],
+    title: [
+      { src: '/public/platform/images/custom/style/title-style-1.png', val: 1, selected: false },
+      { src: '/public/platform/images/custom/style/title-style-2.png', val: 2, selected: false },
+      { src: '/public/platform/images/custom/style/title-style-3.png', val: 3, selected: false },
+      { src: '/public/platform/images/custom/style/title-style-4.png', val: 4, selected: false },
+      { src: '/public/platform/images/custom/style/title-style-5.png', val: 5, selected: false },
+      { src: '/public/platform/images/custom/style/title-style-6.png', val: 6, selected: false },
+    ],
+    assemble: [
+      { src: '/public/platform/images/custom/style/assemble-style-1.png', val: 1, selected: false },
+      { src: '/public/platform/images/custom/style/assemble-style-2.png', val: 2, selected: false },
+      { src: '/public/platform/images/custom/style/assemble-style-3.png', val: 3, selected: false },
+      { src: '/public/platform/images/custom/style/assemble-style-4.png', val: 4, selected: false },
+    ],
+    presell: [
+      { src: '/public/platform/images/custom/style/presell-style-1.png', val: 1, selected: false },
+      { src: '/public/platform/images/custom/style/presell-style-2.png', val: 2, selected: false },
+      { src: '/public/platform/images/custom/style/presell-style-3.png', val: 3, selected: false },
+      { src: '/public/platform/images/custom/style/presell-style-4.png', val: 4, selected: false },
+    ],
+    bargain: [
+      { src: '/public/platform/images/custom/style/bargain-style-1.png', val: 1, selected: false },
+      { src: '/public/platform/images/custom/style/bargain-style-2.png', val: 2, selected: false },
+      { src: '/public/platform/images/custom/style/bargain-style-3.png', val: 3, selected: false },
+      { src: '/public/platform/images/custom/style/bargain-style-4.png', val: 4, selected: false },
+    ],
+    limitbuy: [
+      { src: '/public/platform/images/custom/style/limitbuy-style-1.png', val: 1, selected: false },
+      { src: '/public/platform/images/custom/style/limitbuy-style-2.png', val: 2, selected: false },
+      { src: '/public/platform/images/custom/style/limitbuy-style-3.png', val: 3, selected: false },
+    ],
+    luckyspell: [
+      { src: '/public/platform/images/custom/style/luckyspell-style-1.png', val: 1, selected: false },
+      { src: '/public/platform/images/custom/style/luckyspell-style-2.png', val: 2, selected: false },
+    ],
+    video: [
+      { src: '/public/platform/images/custom/style/video-style-1.png', val: 1, selected: false },
+      { src: '/public/platform/images/custom/style/video-style-2.png', val: 2, selected: false }
+    ],
+    coupon: [
+      { src: '/public/platform/images/custom/style/coupon-style-1.png', val: 1, selected: false },
+      { src: '/public/platform/images/custom/style/coupon-style-2.png', val: 2, selected: false },
+      { src: '/public/platform/images/custom/style/coupon-style-3.png', val: 3, selected: false },
+    ],
+    video: [
+      { src: '/public/platform/images/custom/style/video-style-1.png', val: 1, selected: false },
+      { src: '/public/platform/images/custom/style/video-style-2.png', val: 2, selected: false }
+    ]
+  }
+  require(['util', 'tpl'], function (util, tpl) {
+    var styleType = $('#styles-type').val()
+    var active = $('#styles-diglog-data').val()
+    var list = stylesObj[styleType]
+
+    if (list) {
+      loadList()
+    }
+
+    function loadList() {
+      $.each(list, function (i, e) {
+        e.selected = e.val == active
+      })
+      setStyleData(active)
+      var showHtml = tpl("tpl_show_styles", { list: list })
+      $(".styles-diglog .styles-list").html(showHtml)
+
+      $('.styles-diglog .styles-list-item').unbind("click").click(function () {
+        active = list[$(this).index()].val
+        setStyleData(active)
+        loadList()
+      })
+    }
+
+    function setStyleData(data) {
+      $('#styles-diglog-data').val(data)
+    }
+  })
+</script>

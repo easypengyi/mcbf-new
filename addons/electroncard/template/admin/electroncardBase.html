@@ -1,0 +1,145 @@
+
+{block name="main"}
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">卡密库名称</label>
+                    <div class="v__controls">
+                        <input type="text" id="electroncard_name" class="v__control_input">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">卡密库分类</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="electroncard_category">
+                            <option value="">请选择</option>
+                            {if $category_list}
+                            {foreach name="category_list" item="vo"}
+                            <option value="{$vo.id}">{$vo.category_name}</option>
+                            {/foreach}
+                            {/if}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="mb-10 flex flex-pack-justify">
+    <div class="">
+        <a class="btn btn-primary add_electroncard_base" href="{:__URL('admin/Menu/addonmenu?addons=addOrUpdateElectroncardBase')}">添加卡密库</a>
+    </div>
+</div>
+                <table class="table v-table table-auto-center">
+                    <thead>
+                        <tr class="order-list-item">
+                            <th>卡密库名称</th>
+                            <th>卡密库分类</th>
+                            <th>已售</th>
+                            <th>剩余库存 / 总库存</th>
+                            <th>创建时间</th>
+                            <th class="col-md-2 pr-14 operationLeft">操作</th>
+                        </tr>
+                    </thead> 
+                    <tbody id="list">
+
+                    </tbody>
+                </table>
+                <input type="hidden" id="page_index">
+                <nav aria-label="Page navigation" class="clearfix">
+                    <ul id="page" class="pagination pull-right"></ul>
+                </nav>
+                <!-- page end -->
+{/block}
+{block name="script"}
+<script>
+require(['utilAdmin'],function(utilAdmin){
+    utilAdmin.initPage(getMemberList);
+
+    function getMemberList(page_index){
+        $("#page_index").val(page_index);
+        var electroncard_name = $("#electroncard_name").val();
+        var electroncard_category = $("#electroncard_category").val();
+
+        $.ajax({
+            type : "post",
+            url : "{$electroncardBaseListUrl}",
+            async : true,
+            data : {
+                "page_index" : page_index,
+                "electroncard_name" : electroncard_name,
+                "electroncard_category" : electroncard_category
+            },
+            success : function(data) {
+                var html = '';
+                if (data["data"].length > 0) {
+                    for (var i = 0; i < data["data"].length; i++) {
+                        html += '<tr>';
+                        html += '<td>'+ data["data"][i]["electroncard_base_name"]+'</td>';
+                        html += '<td>'+ data["data"][i]["category_name"]+'</td>';
+                        html += '<td>'+ data["data"][i]["sales"]+'</td>';
+                        html += '<td>'+ data["data"][i]["surplus_stock"]+' / '+data["data"][i]["total_stock"]+'</td>';
+                        html += '<td>'+ data["data"][i]["create_time"]+'</td>';
+                        html += '<td class="operationLeft fs-0"><a class="btn-operation" href="'+__URL('admin/Menu/addonmenu?addons=addOrUpdateElectroncardBase&id='+ data['data'][i]['id']) +'">编辑</a>';
+                        html += '<a class="btn-operation" href="'+__URL('admin/Menu/addonmenu?addons=electroncardBaseDetail&id='+ data['data'][i]['id']) +'">卡密库详情</a>';
+                        html += '<a class="btn-operation" href="'+__URL('admin/Menu/addonmenu?addons=addData&id='+ data['data'][i]['id']) +'" data-id="'+ data['data'][i]['id']+'">添加数据</a>';
+                        html += '<a class="btn-operation text-red1 del" href="javascript:;" data-id="'+ data['data'][i]['id']+'">删除</a>';
+                        html += '</tr>';
+                    }
+
+                } else {
+                    html += '<tr align="center"><td colspan="9" class="h-200">暂无符合条件的数据记录</td></tr>';
+                }
+                $('#page').paginator('option', {
+                    totalCounts: data['total_count']  // 动态修改总数
+                });
+                $("#list").html(html);del();
+                utilAdmin.tips();
+            }
+        });
+    }
+
+    $('.search').on('click',function(){
+        utilAdmin.initPage(getMemberList);
+    });
+
+    function del(){
+        $('.del').on('click',function(){
+            var id = $(this).data('id');
+            utilAdmin.alert('确定删除？',function(){
+                $.ajax({
+                    type : "post",
+                    url : "{$delElectroncardBaseUrl}",
+                    data : {
+                        'id' : id
+                    },
+                    async : true,
+                    success : function(data) {
+                        if (data['code'] > 0) {
+                            utilAdmin.message(data["message"], 'success', getMemberList($("#page_index").val()));
+                        } else {
+                            utilAdmin.message(data["message"], 'danger', getMemberList($("#page_index").val()));
+                        }
+                    }
+                });
+            })
+        })
+    }
+
+    })
+
+</script>
+{/block}

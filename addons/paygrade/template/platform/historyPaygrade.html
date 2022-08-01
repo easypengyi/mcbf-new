@@ -1,0 +1,273 @@
+{block name="main"}
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">会员信息</label>
+                    <div class="v__controls">
+                        <input type="text" class="v__control_input" id="user" placeholder="用户名/昵称/手机号码" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">等级类型</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="grade_type">
+                            <option value="">请选择</option>
+                            {volist name="$grade_list" id="gr"}
+                            <option value="{$gr['grade_type']}">{$gr['grade_name']}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">购买等级</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="grade_type_id">
+                            <option value="">请选择</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">到期降级</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="demotion_id">
+                            <option value="">请选择</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">购买时间</label>
+                    <div class="v__controls v-date-input-control">
+                        <label for="payTime">
+                            <input type="text" class="v__control_input pr-30" id="payTime" placeholder="请选择时间" value="" autocomplete="off" name="create_time" data-types="datetime">
+                            <i class="icon icon-calendar"></i>
+                            <input type="hidden" id="start_time">
+                            <input type="hidden" id="end_time">
+                        </label>
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">到期时间</label>
+                    <div class="v__controls v-date-input-control">
+                        <label for="expireTime">
+                            <input type="text" class="v__control_input pr-30" id="expireTime" placeholder="请选择时间" value="" autocomplete="off" name="create_time" data-types="datetime">
+                            <i class="icon icon-calendar"></i>
+                            <input type="hidden" id="start_time2">
+                            <input type="hidden" id="end_time2">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
+                        <a class="btn btn-success ml-15 dataExcel">导出EXCEL</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<table class="table v-table table-auto-center">
+    <thead>
+    <tr class="order-list-item">
+        <th>会员信息</th>
+        <th>等级类型</th>
+        <th>购买等级</th>
+        <th>售价/有效期</th>
+        <th>到期降级</th>
+        <th>购买时间</th>
+        <th>到期时间</th>
+    </tr>
+    </thead>
+    <tbody id="records_list">
+    </tbody>
+</table>
+<input type="hidden" id="page_index">
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+{/block}
+{block name="script"}
+<script id="tpl_records_list" type="text/html">
+    <%each data as item index%>
+    <tr>
+        <td>
+			<%if item.user_headimg %>
+			<p><img src="<%item.user_headimg%>" height="30" width="30" alt=""></p>
+			<%else%>
+			<p><img src="/public/static/images/headimg.png" height="30" width="30" alt=""></p>
+			<%/if%>
+			<p><a href="{:__URL('PLATFORM_MAIN/member/memberDetail?member_id=<%item.uid%>')}" class="text-primary" target="_blank"><%item.user_name%></a></p>
+			<p><%item.user_tel%></p>
+		</td>
+        <td><%item.pay_grade_name%></td>
+        <td><%item.grade_type_name%></td>
+		<td><%item.price%>元/<%item.effective_time%>
+		<%if item.granularity == 1 %>年
+		<%else if item.granularity == 2 %>季
+		<%else if item.granularity == 3 %>月
+		<%/if%>
+		</td>
+		<td><%item.demotion_name%></td>
+		<td><%timeStamp(item.create_time)%></td>
+        <td>
+            <%if item.type_type == 1 %>
+            <%timeStamp(item.start_time)%>续-
+            <%/if%>
+            <%timeStamp(item.end_time)%>
+        </td>
+    </tr>
+    <%/each%>
+</script>
+<script>
+    require(['util', 'tpl'], function (util, tpl) {
+        util.initPage(LoadingInfo);
+        util.layDate('#payTime',true,function(value, date, endDate){
+            var h=date.hours<10 ?"0"+date.hours : date.hours;
+            var m=date.minutes<10 ?"0"+date.minutes : date.minutes;
+            var s=date.seconds<10 ?"0"+date.seconds : date.seconds;
+            var h1=endDate.hours<10 ?"0"+endDate.hours : endDate.hours;
+            var m1=endDate.minutes<10 ?"0"+endDate.minutes : endDate.minutes;
+            var s1=endDate.seconds<10 ?"0"+endDate.seconds : endDate.seconds;
+            var date1=date.year+'-'+date.month+'-'+date.date+' '+h+":"+m+":"+s;
+            var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+h1+":"+m1+":"+s1;
+            if(value){
+                $('#start_time').val(date1);
+                $('#end_time').val(date2);
+            }
+            else{
+                $('#start_time').val('');
+                $('#end_time').val('');
+            }
+        });
+        util.layDate('#expireTime',true,function(value, date, endDate){
+            var h=date.hours<10 ?"0"+date.hours : date.hours;
+            var m=date.minutes<10 ?"0"+date.minutes : date.minutes;
+            var s=date.seconds<10 ?"0"+date.seconds : date.seconds;
+            var h1=endDate.hours<10 ?"0"+endDate.hours : endDate.hours;
+            var m1=endDate.minutes<10 ?"0"+endDate.minutes : endDate.minutes;
+            var s1=endDate.seconds<10 ?"0"+endDate.seconds : endDate.seconds;
+            var date1=date.year+'-'+date.month+'-'+date.date+' '+h+":"+m+":"+s;
+            var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+h1+":"+m1+":"+s1;
+            if(value){
+                $('#start_time2').val(date1);
+                $('#end_time2').val(date2);
+            }
+            else{
+                $('#start_time2').val('');
+                $('#end_time2').val('');
+            }
+        });
+        tpl.helper("timeStamp", function (timeStamp) {
+            if (timeStamp > 0) {
+                var date = new Date();
+                date.setTime(timeStamp * 1000);
+                var y = date.getFullYear();
+                var m = date.getMonth() + 1;
+                m = m < 10 ? ('0' + m) : m;
+                var d = date.getDate();
+                d = d < 10 ? ('0' + d) : d;
+                var h = date.getHours();
+                h = h < 10 ? ('0' + h) : h;
+                var minute = date.getMinutes();
+                var second = date.getSeconds();
+                minute = minute < 10 ? ('0' + minute) : minute;
+                second = second < 10 ? ('0' + second) : second;
+                return y + '-' + m + '-' + d + ' ' + h + ':' + minute + ':' + second;
+            } else {
+                return "";
+            }
+        });
+		//列表
+        function LoadingInfo(page_index) {
+            $('#page_index').val(page_index ? page_index : 1);
+            var user = $("#user").val();
+            var grade_type = $("#grade_type").val();
+            var grade_type_id = $("#grade_type_id").val();
+            var demotion_id = $("#demotion_id").val();
+            var start_time = $("#start_time").val();
+            var end_time = $("#end_time").val();
+            var start_time2 = $("#start_time2").val();
+            var end_time2 = $("#end_time2").val();
+            $.ajax({
+                type: "post",
+                url: '{$recordListUrl}',
+                data: {
+                    'page_index': page_index,
+                    "user": user,
+                    'grade_type': grade_type,
+                    'grade_type_id': grade_type_id,
+                    'demotion_id': demotion_id,
+                    'start_time': start_time,
+                    'end_time': end_time,
+                    'start_time2': start_time2,
+                    'end_time2': end_time2
+                },
+                success: function (data) {
+                    html ='';
+                    html += '<tr><th colspan="7">暂无符合条件的数据记录</th></tr>';
+                    if(tpl('tpl_records_list', data)){
+                        $("#records_list").html(tpl('tpl_records_list', data))
+                        $('#page').paginator('option', {
+                            totalCounts: data['total_count']  // 动态修改总数
+                        });
+                    }else{
+                        $("#records_list").html(html);
+                    }
+                }
+            });
+        }
+      	//搜索
+        $(".search").on('click', function () {
+            LoadingInfo(1);
+        });
+        //导出
+        $('.dataExcel').on('click',function(){
+            var user = $("#user").val();
+            var grade_type = $("#grade_type").val();
+            var grade_type_id = $("#grade_type_id").val();
+            var demotion_id = $("#demotion_id").val();
+            var start_time = $("#start_time").val();
+            var end_time = $("#end_time").val();
+            var start_time2 = $("#start_time2").val();
+            var end_time2 = $("#end_time2").val();
+    		window.location.href = "{$recordDataExcelUrl}" +
+    		    "?user=" + user +
+    		    "&grade_type=" + grade_type +
+    		    "&grade_type_id=" + grade_type_id +
+                "&demotion_id=" + demotion_id +
+                "&start_time=" + start_time +
+    		    "&end_time=" + end_time +
+    		    "&start_time2=" + start_time2 +
+    		    "&end_time2=" + end_time2;
+        })
+        //会员类型
+        $('#grade_type').change(function() {
+        	var grade_type = this.value;
+            $.ajax({
+                type: "post",
+                url: '{$getGradeUrl}',
+                data: {
+                    'grade_type': grade_type
+                },
+                success: function (data) {
+                	var html = '<option value="">请选择</option>';
+                    if (data.length>0) {
+                        for (var i = 0; i < data.length; i++) {
+                        	html += '<option value="' +data[i].level_id+ '">' +data[i].level_name+ '</option>';
+                        }
+                	}
+                    $("#grade_type_id").html(html);
+                    $("#demotion_id").html(html);
+                }
+            });
+        })
+    })
+</script>
+{/block}

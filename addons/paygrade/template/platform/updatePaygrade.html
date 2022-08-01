@@ -1,0 +1,281 @@
+{block name="main"}
+        <!-- page -->
+        <form class="form-horizontal form-validate widthFixedForm">
+            <div class="screen-title">
+                <span class="text">规则设置</span>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>等级类型</label>
+                <div class="col-md-5">
+                   <label class="control-label">{$info['grade_name']}</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>销售套餐</label>
+                <div class="col-md-6 addgoods-sortable">
+                    <div class="divTable goodsTable">
+                        <div class="divThead">
+                            <div class="divTh">等级名称</div>
+                            <div class="divTh" style="width:19%;">粒度</div>
+                            <div class="divTh" style="width:19%;">有效期</div>
+                            <div class="divTh" style="width:19%;">售价</div>
+                            <div class="divTh" style="width:18%;">操作</div>
+                        </div>
+                        <div class="divTbody ui-sortable" id="setmeal-list">
+                        	{volist name="setmeal_list" id="sl" key="k"}
+	                        <div class="divTr setmeal">
+		                        <div class="divTd">
+									<div class="control-group">
+							            <select class="form-control grade_type_id" name="grade_type_id" min="0" required title=" ">
+					                    	{volist name="setmeal_grade_list" id="gl"}
+					                        <option value="{$gl['level_id']}" {if($sl['grade_type_id']==$gl['level_id'])}selected = "selected"{/if}>{$gl['level_name']}</option>
+					                        {/volist}
+							            </select>
+									</div>
+		                        </div>
+		                        <div class="divTd" style="width:19%;">
+									<div class="control-group">
+							            <select class="form-control granularity" name="granularity" data-ids="{$k-1}" min="0" required title=" ">
+							            	<option value="1" {if($sl['granularity']==1)}selected = "selected"{/if}>年</option>
+							            	<option value="2" {if($sl['granularity']==2)}selected = "selected"{/if}>季</option>
+							            	<option value="3" {if($sl['granularity']==3)}selected = "selected"{/if}>月</option>
+							            </select>
+									</div>
+		                        </div>
+		                        <div class="divTd form-group" style="width:19%;margin:0;">
+									<div class="control-group">
+										<div class="input-group">
+											<input type="number" class="form-control effective_time" name="effective_time{$k-1}" min="0" mustnum="true" required value="{$sl['effective_time']}">
+											<div class="input-group-addon">
+                                                {if($sl['granularity']==1)}年
+                                                {elseif ($sl['granularity']==2)}季
+                                                {else}
+                                                月
+                                                {/if}</div>
+										</div>
+									</div>
+		                        </div>
+		                        <div class="divTd form-group" style="width:19%;margin:0;">
+									<div class="control-group">
+										<div class="input-group">
+											<input type="number" class="form-control price" name="price" min="0" required value="{$sl['price']}">
+											<div class="input-group-addon">元</div>
+										</div>
+									</div>
+		                        </div>
+		                        <input type="hidden" name="set_meal_id" class="set_meal_id" value="{$sl['set_meal_id']}" autocomplete="off"/>
+		                        <div class="divTd operationLeft fs-0" style="width:18%;">
+			                        <a href="javascript:void(0);" class="btn-operation text-red1 deleteSetmeal">删除</a>
+			                        <a href="javascript:void(0);" class="btn-operation moveItem ui-sortable-handle">拖动排序</a>
+		                        </div>
+	                        </div>
+	                        {/volist}
+                        </div>
+                         <div class="divTr"><div class="divTd" style="text-align: left;"><a href="javascript:void(0);" class="btn-operation" onclick="javascript:addSetmeal()">＋增加一个</a></div></div>
+                    </div>
+                </div>
+            </div>
+			<div class="form-group">
+                <label class="col-md-2 control-label"><span class="text-bright">*</span>到期降级</label>
+                <div class="col-md-5">
+                    <select name="demotion_id" id="demotion_id" class="form-control w-200" min="0" required title=" ">
+                    	{volist name="grade_list" id="gl"}
+                        <option value="{$gl['level_id']}" {if($info['demotion_id']==$gl['level_id'])}selected = "selected"{/if}>{$gl['level_name']}</option>
+                        {/volist}
+                    </select>
+                    <div class="mb-0 help-block">套餐到期后将降至该等级，如重复购买将以后面购买的为准</div>
+                </div>
+            </div>
+			<div class="form-group">
+                <label class="col-md-2 control-label">是否上架</label>
+                <div class="col-md-5">
+                    <div class="switch-inline">
+                        <input type="checkbox" name="is_putaway" id="is_putaway" {if($info['is_putaway']==1)}checked{/if}>
+                        <label for="is_putaway" class=""></label>
+                    </div>
+                    <div class="mb-0 help-block">上架后前端拥有身份的会员可以看到并可以购买该等级</div>
+                </div>
+            </div>
+            <div class="form-group table3" >
+                <label class="col-md-2 control-label">协议名称</label>
+                <div class="col-md-5">
+                    <input type="text" id="agreement_name" class="form-control" name="agreement_name" value="{if($info['agreement_name'])}{$info['agreement_name']}{else}微商来购买等级协议{/if}">
+                </div>
+            </div>
+            <div class="form-group table3" >
+                <label class="col-md-2 control-label">协议内容</label>
+                <div class="col-md-9" >
+                    <div class="UE-box">
+                        <div id="UE-detail2" data-content='{$info["agreement_content"]}'></div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group table3" >
+                <label class="col-md-2 control-label">介绍名称</label>
+                <div class="col-md-5">
+                    <input type="text" id="introduce_name" class="form-control" name="introduce_name" value="{if($info['introduce_name'])}{$info['introduce_name']}{else}微商来购买等级介绍{/if}">
+                </div>
+            </div>
+            <div class="form-group table3" >
+                <label class="col-md-2 control-label">介绍内容</label>
+                <div class="col-md-9" >
+                    <div class="UE-box">
+                        <div id="UE-detail3" data-content='{$info["introduce_content"]}'></div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group"></div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-8">
+                    <button class="btn btn-primary" type="submit">保存</button>
+                    <a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
+                </div>
+            </div>
+            <input type="hidden" name="pay_grade_id" id="pay_grade_id" value="{$info['pay_grade_id']}" autocomplete="off"/>
+        </form>
+
+        <!-- page end -->
+{/block}
+{block name="script"}
+<script>
+	var grade_list = {:json_encode($setmeal_grade_list)};
+    require(['util','jquery-ui'], function (util) {
+        //选择变更 名称
+        
+        $("body").on("change",".granularity",function(e){
+            var itemText1 = $(this).find("option:selected").text();
+            $('input[name="effective_time'+ $(this).data("ids") +'"]').next().html(itemText1);   
+            // $(this).next().html(itemText1);   
+            // $(this).parent().find(".effective_time").next().html(itemText1);   
+        });
+        //提交数据
+        var flag = false;
+        util.validate($('.form-validate'), function (form) {
+            var agreement_name = $("#agreement_name").val();
+        	var agreement_content = $("#UE-detail2").data("content");
+            var introduce_name = $("#introduce_name").val();
+        	var introduce_content = $("#UE-detail3").data("content");
+        	var pay_grade_id = $("#pay_grade_id").val();
+            var demotion_id = $("#demotion_id").val();
+            var is_putaway = ($("#is_putaway").is(":checked"))?1:0;
+            if (flag)return;
+            var setmeal_list = [];
+            var state = 1;
+        	$(".setmeal").each(function(){
+        		var set_meal_id = $(this).find('.set_meal_id').val();
+        		var grade_type_id = $(this).find('.grade_type_id').val();
+            	var granularity = $(this).find('.granularity').val();
+            	var effective_time = $(this).find('.effective_time').val();
+            	var price = $(this).find('.price').val();
+            	if(grade_type_id == ''){
+            		util.message('请选择等级名称');
+            		state = 0;
+            	}
+            	if(effective_time == ''){
+            		util.message('请填写有效期');
+            		state = 0;
+            	}
+            	if(price == ''){
+            		util.message('请填写售价');
+            		state = 0;
+            	}
+           		var list = {'set_meal_id':set_meal_id,'grade_type_id':grade_type_id,'granularity':granularity,'effective_time':effective_time,'price':price};
+           		setmeal_list.unshift(list);
+        	});
+        	if(state == 0)return;
+        	if(setmeal_list == ''){
+            	util.message('请添加销售套餐');
+                return false;
+        	}
+            flag = true;
+            var data = {};
+        	data.agreement_name = agreement_name;
+        	data.agreement_content = agreement_content;
+            data.introduce_name = introduce_name;
+        	data.introduce_content = introduce_content;
+        	data.pay_grade_id = pay_grade_id;
+        	data.demotion_id = demotion_id;
+        	data.is_putaway = is_putaway;
+        	data.setmeal_list = setmeal_list;
+            $.ajax({
+                type: "post",
+                url: "{$updatePaygradelUrl}",
+                data: data,
+                success: function (data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"], 'success',function(){
+                            window.location.href="{:__URL('ADDONS_MAINpaygradeList')}";
+                        });
+                    } else {
+                    	flag = false;
+                        util.message(data["message"], 'danger');
+                    }
+                }
+            });
+        });
+        //拖动排序
+        $("#setmeal-list").sortable({
+            opacity: 0.8,
+            placeholder: "highlight",
+            handle:'.moveItem',
+            revert: 100,
+            start: function (event, ui) {
+                var height = ui.item.height();
+                $(".highlight").css({"height": height + "px"});
+                $(".highlight").html('<div class="text-center" style="line-height:'+height+'px;"><i class="icon icon-add1"></i> 拖动到此处</div>');
+            },
+            update: function (event, ui) {}
+        })
+        //删除套餐
+        $('body').on('click', '.deleteSetmeal', function () {
+        	$(this).parent().parent().remove();
+        });
+    })
+    var n = 0;
+    //新增一个
+    function addSetmeal(){
+    	if(n == 0){
+        	n = $("#setmeal-list .setmeal").length;
+    	}else{
+    		n = n + 1;
+    	}
+    	html = '';
+    	html += '<div class="divTr setmeal">';
+    	html += '<div class="divTd">';
+    	html += '<div class="control-group">';
+    	html += '<select class="form-control grade_type_id" name="grade_type_id'+ n +'"  min="0" required title=" ">';
+       	if(grade_list.length>0){
+			for (var i=0;i<grade_list.length;i++){
+				html += '<option value="'+ grade_list[i].level_id +'">'+ grade_list[i].level_name +'</option>';
+			}
+       	}
+        html += '</select>';
+        html += '</div></div>';
+        html += '<div class="divTd" style="width:19%;">';
+       	html += '<div class="control-group">';
+       	html += '<select class="form-control granularity" data-ids="'+ n +'" name="granularity'+ n +'" min="0" required title=" ">';
+    	html += '<option value="1">年</option>';
+    	html += '<option value="2">季</option>';
+    	html += '<option value="3">月</option>';
+        html += '</select>';
+        html += '</div></div>';
+        html += '<div class="divTd form-group" style="width:19%;margin:0;">';
+        html += '<div class="control-group">';
+        html += '<div class="input-group">';
+        html += '<input type="number" class="form-control effective_time" name="effective_time'+ n +'" min="0" mustnum="true" required value=""><div class="input-group-addon">年</div>';
+       	html += '</div></div></div>';
+        html += '<div class="divTd form-group" style="width:19%;margin:0;">';
+        html += '<div class="control-group">';
+        html += '<div class="input-group">';
+        html += '<input type="number" class="form-control price" name="price'+ n +'" min="0" required value=""><div class="input-group-addon">元</div>';
+        html += '</div></div></div><input type="hidden" name="set_meal_id'+ n +'" class="set_meal_id" value="0" autocomplete="off"/>';
+       	html += '<div class="divTd operationLeft fs-0" style="width:18%;">';
+        html += ' <a href="javascript:void(0);" class="btn-operation text-red1 deleteSetmeal">删除</a>';
+        html += '<a href="javascript:void(0);" class="btn-operation moveItem ui-sortable-handle">拖动排序</a>';
+        html += '</div>';
+        html += '</div>';
+        $("#setmeal-list").append(html);
+	}
+</script>
+{/block}

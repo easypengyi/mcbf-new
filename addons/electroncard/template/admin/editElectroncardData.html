@@ -1,0 +1,13 @@
+<form class="form-horizontal padding-15" role="form">
+    {foreach $info as $k => $v}
+    <div class="form-group list">
+        <label for="receiver_name" class="col-sm-3 control-label"><span class="text-red">*</span>{$v[0]}</label>
+        <div class="col-sm-8">
+            <input type="text" class="form-control key{$k}" required id="receiver_name" value="{$v[1]}">
+        </div>
+    </div>
+    {/foreach}
+</form>
+<script>
+
+</script>

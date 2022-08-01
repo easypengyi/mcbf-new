@@ -1,0 +1,351 @@
+{block name="main"}
+<style>
+    .link-pos-live{
+    display: none;
+    position: absolute;
+    bottom: -38px;
+    right: -15px;
+    width: 280px;
+    height: 40px;
+    z-index: 99;
+    padding: 10px 4px;
+    text-align: center;
+}
+.link-pr:hover .link-pos-live{
+    display: block;
+}
+</style>
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">直播信息</label>
+                    <div class="v__controls">
+                        <input type="text" id="live_info" name="live_info" class="v__control_input J-selectCategory"
+                               placeholder="房号/直播标题" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i>搜索</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<ul class="nav nav-tabs v-nav-tabs fs-12">
+    <li role="presentation" class="J-status active" data-live_status="-1">
+        <a href="javascript:;" class="flex-auto-center">全部<br>
+            <span class="J-living"></span></a></li>
+    <li role="presentation" class="J-status" data-live_status="101">
+        <a href="javascript:;" class="flex-auto-center">直播中<br>
+            <span class="J-living"></span></a></li>
+    <li role="presentation" class="J-status" data-live_status="102">
+        <a href="javascript:;" class="flex-auto-center">未开始<br>
+            <span class="J-uncheck"></span></a></li>
+    <li role="presentation" class="J-status" data-live_status="105">
+        <a href="javascript:;" class="flex-auto-center">暂停中<br>
+            <span class="J-checked"></span></a></li>
+    <li role="presentation" class="J-status" data-live_status="103">
+        <a href="javascript:;" class="flex-auto-center">已结束<br>
+            <span class="J-advance"></span></a></li>
+    <li role="presentation" class="J-status" data-live_status="107">
+        <a href="javascript:;" class="flex-auto-center">已过期<br>
+            <span class="J-advance"></span></a></li>
+    <li role="presentation" class="J-status" data-live_status="104">
+        <a href="javascript:;" class="flex-auto-center">禁播<br>
+            <span class="J-advance"></span></a></li>
+    <li role="presentation" class="J-status" data-live_status="106">
+        <a href="javascript:;" class="flex-auto-center">异常<br>
+            <span class="J-advance"></span></a></li>
+</ul>
+<input type="hidden" name="live_status" id="live_status" value="-1">
+<div id="J-operation">
+    <a class="btn btn-primary mb-15 J-add" href="{:__URL('ADDONS_MAINcreateMplive')}">创建直播间</a>
+    <a class="btn btn-primary mb-15 J-update">同步直播间</a>
+    <span class="J-update_info" style="color:red;"></span>
+</div>
+<!--<div class="mb-20 bg-info border-info padding-15">直播房间列表信息每天最多可同步500次，如手动同步数据请合理分配获取频次，添加直播间需要前往 <a class="btn-operation" target="_blank" href="https://mp.weixin.qq.com/">小程序后台</a></div>-->
+<div class="mb-20 bg-info border-info padding-15"> 直播房间列表信息每天最多可同步100000次/天，直播列表每分钟系统都会同步，如需手动同步请合理分配频次。</div>
+
+<table class="table v-table table-auto-center">
+    <thead>
+    <tr class="order-list-item">
+        <!--<th><input type="checkbox" name="selAll"></th>-->
+        <th>房号</th>
+        <th class=" ">直播间信息</th>
+        <th>直播商品数</th>
+        <th>状态</th>
+        <th class="col-md-2 pr-14 operationLeft">操作</th>
+    </tr>
+    </thead>
+    <tbody id="live_list">
+    </tbody>
+</table>
+<input type="hidden" id="page_index">
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+
+<!-- page end -->
+
+{/block}
+{block name="script"}
+<script id="live_list_tpl" type="text/html">
+    <%each data as item index%>
+    <tr>
+        <!-- 直播间信息 -->
+        <td><%item.roomid%></td>
+        <!--<td>-->
+        <!--<div class="strong"><%item.name%></div>-->
+        <!--<div>主播：<%item.anchor_name%></div>-->
+        <!--<div>开播时间：<%item.start_date%></div>-->
+        <!--<div>结束时间：<%item.end_date%></div>-->
+        <!--</td>-->
+        <td>
+            <div class="media text-left" style="margin-left:80px;">
+                <div class="media-left">
+                    <p>
+                        <img src="<%item.cover_img%>" style="width:80px;height:80px;">
+                    </p>
+                </div>
+                <div class="media-body break-word">
+                    <div class="line-2-ellipsis line-title"><%item.name%></div>
+                    <div class="small-muted line-2-ellipsis">主播：<%item.anchor_name%></div>
+                    <div class="small-muted line-2-ellipsis">开始时间：<%item.start_date%></div>
+                    <div class="small-muted line-2-ellipsis">结束时间：<%item.end_date%></div>
+                </div>
+            </div>
+
+        </td>
+        <td><a href="javascript:;" class="btn-operation J-selected_goods" data-roomid="<%item.roomid%>"><%item.goods_count%></a></td>
+        <!-- 状态 -->
+        <td>
+            <div>
+                <%if item.live_status == 101%>
+                <span class="label font-color-success">直播中</span>
+                <%/if%>
+                <%if item.live_status == 102%>
+                <span class="label font-color-red">未开始</span>
+                <%/if%>
+                <%if item.live_status == 103%>
+                <span class="label font-color-red">已结束</span>
+                <%/if%>
+                <%if item.live_status == 104%>
+                <span class="label font-color-red">禁播</span>
+                <%/if%>
+                <%if item.live_status == 105%>
+                <span class="label font-color-blue">暂停中</span>
+                <%/if%>
+                <%if item.live_status == 106%>
+                <span class="label font-color-blue">异常</span>
+                <%/if%>
+                <%if item.live_status == 107%>
+                <span class="label font-color-red">已过期</span>
+                <%/if%>
+
+            </div>
+        </td>
+        <!-- 操作 -->
+        <td class="fs-0 operationLeft">
+            <a href="javascript:;" class="btn-operation J-pick_mplive_goods link-pr" data-roomid="<%item.roomid%>">挑选商品</a>
+            <a href="javascript:;" class="btn-operation J-mplive_code link-pr">
+                <span>开播码</span>
+                <div class="J-room_open_code link-pos-live">
+                    <div class="link-arrow">
+                        <div class="flex link-flex">
+                            <div class="flex-1">
+                                <div class="mb-04">
+                                    <!--<img src="<%__URL('PLATFORM_MAIN/goods/getGoodsDetailQr')+'?qr_type=3&mp_path=package/__plugin__/wx2b03c6e691cd7370/pages/live-player-plugin.html&room_id='+item.roomid%>" style="width: 100px;height: 100px">-->
+                                </div>
+                                <p>(直播间开播码)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <%if item.live_status == 101 || item.live_status == 103 || item.live_status == 105 || item.live_status == 106%>
+            <a href="javascript:;" class="btn-operation J-room_code link-pr" data-roomid="<%item.roomid%>"><span>直播间码</span>
+                <div class="J-room_code_html link-pos-live">
+                    <div class="link-arrow">
+                        <div class="flex link-flex">
+                            <div class="flex-1">
+                                <div class="mb-04">
+                                </div>
+                                <p>(直播间二维码)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <%/if%>
+        </td>
+    </tr>
+    <%/each%>
+</script>
+
+<script>
+    require(['util', 'tpl'], function (util, tpl) {
+        tpl.helper('__URLS',function(str){
+            return  __URLS(str)
+        })
+        tpl.helper('__URL',function(str){
+            return  __URL(str)
+        })
+        //搜索
+        $('.search').click(function () {
+            LoadingInfo(1);
+        })
+        //点击J-check_status实现切换效果
+        $('.J-status').click(function () {
+            var live_status = $(this).data('live_status');
+            $('#live_status').val(live_status);
+            $(this).addClass('active').siblings().removeClass('active');
+            LoadingInfo(1);
+        })
+
+        util.initPage(LoadingInfo);
+
+        function LoadingInfo(page_index) {
+            //直播信息
+            var live_info = $('#live_info').val();
+            $("#page_index").val(page_index);
+            var live_status = $('#live_status').val();
+            $.ajax({
+                type: "post",
+                url: "{$getMpLiveList}",
+                data: {
+                    "page_index": page_index,
+                    "live_info": live_info,
+                    "live_status": live_status,
+                },
+                success: function (data) {
+                    var html = '<tr><td class="h-200" colspan="8">暂无符合条件的数据记录</td></tr>';
+                    $('li[data-live_status=-1]').html('<a href="javascript:;" class="flex-auto-center">全部<br><span class="J-living">('+ data['count']['total_count'] +')</span></a>');
+                    $('li[data-live_status=101]').html('<a href="javascript:;" class="flex-auto-center">直播中<br><span class="J-living">('+ data['count']['living_count'] +')</span></a>');
+                    $('li[data-live_status=102]').html('<a href="javascript:;" class="flex-auto-center">未开始<br><span class="J-uncheck">('+ data['count']['unstart_count'] +')</span></a>');
+                    $('li[data-live_status=103]').html('<a href="javascript:;" class="flex-auto-center">已结束<br><span class="J-checked">('+ data['count']['ended_count'] +')</span></a>');
+                    $('li[data-live_status=104]').html('<a href="javascript:;" class="flex-auto-center">禁播<br><span class="J-advance">('+ data['count']['forbid_count'] +')</span></a>');
+                    $('li[data-live_status=105]').html('<a href="javascript:;" class="flex-auto-center">暂停中<br><span class="J-advance">('+ data['count']['stop_count'] +')</span></a>');
+                    $('li[data-live_status=106]').html('<a href="javascript:;" class="flex-auto-center">异常<br><span class="J-advance">('+ data['count']['error_count'] +')</span></a>');
+                    $('li[data-live_status=107]').html('<a href="javascript:;" class="flex-auto-center">已过期<br><span class="J-advance">('+ data['count']['past_count'] +')</span></a>');
+                    if(data.last_request_time){
+                        $('.J-update_info').html('上次同步时间为 ' + data.last_request_time);
+                    }
+                    if (tpl('live_list_tpl', data)) {
+                        $("#live_list").html(tpl('live_list_tpl', data));
+                    } else {
+                        $("#live_list").html(html);
+                    }
+                    $('#page').paginator('option', {
+                        totalCounts: data['total_count']  // 动态修改总数
+                    });
+                }
+            });
+        }
+        //更新直播间
+        $('body').on('click', '.J-update', function(){
+            $.ajax({
+                type: "post",
+                url: "{$isPlatformUpdateData}",
+                data: {
+                },
+                success: function (data) {
+                    if(data.code > 0){
+                        util.message(data['message'], 'success');
+                        LoadingInfo();
+                    }else{
+                        util.message(data['message'], 'danger');
+                    }
+                }
+            })
+        })
+        //经过的时候
+        $('body').on('mouseover', '.J-mplive_code', function(){
+            if($(this).attr('mark')){
+                return;
+            }
+            var url = 'http://mmbiz.qpic.cn/mmbiz_png/TrtTIQUXGiaVMXw7Iu2gbz94phLoORtYWIDz5XvAr0KsCs28gjNn9B7PiaDqYSkN5gEPngp1AiaZ68IwRYicyibLW7Q/0?wx_fmt=png';
+            window.img = '<div style="text-align:center;"><img id="img" style="width:120px;height:120px;" src="'+ url + '?' +  Math.random() +'"></div>';
+            var html = '<div class="link-arrow">';
+            html += '<div class="flex link-flex"> ';
+            html += '<div class="flex-1"> <div class="mb-04" text-align="center">'+ '<iframe src="javascript:parent.img;" frameBorder="0" scrolling="no" width="50%" height="50%"></iframe>' +'</div><p>(直播间开播码)</p></div>';
+            html += ' </div> </div>';
+            $(this).find('.J-room_open_code').html(html);
+            $(this).attr('mark', true);
+        })
+        //获取直播间码
+        $('body').on('mouseover', '.J-room_code', function(){
+            console.log($(this).attr('mark'));
+            if($(this).attr('mark')){
+                return;
+            }
+            var roomid = $(this).data('roomid');
+            var obj = this;
+            $.ajax({
+                'url':'{$getRoomCode}',
+                'type':'post',
+                'data':{'roomid':roomid},
+                'success':function(res){
+                    if(res['code'] > 0){
+                        var url = res.data.cdnUrl;
+                        window.img = '<div style="text-align:center;"><img id="img" style="width:120px;height:120px;" src="'+ url + '?' +  Math.random() +'"></div>';
+                        var html = '<div class="link-arrow">';
+                        html += '<div class="flex link-flex"> ';
+                        html += '<div class="flex-1"> <div class="mb-04" text-align="center">'+ '<iframe src="javascript:parent.img;" frameBorder="0" scrolling="no" width="50%" height="50%"></iframe>' +'</div><p>(直播间二维码)</p></div>';
+                        html += ' </div> </div>';
+                        $(obj).find('.J-room_code_html').html(html);
+                    }
+                }
+            })
+            $(this).attr('mark', true);
+        })
+        $('body').on('click', '.J-pick_mplive_goods', function () {
+            var roomid = $(this).data('roomid');
+            util.goodsDialog('url:'+'{$modalGoods}?roomid='+roomid,function(data){
+                var curr_str = JSON.stringify(data)
+                //将商品上传到小程序直播间
+                $.ajax({
+                    'url':'{$uploadMpliveGoods}',
+                    'type':'post',
+                    'data':{'goods_str':curr_str, 'roomid':roomid},
+                    'success':function(res){
+                        if(res.code > 0){
+                            util.message(res['message'], 'success', LoadingInfo(1));
+                        }else{
+                            util.message(res['message'], 'danger');
+                        }
+                    }
+                })
+            })
+        })
+        $('body').on('click', '.J-selected_goods', function () {
+            var roomid = $(this).data('roomid');
+            util.goodsDialog('url:'+'{$selectedGoods}'+'?roomid='+roomid,function(data){
+            })
+        })
+
+        function showImg(url) {
+
+            var frameid = 'frameimg' + Math.random();
+
+            console.debug(frameid);
+
+            console.debug(url);
+
+            window.img = '<img id="img" style="width:50%" src=\'' + url + '?' + Math.random() + '\' /><script>window.onload = function() { parent.document.getElementById(\'' + frameid + '\').height = document.getElementById(\'img\').height+\'px\'; }<' + '/script>';
+            document.getElementsByClassName('J-room1').innelHtml = '<iframe id="' + frameid + '" src="javascript:parent.img;" frameBorder="0" scrolling="no" width="50%"></iframe>';
+
+        }
+    })
+
+
+</script>
+{/block}

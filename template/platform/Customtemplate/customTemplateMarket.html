@@ -1,0 +1,207 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+{/block}
+{block name="main"}
+<form class="v-filter-container" id="select-page-form">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group" id="show_ports">
+
+                    <label class="v__control-label">适用端口：</label>
+                    <div class="v__controls select_port">
+                        {foreach name='searchPorts' item='vo' key='k'}
+                        {if $k == 0}
+                        <a class="btn ports btn-primary" data-value="0" data-type="1">不限</a>
+                        {else/}
+                        <a class="btn ports" data-value="{$vo.value}" data-type="0">{$vo.name}</a>
+                        {/if}
+                        {/foreach}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">模版类型：</label>
+                    <div class="v__controls select_type" id="show_types">
+                        <a class="btn btn-primary template_type" data-value="0" data-type="1">不限</a>
+                        {foreach name='searchTypes' item='vo' key='k'}
+                        <a class="btn btn-template template_type" data-value="{$vo.value}" data-type="0">{$vo.name}</a>
+                        {/foreach}
+                        {foreach name='pcSearchTypes' item='vo' key='k'}
+                        <a class="btn btn-pc-template template_type hidden" data-value="{$vo.value}" data-type="0">{$vo.name}</a>
+                        {/foreach}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>
+
+<form class="form-horizontal padding-15">
+    <div id="content_type">
+        <div class="template-list tab-content">
+            <div class="tab-pane fade in active">
+                <ul class="template-list-ul clearfix" data-type='1' id="template_list">
+                </ul>
+            </div>
+        </div>
+    </div>
+</form>
+
+<input type="hidden" id="page_index">
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+{/block}
+{block name="script"}
+<script>
+    require(['util'], function (util) {
+        // selectItem();
+        var template_type = 0;// 模板类型
+        var port_type = 0;// 端口
+        util.initPage(LoadingInfo);
+        $('#show_ports .ports').on('click',function(){
+            $(this).addClass('btn-primary').siblings().removeClass('btn-primary');
+            port_type = $(this).data('value')
+            if(port_type==4){
+                $('.btn-template').addClass('hidden')
+                $('.btn-pc-template').removeClass('hidden')
+            }else{
+                $('.btn-template').removeClass('hidden')
+                $('.btn-pc-template').addClass('hidden')
+            }
+
+            util.initPage(LoadingInfo);
+        });
+        $('#show_types .template_type').on('click',function(){
+            $(this).addClass('btn-primary').siblings().removeClass('btn-primary');
+            template_type = $(this).data('value');
+            util.initPage(LoadingInfo);
+        });
+        function LoadingInfo(page_index) {
+            $("#page_index").val(page_index);
+            $.ajax({
+                type: "post",
+                data: {
+                    "page_index": page_index,
+                    "page_size": 20,
+                    "template_type": template_type,
+                    "port": port_type
+                },
+                url: __URL("PLATFORM_MAIN/Customtemplate/customTemplateMarket"),
+                success: function (data) {
+                    console.log(data);
+                    var new_html = '<div class="tpl-list-item">';
+                    //     '<li>';
+                    // new_html += '<div class="template-list-pic"><img src="/public/static/images/customPC/blankTemplate.png" alt=""></div>';
+                    // new_html += '<p class="template-list-title">空白模板</p>';
+                    // new_html += '<p class="template-list-button"><a href="javascript:;" data-type="' + $(this).data('type') + '" data-type_name="空白模板" class="template-list-button-a J-create" data-port_type="'+port_type+'" >立即创建</a></p>';
+                    // new_html += '</li>';
+                    if (data['data'].length > 0) {
+                        for (var i = 0; i < data['data'].length; i++) {
+                            var temp_port = data["data"][i]['ports'] ? data["data"][i]['ports'] : 0;
+                            if (data['data'][i]['type'] != 6) {
+                                new_html += '<li>';
+                                new_html += '<div class="template-list-pic">';
+                                new_html += '<img src=' + data["data"][i]['template_logo'] + ' alt="">';
+                                new_html += '</div>';
+                                new_html += '<p class="template-list-title">' + data["data"][i]['template_name'] + '</p>';
+                                new_html += '<p class="template-list-button">';
+                                new_html += '<a href="javascript:void(0);" data-type="' + data["data"][i]['type'] + '" data-id="' + data["data"][i]['id'] + '" data-type_name="' + data["data"][i]['template_name'] + '" class="template-list-button-a J-create" data-port_type="' + temp_port + '"  data-code="' + data["data"][i]['code'] + '">立即创建</a>';
+                                new_html += '</p>';
+                                new_html += '</li>'
+                            }
+                        }
+                    }
+                    new_html += '</div>';
+
+                    $('.tpl-list-item').remove();
+                    $('#template_list').append(new_html);
+                    $('#page').paginator('option', {
+                        totalCounts: data['total_count'],  // 动态修改总数
+                        pageSize: 20 //动态修改每页条数
+                    });
+                }
+            });
+        }
+        $('#content_type').on('click', '.J-create', function () {
+            var id = $(this).data('id');//系统模板id
+            var type = $(this).data('type');
+            var type_name = $(this).data('type_name');
+            var port = $(this).data('port_type');
+            var template_code = $(this).data('code');
+            var html = '<form class="form-horizontal padding-15" id="addpage-form">' +
+                '<div class="form-group"><label class="col-md-3 control-label">模板类型</label><div class="col-md-8"><input class="form-control" value="'+type_name+'" disabled/></div></div>' +
+                '<div class="form-group"><label class="col-md-3 control-label"><span class="text-bright">*</span>页面名称</label><div class="col-md-8"><input class="form-control" name="page-name" placeholder="请输入页面名称"/></div></div>';
+            html += '<div class="form-group">' +
+                '<label class="col-md-3 control-label"><span class="text-bright">*</span>发布端口</label><div class="col-md-8"><div>' +
+                '<label class="checkbox-inline">';
+            if (port == 4) {
+                html += '<input type="checkbox" name="page-port" value="4" checked disabled>电脑端</label><label class="checkbox-inline">';
+            }else {
+                {foreach name="port_project" item="vo" key="k" }
+                html += '<input type="checkbox" name="page-port" value="{$k}">{$vo.name}</label><label class="checkbox-inline">';
+                {/foreach}
+            }
+            html +='</form>';
+            // 新增页面
+            util.confirm('新增页面',html,function(){
+                var form = this.$content.find('#addpage-form')
+                var pageName = form.find('input[name ="page-name"]').val();// 页面名称
+                var pageType = type// 页面类型
+                var ports = form.find('input[name ="page-port"]:checked')
+                var portArr = []
+                var pagePort = '' // 发布端口
+
+                $.each(ports,function(){
+                    portArr.push($(this).val())
+                })
+                pagePort = portArr.join(',')
+                if (pageName==''){
+                    util.message( '页面名称不能为空','danger');return false;
+                }
+                if (pagePort==''){
+                    util.message( '请勾选发布端口','danger');return false;
+                }
+
+                var data = {'id':id, 'template_name':pageName, 'type':pageType, 'ports':pagePort};
+                var url = "{:__URL('PLATFORM_MAIN/Customtemplate/createCustomTemplate')}";
+                if (port==4) {
+                    url = "PLATFORM_MAIN/addons/execute/addons/pcport/controller/pcport/action/createtemplate";
+                    data = {"template_type": pageType, "template_code": template_code, "name" : pageName};
+                }
+                $.ajax({
+                    type:"post",
+                    url: url,
+                    data: data,
+                    async:true,
+                    success:function (data) {
+                        if (port == 4) {
+                            if (data.error == 0) {
+                                util.message(data["message"], 'success',__URL('ADDONS_MAINpcCustomTemplate&code='+data.code+'&type='+data.type));
+                            } else {
+                                util.message(data["message"], 'danger');
+                            }
+                        } else {
+                            if (data["code"] > 0) {
+                                var id = data['data'];
+                                util.message( data["message"],'success', window.location.href = __URL("PLATFORM_MAIN/Customtemplate/customTemplate?id="+ id));
+                            }else{
+                                util.message( data["message"],'danger');
+                            }
+                        }
+                    }
+                });
+                return false
+            });
+            });
+    })
+</script>
+{/block}

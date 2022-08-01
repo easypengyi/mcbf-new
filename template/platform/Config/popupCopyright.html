@@ -1,0 +1,201 @@
+<ul class="nav nav-tabs v-nav-tabs pt-15" role="tablist" id="popup-copyright-tab">
+	<li role="presentation" class="active"><a href="#wapCopyright" style="width: auto;" aria-controls="wapCopyright"
+			role="tab" data-toggle="tab" class="flex-auto-center">移动端（公众号端、H5端）</a></li>
+</ul>
+<div class="tab-content" id="popup-copyright-content">
+	<div class="popup-dialog">
+		<div class="popup-view">
+			<div class="view-main">
+
+			</div>
+		</div>
+		<div class="popup-edit">
+			<div class="editor-inner">
+
+			</div>
+		</div>
+	</div>
+	<input type="hidden" id="modalData">
+</div>
+
+<style>
+	#popup-copyright-content .vui-copyright img {
+		max-width: 80%;
+		height: 40px;
+	}
+</style>
+
+<script type="text/html" id="tpl_popup_show_copyright">
+	<div class="vui-copyright style-<%style.showtype%>">
+		<%if params.showlogo == '1'%>
+		<img src="<%params.src%>">
+		<%/if%>
+		<span class="text"><%params.text%></span>
+	</div>
+</script>
+<script type="text/html" id="tpl_popup_edit_copyright">
+    <div class="form-editor-title">版权设置</div>
+    <%if params.readonly == '1'%>
+    <div class="alert alert-info alert-sm" role="alert">默认版本不支持修改相关参数</div>
+    <%/if%>
+    <div class="form-group">
+        <div class="col-sm-2 control-label">版权信息</div>
+        <div class="col-sm-10">
+            <label class="radio-inline"><input <%if params.readonly == '1'%>disabled<%/if%> type="radio" name="is_show" value="1" class="diy-bind" data-bind-child="params" data-bind="is_show" data-bind-init="true" <%if params.is_show=='1'||!params.is_show%>checked="checked"<%/if%>> 显示</label>
+            <label class="radio-inline"><input <%if params.readonly == '1'%>disabled<%/if%> type="radio" name="is_show" value="0" class="diy-bind" data-bind-child="params" data-bind="is_show" data-bind-init="true" <%if params.is_show=='0'%>checked="checked"<%/if%>> 隐藏</label>
+        </div>
+    </div>
+    <%if params.is_show != '0'%>
+    <div class="form-group">
+        <div class="col-sm-2 control-label">版权内容</div>
+        <div class="col-sm-10">
+            <input class="form-control input-sm diy-bind" data-bind-child="params" data-bind="text" data-placeholder="" placeholder="请填写版权内容" value="<%params.text%>" <%if params.readonly == '1'%>disabled<%/if%>/>
+            <div class="help-block">版权内容建议40个字符以内</div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-2 control-label">跳转链接</div>
+        <div class="col-sm-10">
+            <div class="input-group">
+                <input type="text" class="form-control input-sm diy-bind" <%if params.readonly == '1'%>disabled<%/if%> readonly data-bind-child="params" data-bind="linkurl" id="curl-<%itemid%>" placeholder="请选择链接(可不填)" value="<%params.linkurl%>" />
+                <span class="input-group-addon btn btn-default" data-toggle="selectUrl" data-disabled="<%if params.readonly == '1'%>disabled<%/if%>"  data-input="#curl-<%itemid%>">选择链接</span>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-2 control-label">启用LOGO</div>
+        <div class="col-sm-10">
+            <label class="radio-inline"><input type="radio" name="showlogo" value="1" class="diy-bind" data-bind-child="params" data-bind="showlogo" data-bind-init="true" <%if params.showlogo=='1'||!params.showlogo%>checked="checked"<%/if%> <%if params.readonly == '1'%>disabled<%/if%>> 是</label>
+            <label class="radio-inline"><input type="radio" name="showlogo" value="0" class="diy-bind" data-bind-child="params" data-bind="showlogo" data-bind-init="true" <%if params.showlogo=='0'||!params.showlogo%>checked="checked"<%/if%> <%if params.readonly == '1'%>disabled<%/if%>> 否</label>
+        </div>
+    </div>
+    <%if params.showlogo=='1' %>
+    <div class="form-group">
+        <div class="col-sm-2 control-label">选择样式</div>
+        <div class="col-sm-10">
+            <label class="radio-inline"><input type="radio" name="showtype" value="0" class="diy-bind" data-bind-child="style" data-bind="showtype" data-bind-init="true" <%if style.showtype=='0'||!style.showtype%>checked="checked"<%/if%> <%if params.readonly == '1'%>disabled<%/if%>> 样式一</label>
+            <label class="radio-inline"><input type="radio" name="showtype" value="1" class="diy-bind" data-bind-child="style" data-bind="showtype" data-bind-init="true" <%if style.showtype=='1'||!style.showtype%>checked="checked"<%/if%> <%if params.readonly == '1'%>disabled<%/if%>> 样式二</label>
+        </div>
+    </div>
+    <div class="form-items">
+        <div class="inner" id="form-items">
+            <div class="item" data-id="<%itemid%>">
+                <div class="item-image">
+                    <img src="<%params.src%>" onerror="this.src='/public/platform/images/custom/nopic.jpg';" class="changePath" id="pimg-<%itemid%>" />
+                </div>
+                <div class="item-form">
+                    <div class="input-group">
+                        <input type="text" class="form-control input-sm changePath diy-bind" data-bind-child="params" data-bind="src" id="cimg-<%itemid%>" placeholder="请选择图片" value="<%params.src%>"/>
+                        <span class="input-group-addon btn btn-default singlePicture" data-toggle="selectImg" data-disabled="<%if params.readonly == '1'%>disabled<%/if%>" data-input="#cimg-<%itemid%>" data-img="#pimg-<%itemid%>">选择图片</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>   
+    <%/if%>  
+    <%/if%>
+</script>
+
+<script>
+
+	require(['util', 'tpl', 'jquery-ui'], function (util, tpl) {
+		var modal = $('#modalData').data('set')
+		if(modal.mpCopyright){
+			$('#popup-copyright-tab').append('<li role="presentation"><a href="#mpCopyright" aria-controls="mpCopyright" role="tab" data-toggle="tab" class="flex-auto-center">小程序端</a></li>')
+		}
+		if(modal.appCopyright){
+			$('#popup-copyright-tab').append('<li role="presentation"><a href="#appCopyright" aria-controls="appCopyright" role="tab" data-toggle="tab" class="flex-auto-center">APP端</a></li>')
+		}
+		var tabtype = 'wapCopyright'// 默认wap
+		var copyrightData = modal[tabtype]
+		init()
+
+		$('#popup-copyright-tab a[data-toggle="tab"]').click(function () {
+			tabtype = $(this).attr('aria-controls')
+			copyrightData = modal[tabtype]
+			init()
+		})
+
+		function init() {
+			if(copyrightData){
+				copyrightData.params.readonly = modal.default_version
+			}
+			var showHtml = tpl("tpl_popup_show_copyright", copyrightData)
+			var editHtml = tpl("tpl_popup_edit_copyright", copyrightData)
+			$(".popup-view .view-main").html(showHtml)
+			$(".popup-edit .editor-inner").html(editHtml)
+			// 双向绑定数据
+			$(".popup-edit .editor-inner").find(".diy-bind").bind('input propertychange change', function () {
+				var _this = $(this);
+				var bind = _this.data("bind");
+				var bindchild = _this.data("bind-child");
+				var bindparent = _this.data("bind-parent");
+				var initEditor = _this.data("bind-init");
+				var value = '';
+				var tag = this.tagName;
+				if (tag == 'INPUT') {
+					value = _this.val();
+				} else if (tag == 'SELECT') {
+					value = _this.find('option:selected').val()
+				}
+				value = $.trim(value);
+				copyrightData[bindchild][bind] = value
+				if (bind == 'src') {
+					util.getImageInfo(copyrightData[bindchild][bind], function (w, h) {
+						copyrightData[bindchild].width = w
+						copyrightData[bindchild].height = h
+					})
+				}
+				$(".popup-view .view-main").html(tpl("tpl_popup_show_copyright", copyrightData))
+				if (initEditor) {
+					init()
+				}
+			})
+
+			// 选择图片
+			$('[data-toggle="selectImg"]').unbind('click').click(function () {
+				var _this = $(this);
+				if (_this.data('disabled') == 'disabled') {
+					return false
+				}
+				var cimg = _this.parents('.item').find('input' + _this.data('input'));
+				var pimg = _this.parents('.item').find('img' + _this.data('img'));
+				util.confirm('素材空间', modal.popupPicUrl[modal.portName], function (e) {
+					var data = this.$content.find('#selectedData').data();
+					if (util.isEmpty(data) || util.isEmpty(data['id'])) {
+						util.message('请选择图片')
+						return false;
+					}
+					var path = data.path[0];
+					cimg.val(path).change();
+					pimg.attr('src', path);
+				}, 'col-md-11')
+			})
+
+			// 选择链接
+			$('[data-toggle="selectUrl"]').unbind('click').click(function () {
+				var _this = $(this);
+				if (_this.data('disabled') == 'disabled') {
+					return false
+				}
+				var curlId = _this.data('input');
+				var elm = _this.parent().find('input' + curlId);
+
+				util.confirm('选择页面链接', 'url:' + __URL(modal.popupLinkUrl[modal.portName] + '&platform=' + modal.diff[modal.platform].name + '&template_type=' + modal.type), function (e) {
+					var link = this.$content.find('#selectedData').data('link')
+					if (util.isEmpty(link)) {
+						util.message('请选择链接')
+						return false;
+					}
+					elm.val(link).change();
+				}, 'large', function () {
+					this.$content.find('#platformName').val(modal.platform)
+					this.$content.find('#portName').val(modal.portName)
+				})
+			})
+
+		}
+
+	})
+
+</script>

@@ -1,0 +1,636 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+<style>
+.tpl-box{
+  display: flex;
+  padding-right: 20px;
+  margin: 0 -20px;
+  flex-wrap: wrap;
+}
+.tpl-box .tpl-item{
+  border: 1px solid #eee;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 286px;
+  margin: 10px 20px;
+	margin-right: 0px;
+	position: relative;
+}
+.tpl-box .item-head{
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  background: #F9F9FB;
+  height: 40px;
+}
+.tpl-box .item-head .item-head-title{
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+.tpl-box .item-head .item-head-title .right-title{
+  color: #007fbb;
+  font-weight: 400;
+}
+.tpl-box .item-box{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 0;
+  position: relative;
+  padding-bottom: 177.866%;
+}
+
+.tpl-box .item-box>.box{
+	width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.tpl-box .item-box .pic{
+	width: 100%;
+  height: 100%;
+}
+.tpl-box .item-box .item-box-btn-group .btn{
+  height: 40px;
+  line-height: 26px;
+  margin: 0 14px;
+}
+.tpl-box .mask{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 80px;
+	z-index: 1;
+	background: rgba(0,0,0,.5);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: .3s;
+}
+.tpl-box .mask .message{
+    color: #fff;
+    font-size: 16px;
+    margin: 10px 0;
+}
+.tpl-box .mask .mask-btn-group{
+    display: flex;
+    flex-direction: column;
+}
+.tpl-box .mask .mask-btn-group .btn{
+    color: #fff;
+    margin: 10px 0;
+    width: 140px;
+    padding: 10px;
+}
+.tpl-box .tpl-item:hover .mask{
+	opacity: 1;
+}
+.tpl-box .mask .mask-btn-group .btn.btn-custom{
+   
+}
+.tpl-box .mask .mask-btn-group .btn.btn-use{
+    
+}
+.tpl-box .mask .mask-btn-group .btn.btn-del{
+    
+}
+
+.tpl-box .item-foot{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 10px 10px;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+    z-index: 2;
+}
+.tpl-box .item-foot .item-foot-cell{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 30px;
+}
+.tpl-box .item-foot .item-foot-cell .cell-left{
+	display: flex;
+  align-items: center;
+}
+.tpl-box .item-foot .item-foot-cell .cell-right{
+	color: #999;
+}
+.tpl-box .item-foot .item-foot-cell .cell-right.text-useing{
+	color: #01BB02;
+}
+.tpl-box .item-foot .item-foot-cell .text{}
+.tpl-box .item-foot .item-foot-cell .imgs{
+    display: flex;
+    flex-wrap: nowrap;
+}
+.tpl-box .item-foot .item-foot-cell .imgs img{
+    width: 20px;
+    height: 20px;
+    margin: 0 3px;
+}
+.tpl-box .item-foot .item-foot-cell .text{}
+.tpl-box .item-add .item-head{
+	background: transparent;
+}
+.tpl-box .box-add{
+	  width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+.tpl-box .box-add .box-add-icon{
+	  width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 50px;
+    border: 1px dashed #999;
+    margin: 10px;
+    color: #999;
+    cursor: pointer;
+}
+.tpl-box .box-add .box-add-text{}
+</style>
+{/block}
+{block name="main"}
+<form class="v-filter-container" id="page-form">
+  <div class="filter-fields-wrap">
+    <div class="filter-item clearfix">
+      <div class="filter-item__field">
+        <div class="v__control-group">
+          <label class="v__control-label">页面名称</label>
+          <div class="v__controls">
+              <input type="text" name="name" class="v__control_input" placeholder="请输入页面名称" id="template_name">
+          </div>
+        </div>
+        <div class="v__control-group">
+          <label class="v__control-label">页面类型</label>
+          <div class="v__controls">
+            <select name="type" class="v__control_input" id="template_type">
+                {volist name="searchTypes" id="vo"}
+                    <option value="{$vo.value}">{$vo.name}</option>
+                {/volist}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="filter-item clearfix">
+      <div class="filter-item__field">
+        <div class="v__control-group">
+          <label class="v__control-label"></label>
+          <div class="v__controls">
+            <a class="btn btn-primary btn-search search"><i class="icon icon-search"></i>搜索</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<form class="form-horizontal padding-15">
+    <div id="content_type">
+        <ul class="nav nav-tabs v-nav-tabs" role="tablist">
+            {foreach name='searchPorts' item='vo' key='k'}
+            <li role="presentation" {if condition="$k eq 0"}class="active"{/if}>
+            <!--        <a href="#{$vo.value}" aria-controls="{$vo.value}" role="tab" data-toggle="tab" class="flex-auto-center sys_template_list" data-type="{$vo.value}">{$vo.name}</a>-->
+            <a href="javascript:void(0);" class="flex-auto-center template_list" data-port="{$vo.value}">{$vo.name}<br>
+                <span class='template-count' id="count_{$vo.value}">({$vo.count ?? 0})</span>
+            </a>
+            </li>
+            {/foreach}
+        </ul>
+        <div class="tpl-box" id="tpl-list">
+            <div class="tpl-item item-add" id="add_template">
+                <div class="item-head"></div>
+                <div class="item-box">
+                    <div class="box">
+                        <div class="box-add">
+					<div class="box-add-icon" id="add-page">
+						<i class="icon icon-add"></i>
+                            </div>
+                            <div class="box-add-text">新增页面</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="tpl-page" class="pagination pull-right"></ul>
+</nav>
+
+{include file='platform/Customtemplate/customEditTemplate'}
+{include file='platform/Customtemplate/customViewTemplate'}
+{/block}
+{block name="script"}
+<script>
+require(['util','custom','tpl'], function (util,custom,tpl) {
+	util.initPage(LoadingInfo,'tpl-page');//初始化
+    $('.template_list').on('click',function(){
+        util.initPage(LoadingInfo,'tpl-page');//初始化
+        $(this).parent('li').addClass('active').siblings().removeClass('active');
+        util.initPage(LoadingInfo());
+    });
+
+    //搜索
+    $('.btn-search').on('click', function () {
+        LoadingInfo(1)
+    })
+    var html = '<form class="form-horizontal padding-15" id="addpage-form">' +
+    '<div class="form-group"><label class="col-md-3 control-label">页面名称</label><div class="col-md-8"><input class="form-control" name="page-name" placeholder="请输入页面名称"/></div></div><div class="form-group"><label class="col-md-3 control-label">页面类型</label>' +
+    '<div class="col-md-8"><select name="page-type" class="form-control">';
+        {foreach name="searchTypes" item="v"}
+            {neq name="v['value']" value="0"}
+                html += '<option value="{$v.value}">{$v.name}</option>';
+            {/neq}
+        {/foreach}
+        html += '</select></div></div>';
+        html += '<div class="form-group">' +
+        '<label class="col-md-3 control-label">发布端口</label><div class="col-md-8"><div>' +
+        '<label class="checkbox-inline">';
+        {foreach name="port_project" item="vo" key="k" }
+            html += '<input type="checkbox" name="page-port" value="{$k}">{$vo.name}</label><label class="checkbox-inline">';
+        {/foreach}
+        html +='</form>';
+	// 新增页面
+	$('#add-page').click(function(){
+		util.confirm('新增页面',html,function(){
+			var form = this.$content.find('#addpage-form')
+			var pageName = form.find('input[name ="page-name"]').val();// 页面名称
+			var pageType = form.find('select[name ="page-type"]').val()// 页面类型
+			var ports = form.find('input[name ="page-port"]:checked')
+			var portArr = []
+			var pagePort = '' // 发布端口
+			$.each(ports,function(){
+				portArr.push($(this).val())
+			})
+			pagePort = portArr.join(',')
+            if (pageName==''){
+                util.message( '页面名称不能为空','danger');return false;
+            }
+            if (pagePort==''){
+                util.message( '页面至少勾选一个应用端口','danger');return false;
+            }
+			// console.log(pageName,pageType,pagePort);return;
+			$.ajax({
+				type:"post",
+				url:"{:__URL('PLATFORM_MAIN/Customtemplate/createCustomTemplate')}",
+				data:{
+					'template_name':pageName,
+					'type':pageType,
+					'ports':pagePort,
+				},
+				async:true,
+				success:function (data) {
+					if (data["code"] > 0) {
+						var id = data['data'];
+						util.message( data["message"],'success', window.location.href = __URL("PLATFORM_MAIN/Customtemplate/customTemplate?id="+ id));
+					}else{
+						util.message( data["message"],'danger');
+					}
+				}
+			});
+			return false
+		},'',function(){
+			// 创建之后的方法，可填充数据
+			// console.log(this.$content)
+		})
+	});
+
+	// 前往装修
+	$('#tpl-list').on('click','.btn-custom',function(){
+		var id = $(this).data('id');
+		var is_new = $(this).data('is_new');
+		var ports = $(this).data('ports');//1h5 2小程序 3app
+		//判断装修的template_version 0旧模板 1新模板 对应跳转路径
+        if (is_new == 1){
+            window.location.href = __URL("PLATFORM_MAIN/Customtemplate/customTemplate" +
+                "?id=" + id
+                // "&start_create_date=" + start_create_date +
+            );
+        }else{
+            switch (parseInt(ports)) {
+                case 1:
+                    window.location.href = __URL("PLATFORM_MAIN/config/customtemplate?id=" + id);
+                    break;
+                case 2:
+                    window.location.href = __URL('ADDONS_MAINminiProgramCustom&id=' + id);
+                    break;
+                case 3:
+                    window.location.href = __URL('ADDONS_MAINdecoration&id=' + id);
+                    break;
+            }
+        }
+	});
+
+	// 使用模板
+	$('#tpl-list').on('click','.btn-use',function(){
+        var id = $(this).data('id');
+        var is_new = $(this).data('is_new');
+        var ports = $(this).data('ports');//1h5 2小程序 3app
+        var type = $(this).data('type');//1:商城首页 2:店铺首页  3:商品详情页 4:会员中心 5:分销中心，6:自定义页面,7:底部 8:版权信息 9:积分商城首页 11:弹窗
+        util.alert('是否使用此模板？',function(){
+            $.ajax({
+                type: "post",
+                url: __URL("PLATFORM_MAIN/Customtemplate/useCustomTemplate"),
+                async: true,
+                data: {
+                    "id": id,
+                    "is_new": is_new,
+                    "ports": ports,
+                    "type": type
+                },
+                success: function (data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"], 'success', LoadingInfo($('#page_index').val()));
+                    } else {
+                        util.message(data["message"], 'danger', LoadingInfo($('#page_index').val()));
+                    }
+                }
+            })
+        });
+	});
+
+    // 应用端口
+    $('#tpl-list').on('click','.btn-ports',function(){
+        var id = $(this).data('id');
+        var is_new = $(this).data('is_new');
+        var type = $(this).data('type');
+        var template_name = $(this).data('template_name');
+        var type_name = $(this).data('type_name');
+        var ports = $(this).data('ports');
+        var in_use = $(this).data('in_use')// 是否使用中
+        ports = ports.toString();
+        // var arrayPorts = ports.split(",");
+        var port_html = '';
+        port_html = '<form class="form-horizontal padding-15" id="usepage-form">' +
+            '<div class="form-group"><label class="col-md-3 control-label"><span class="text-bright">*</span>页面名称</label><div class="col-md-8 form-control-static"><input class="form-control" name="page-name" placeholder="请输入页面名称" value="'+template_name+'"/></div></div>' +
+            '<div class="form-group"><label class="col-md-3 control-label">页面类型</label>' +
+            '<div class="col-md-8 form-control-static">'+type_name+'</div></div>' +
+            '<div class="form-group">' +
+            '<label class="col-md-3 control-label"><span class="text-bright">*</span>应用端口</label><div class="col-md-8"><div>' +
+            '<label class="checkbox-inline">';
+            if(ports.indexOf("1") != -1){
+                port_html += '<input type="checkbox" name="page-port" value="1" checked>公众号、H5</label><label class="checkbox-inline">';
+            }else{
+                port_html += '<input type="checkbox" name="page-port" value="1" >公众号、H5</label><label class="checkbox-inline">';
+            }
+            if(ports.indexOf("2") != -1){
+                port_html += '<input type="checkbox" name="page-port" value="2" checked>小程序</label><label class="checkbox-inline">';
+            }else{
+                port_html += '<input type="checkbox" name="page-port" value="2">小程序</label><label class="checkbox-inline">';
+            }
+            if(ports.indexOf("3") != -1){
+                port_html += '<input type="checkbox" name="page-port" value="3" checked>APP</label><label class="checkbox-inline">';
+            }else{
+                port_html += '<input type="checkbox" name="page-port" value="3">APP</label><label class="checkbox-inline">';
+            }
+              port_html +=  '</div></div></div></form>';
+        util.confirm('编辑页面信息',port_html, function(){
+                var form = this.$content.find('#usepage-form');
+                var ports = form.find('input[name ="page-port"]:checked');
+                var template_name = form.find('input[name ="page-name"]').val();
+                var portArr = []
+                var pagePort = '' // 发布端口
+                $.each(ports,function(){
+                    portArr.push($(this).val())
+                })
+                pagePort = portArr.join(',');
+                if ( pagePort==' '||  pagePort==''){
+                    util.message( '应用端口不能为空','danger');return false;
+                }
+                if (template_name == '') {
+                    util.message( '页面名称不能为空','danger');return false;
+                }
+                $.ajax({
+                    type:"post",
+                    url:"{:__URL('PLATFORM_MAIN/Customtemplate/setCustomTemplatePorts')}",
+                    data:{
+                        'id':id,
+                        'is_new':is_new,
+                        'type':type,
+                        'ports':pagePort,
+                        'in_use':in_use,
+                        'template_name':template_name,
+                    },
+                    async:true,
+                    success:function (data) {
+                        if (data["code"] > 0) {
+                            var id = data['data'];
+                            // util.message( data["message"],'success', window.location.href = __URL("PLATFORM_MAIN/Customtemplate/customTemplate?id="+ id));
+                            util.message( data["message"],'success', LoadingInfo($('#page_index').val()));
+                        }else{
+                            util.message( data["message"],'danger');
+                        }
+                    }
+                });
+            },'',function(){
+                // 创建之后的方法，可填充数据
+                // console.log(this.$content)
+            })
+
+    });
+
+	// 删除模板
+	$('#tpl-list').on('click','.btn-del',function(){
+        var id = $(this).data('id');
+        var is_new = $(this).data('is_new');
+        var ports = $(this).data('ports');//1h5 2小程序 3app
+        var type = $(this).data('type');//1:商城首页 2:店铺首页  3:商品详情页 4:会员中心 5:分销中心，6:自定义页面,7:底部 8:版权信息 9:积分商城首页 11:弹窗
+        util.alert('是否删除此模板？',function(){
+            $.ajax({
+                type: "post",
+                url: __URL("PLATFORM_MAIN/Customtemplate/deleteCustomTemplate"),
+                async: true,
+                data: {
+                    "id": id,
+                    "is_new": is_new,
+                    "ports": ports,
+                    "type": type
+                },
+                success: function (data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"], 'success', LoadingInfo($('#page_index').val()));
+                    } else {
+                        util.message(data["message"], 'danger', LoadingInfo($('#page_index').val()));
+                    }
+                }
+            })
+        });
+	});
+
+	//初始化
+	function LoadingInfo(page_index) {
+		// var template_type = $('li[role=presentation].active').find('a').attr('aria-controls');
+		$("#page_index").val(page_index);
+        var port = $('li[role=presentation].active').find('a').attr('data-port');
+        $.ajax({
+			data: {
+				"page_index": page_index,
+				"page_size": $("#showNumber").val(),
+				"template_name": $("#template_name").val(),
+				"template_type": $("#template_type").val(),
+				"ports": port
+			},
+			type: "post",
+			url: __URL("PLATFORM_MAIN/Customtemplate/customtemplatelist"),
+			success: function (data) {
+                $.each(data.count,function(port,k){
+                    $("#count_"+port).html('('+k+')');
+                })
+			    var html = "";
+                // 初始化装修模板
+                custom.init({
+                  tpl: tpl,
+                  attachurl:'PLATFORM_IMG/custom/default/'
+                })
+                util.tips();
+                $('#tpl-page').paginator('option', {
+                  totalCounts: data['total_count']  // 动态修改总数
+                });
+
+                if (data['data'].length > 0) {
+                    for (var i = 0; i < data['data'].length; i++) {
+                        var curr = data['data'][i];
+
+                        var tplHtml = '';// 模板html
+                        var isSearchTop = false;
+                        var tplData = curr.template_data?JSON.parse(curr.template_data):{}
+                        if(tplData&&tplData.items&&!curr.preview_img){
+                          var itemIndex = 0
+                          $.each(tplData.items, function(itemid, item){
+                            if(itemIndex<5){
+                              if (item.id == "search_top") {
+                                isSearchTop = true;
+                              }
+
+                              if(item.id){
+                                var newItem = $.extend(true, {}, item);
+                                newItem.itemid = itemid;
+                                tplHtml += tpl("tpl_show_" + item.id, newItem)
+                              }
+                            }
+                            itemIndex+=1
+                          })
+                        }
+
+                        //模板类型
+                        var type_name = '商城首页';
+                        switch (parseInt(curr.type)) {
+                            case 1:
+                                type_name = '商城首页';
+                                break;
+                            case 2:
+                                type_name = '店铺首页';
+                                break;
+                            case 3:
+                                type_name = '商品详情';
+                                break;
+                            case 4:
+                                type_name = '会员中心';
+                                break;
+                            case 5:
+                                type_name = '分销中心';
+                                break;
+                            case 6:
+                                type_name = '自定义页面';
+                                break;
+                            case 9:
+                                type_name = '积分商城首页';
+                                break;
+                            default:
+                                type_name = '商城首页';
+                        }
+                        //背景图
+                        var background_img = curr.preview_img ? curr.preview_img : '/public/platform/static/images/custom-tpl-default.png';
+                        var bgHtml = '<img class="pic" src="'+background_img+'"/>'
+                        //端口
+                        var arrayPorts = curr.ports.split(",");
+                        //端口图标
+                        var ports_img = '';
+                        for (var pi=0; pi<arrayPorts.length; pi++){
+                            switch (parseInt(arrayPorts[pi])) {
+                                case 1:
+                                    ports_img += '<img src="/public/platform/static/images/custom-icon-wx-mini.png" title="公众号端"/><img src="/public/platform/static/images/custom-icon-h5-mini.png" title="H5端"/>';
+                                    break;
+                                case 2:
+                                    ports_img += '<img src="/public/platform/static/images/custom-icon-mp-mini.png" title="小程序端"/>';
+                                    break;
+                                case 3:
+                                    ports_img += '<img src="/public/platform/static/images/custom-icon-app-mini.png" title="APP端"/>';
+                                    break;
+                            }
+                        }
+                        //使用状态
+                        var use_status_html = '<div class="cell-right">未使用</div>';
+                        if (parseInt(curr.in_use) == 1){
+                            use_status_html = '<div class="cell-right text-useing">使用中</div>';
+                        }
+                        //是否新模板
+                        var is_new = parseInt(curr.is_new) == 1 ? 1:0;
+
+                        // var padTop = isSearchTop ? 'padding-top:50px':''
+
+                        if(!tplHtml){
+                          tplHtml = bgHtml
+                        }
+
+                        html += '<div class="tpl-item tpl-list-item"><div class="item-head"><div class="item-head-title">' +
+                          '<span>'+curr.template_name +'</span>' +
+                          '<span class="right-title">'+type_name+'</span>' +
+                          '</div>' +
+                          '</div>' +
+                          '<div class="item-box"><div class="box">'+tplHtml+'</div></div>' +
+                          '<div class="item-foot"><div class="item-foot-cell"><div class="cell-left"><div class="text">使用端口：</div>' +
+                          '<div class="imgs">' + ports_img + '</div></div>' + use_status_html + '</div><div class="item-foot-cell"><div class="cell-left">' +
+                          '<div class="text">更新时间：</div>' +
+                          '<div>'+ timeStampTurnTime(curr.update_time) + '</div>' +
+                          '</div></div></div>' +
+                          '<div class="mask"><div class="mask-btn-group">';
+                          if (parseInt(curr.in_use) == 1){
+                              html += '<a href="javascript:;" class="btn btn-primary btn-custom" data-id="'+ curr.id+'" data-is_new="'+ is_new +'" data-ports="'+curr.ports+'" data-type="'+curr.type+'">装修</a>';
+                          }else{
+                              if (parseInt(curr.type)==6){
+                                  html += '<a href="javascript:;" class="btn btn-info btn-operation copy" data-clipboard-text="' + __URLS("APP_MAIN/packages/mall/diy" ) +'?page_id='+ curr.id + '">复制链接</a>';
+                                  util.copy();
+                              }else{
+                                  html += '<a href="javascript:;" class="btn btn-info btn-use" data-id="'+ curr.id+'" data-is_new="'+ is_new +'" data-ports="'+curr.ports+'" data-type="'+curr.type+'">使用该模板</a>';
+                              }
+
+                              html += '<a href="javascript:;" class="btn btn-primary btn-custom" data-id="'+ curr.id+'" data-is_new="'+ is_new +'" data-ports="'+curr.ports+'" data-type="'+curr.type+'">装修</a>' +
+                                  '<a href="javascript:;" class="btn btn-danger btn-del" data-id="'+ curr.id+'" data-is_new="'+ is_new +'" data-ports="'+curr.ports+'" data-type="'+curr.type+'">删除</a>';
+                          }
+                          /*新模板才有应用端口*/
+                          if (parseInt(is_new) == 1){
+                              html += '<a href="javascript:;" class="btn btn-success btn-ports" data-id="'+ curr.id+'" data-is_new="'+ is_new +'" data-ports="'+curr.ports+'" data-type="'+curr.type+'" data-template_name="'+ curr.template_name +'" data-type_name="'+ type_name +'" data-in_use="'+ parseInt(curr.in_use) +'" >编辑页面信息</a>';
+                          }
+                          html += '</div></div></div>';
+                    }
+                }
+                $('#tpl-list .tpl-item').remove(".tpl-list-item")
+                $("#tpl-list").append(html);
+			}
+		});
+	}
+})
+</script>
+{/block}

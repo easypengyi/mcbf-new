@@ -1,0 +1,652 @@
+{block name="resources"}
+
+{/block}
+{block name="main"}
+
+<!-- page -->
+
+<form class="form-horizontal form-validate widthFixedForm">
+    <div class="form-group">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>订单弹幕</label>
+        <div class="col-md-5">
+            <div class="switch-inline">
+                <input type="checkbox" id="state" name="state" value="{$barrage_info.state}" {if condition="$barrage_info.state eq 1"}checked="checked"{/if}>
+                <label for="state"></label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group  is_show {if $barrage_info.state eq 0}hide{/if}">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>弹幕类型</label>
+        <div class="col-md-5">
+            <label class="radio-inline">
+                <input type="radio"  name="type"  class="type" value="1" {if !$barrage_info || $barrage_info.type==1}checked{/if}> 真实数据
+            </label>
+            <label class="radio-inline">
+                <input type="radio" name="type" class="type" value="2" {if $barrage_info.type == 2}checked="checked"{/if}> 虚拟数据
+            </label>
+            <label class="radio-inline">
+                <input type="radio" name="type" class="type" value="3" {if $barrage_info.type == 3}checked="checked"{/if}> 真实+虚拟数据
+            </label>
+        </div>
+    </div>
+    <div class="form-group is_show {if $barrage_info.state eq 0}hide{/if}">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>展示模块</label>
+        <div class="col-md-5">
+            <label class="radio-inline">
+                <input type="radio"  name="use_place" value="1" {if !$barrage_info || $barrage_info.use_place==1}checked{/if}> 商城全局
+            </label>
+            <label class="radio-inline">
+                <input type="radio" name="use_place" value="2" {if $barrage_info.use_place == 2}checked="checked"{/if}> 商城首页
+            </label>
+            <label class="radio-inline">
+                <input type="radio" name="use_place" value="3" {if $barrage_info.use_place == 3}checked="checked"{/if}> 商城首页+商品详情
+            </label>
+            <p class="help-block">订单弹幕会在选中的模块页面中展示</p>
+        </div>
+    </div>
+
+    <div class="form-group is_show {if $barrage_info.state eq 0}hide{/if}">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>弹幕停留时间</label>
+        <div class="col-md-5">
+            <div class="input-group w-200">
+                <input type="number" class="form-control valid" id="show_time" name="show_time" value="{$barrage_info.show_time}" min="1" required="">
+                <div class="input-group-addon">秒</div>
+            </div><span id="order_buy_close_time-error" class="help-block-error"></span>
+            <p class="help-block">每个弹幕信息在屏幕的停留时间</p>
+        </div>
+    </div>
+
+    <div class="form-group  is_show {if $barrage_info.state eq 0}hide{/if}">
+        <label class="col-md-2 control-label"><span class="text-bright">*</span>弹幕规则</label>
+        <div class="col-lg-8">
+            <div class="form-table-group" style="width: auto">
+                <table class="table table-bordered table-auto-center table_rule">
+                    <tr>
+                        <td class="w-300">时段</td>
+                        <td class="w-300">投放量</td>
+                        <td class="w-300">投放间隔区间</td>
+                        <td class="w-300">操作</td>
+                    </tr>
+                    {foreach name="rule_info" item="vo" key="k"}
+                    <tr class="rule_set" id="rule_set{$k+1}" data-rule-id="{$k+1}">
+                        <td>
+                            <div class="v-datetime-input-control">
+                                <label for="effect_time{$k+1}">
+                                    <input type="text" data-nums="1" class="form-control choice_time" data-rule-id="{$k+1}" id="effect_time{$k+1}" value="{$vo.time}" placeholder="请选择时间" data-types="time"  autocomplete="off" name="effect_time" required>
+                                    <i class="icon icon-calendar"></i>
+                                    <input type="hidden" id="start_time{$k+1}" name="start_time" value="{$vo.start_time}">
+                                    <input type="hidden" id="end_time{$k+1}" name="end_time" value="{$vo.end_time}">
+<!--                                    <input type="hidden" id="rule_id1" name="rule_id" value="{$rule_info[0]['rule_id']}">-->
+                                    <input type="hidden" id="rule_id{$k+1}" name="rule_id" value="{$vo['rule_id']}">
+                                </label>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="input-group">
+<!--                                <input type="number" class="form-control virtual_num" min="1" step="1" name="virtual_num" id="virtual_num1" value="{$rule_info[0]['virtual_num']}" data-temp="">-->
+                                <input type="number" class="form-control virtual_num" step="1" name="virtual_num" id="virtual_num{$k+1}" {if $barrage_info.type eq 1} value="" disabled {else /} value="{$vo['virtual_num']}"{/if}  data-temp="">
+                                <span class="input-group-addon">条</span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="input-group">
+                                <span class="input-group-addon">0至</span>
+<!--                                <input type="number" class="form-control" min="1" step="1" name="space_end_time" id="space_end_time1" value="{$rule_info[0]['space_end_time']}">-->
+                                <input type="number" class="form-control" step="1" name="space_end_time" id="space_end_time{$k+1}" value="{$vo['space_end_time']}">
+                                <span class="input-group-addon">秒</span>
+                            </div>
+                        </td>
+
+                        <td>
+                            {if !$vo.is_default}
+                            <a href="javascript:void(0);"  class="text-danger del" data-rule-id="">删除</a>
+                            {/if}
+                        </td>
+                    </tr>
+                    {/foreach}
+                    <tr class="last-tr">
+                        <td colspan="4" class="text-left">
+                            <a href="javascript:;" class="text-primary addRule">增加一个规则</a>
+                        </td>
+                    </tr>
+                    <input type="hidden" id="load_rule_nums" name="load_rule_nums" value="{$rule_info|count}">
+                </table>
+            </div>
+            <p class="help-block">真实数据不允许设置投放量，根据真实订单情况按投放间隔推送。</p>
+        </div>
+    </div>
+
+<!--    <div class="form-group is_show {if $barrage_info.state eq 0}hide{/if}">-->
+<!--        <label class="col-md-2 control-label"></label>-->
+<!--        <div class="col-md-8">-->
+<!--            <div class="help-block mb-0">订单弹幕会在选中的模块页面中展示</div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+    <div class="form-group is_show circle_barrage {if $barrage_info.state == 0}hide{/if}">
+        <label class="col-md-2 control-label">循环投放</label>
+        <div class="col-md-5">
+            <div class="switch-inline">
+                <input type="checkbox" id="is_circle" name="is_circle" {if condition="($barrage_info.type neq 1) AND ($barrage_info.is_circle neq 0)"}checked{/if}>
+                <label for="is_circle" ></label>
+            </div>
+            <div class="help-block mb-0">开启后如果设置的某个时段投放量已经投放完，则系统会重新获取一批新的数据继续投放，直至时段结束</div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-md-2 control-label"></label>
+        <div class="col-md-8">
+            <button class="btn btn-primary add" type="submit">保存</button>
+        </div>
+    </div>
+    <input type="hidden" id="config_id" name="config_id" value="">
+    <input type="hidden" id="is_circle_statue" name="is_circle_statue" value="">
+</form>
+
+<!-- page end -->
+{/block}
+
+
+{block name="script"}
+<script>
+    require(['util'],function(util){
+
+        //处理真实数据的投放量
+        function clearTrueDataVirtual() {
+            $("input[id^=virtual_num]").each(function (i,e) {
+                var temp_vir_num =  $(this).val()
+                console.log(temp_vir_num)
+                $(this).attr('data-temp',temp_vir_num);
+                $(this).attr('value','');
+            });
+        }
+        //恢复投放量数据
+        function recoveryTrueDataVirtual() {
+            $("input[id^=virtual_num]").each(function (i,e) {
+                var temp_vir_num =  $(this).data('temp')
+                $(this).attr('value',temp_vir_num);
+            });
+        }
+
+        $("#state").change(function () {
+            var is_state = $(this).is(':checked') ? 1 : 0;
+            <!--开启-->
+            if(is_state==1){
+                $(".is_show").removeClass("hide");
+                var type = $(':radio[name="type"]:checked').val();
+                if (type == 1) {
+                    $(".circle_barrage").addClass("hide");
+                    //投放量禁止
+                    $(".virtual_num").attr("disabled","disabled");
+                }
+            } else {
+                $(".is_show").addClass("hide");
+                //投放量允许
+                $(".virtual_num").removeAttr("disabled");
+            }
+        })
+
+        //弹幕类型选择 - 默认的第一个
+        $('.type').change(function () {
+            var type_val = $(this).val();
+            // 真实数据不能有(循环，投放量)
+            if ( type_val == 1) {
+                //todo... 投放量为空,赋值他的data-temp，再次切换就把date-temp赋值回来
+                $(".circle_barrage").removeClass("show");
+                $(".circle_barrage").addClass("hide");
+                //投放量禁止
+                $(".virtual_num").attr("disabled","disabled");
+                // 处理投放量
+                clearTrueDataVirtual()
+            } else {
+                $(".circle_barrage").removeClass("hide");
+                $(".circle_barrage").addClass("show");
+                //投放量允许
+                $(".virtual_num").removeAttr("disabled");
+                recoveryTrueDataVirtual()
+            }
+/*            //弹幕规则 - 投放量都禁止
+            var obj = $(".table_rule tbody .rule_set");
+            var nums = 0;
+            for(var i=0; i < obj.length;i++) {
+                nums++;
+                if (type_val == 1) {
+                    obj.eq(i).find('input[name="virtual_num'+nums+'"]').val();
+                    obj.eq(i).find('input[name="virtual_num'+nums+'"]').attr("disabled","disabled");
+                } else {
+                    obj.eq(i).find('input[name="virtual_num'+nums+'"]').removeAttr("disabled");
+                }
+            }*/
+        })
+
+        //初始化记录 is_circle状态
+        var temp_is_circle = $("#is_circle").is(':checked') ? 1 : 0;
+        $("#is_circle_statue").val(temp_is_circle)
+        /*
+                util.initPage(getOrderBarrageSetting);
+                function getOrderBarrageSetting(){
+                    $.ajax({
+                        type : "GET",
+                        url : "{$getOrderBarrageRuleUrl}",
+                        async : true,
+                        success : function(data) {
+                            console.log(data)
+                            if (data.code >0) {
+                                var data = data.data;
+                                var nums = 0;
+                                for (var i = 0; i < data.length; i++){
+                                    nums++;
+                                    var html = '<tr class="rule_set" id="rule_set'+ nums +'">';
+                                    html += '<td><div class="v-datetime-input-control"><label for="effect_time'+nums+'">';
+                                    html += '<input type="text"  value="' + data[i]["time"]+ '"  data-nums="'+ nums +'" class="form-control" id="effect_time'+nums+'" placeholder="请选择时间" data-types="time"  autocomplete="off" name="effect_time"  required>';
+                                    html += '<i class="icon icon-calendar"></i>';
+                                    html += '<input type="hidden" id="start_time'+nums+'" name="start_time">';
+                                    html += '<input type="hidden" id="end_time'+nums+'" name="end_time">';
+                                    html += '<input type="hidden" id="rule_id'+nums+'" name="rule_id" >';
+                                    html += '</label></div></td>';
+                                    html += '<td><div class="input-group">';
+                                    html += '<input type="number" class="form-control" min="1" step="1" name="virtual_num" id="virtual_num'+nums+'" data-temp="" value="' + data[i]["virtual_num"]+ '" >';
+                                    html += '<span class="input-group-addon">条</span>';
+                                    html += '</div></td>';
+                                    html += '<td><div class="input-group"><span class="input-group-addon">0至</span>';
+                                    html += '<input type="number" class="form-control" min="1" step="1" name="space_end_time" id="space_end_time'+nums+'"  value="' + data[i]["space_end_time"]+ '">';
+                                    html += '<span class="input-group-addon">秒</span></div></td>';
+                                    html += '<td><a href="javascript:;" class="text-danger del" data-rule-id="">删除</a></td>';
+                                }
+                                $("#rule_set1").html(html);
+
+                            }
+                        }
+                    });
+                }
+
+        */
+        //初始化 - 时间控件
+        // function choice_time(nums){
+        //     nums =
+        //     util.layDate('#effect_time1',true,function(value, date, endDate){
+        //         var h=date.hours<10 ?"0"+date.hours : date.hours;
+        //         var m=date.minutes<10 ?"0"+date.minutes : date.minutes;
+        //         var s=date.seconds<10 ?"0"+date.seconds : date.seconds;
+        //         var h1=endDate.hours<10 ?"0"+endDate.hours : endDate.hours;
+        //         var m1=endDate.minutes<10 ?"0"+endDate.minutes : endDate.minutes;
+        //         var s1=endDate.seconds<10 ?"0"+endDate.seconds : endDate.seconds;
+        //         // var date1=date.year+'-'+date.month+'-'+1+' '+h+":"+m+":"+s;
+        //         // var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+h1+":"+m1+":"+s1;
+        //         var date1 = date.hours+','+date.minutes+','+date.seconds;//只存时分秒，PHP可以转成对应时间戳
+        //         var date2 = endDate.hours+','+endDate.minutes+','+endDate.seconds;
+        //
+        //         if (h+m+s>h1+m1+s1){
+        //             util.message('第1条规则开始时间不能大于结束时间', 'danger', function () {
+        //                 setTimeout(function(){},2000);
+        //             });return false;
+        //         }
+        //
+        //         // $("tr[id^=rule_set]").each(function (){}
+        //         if(value){
+        //             $('#start_time1').val(date1);
+        //             $('#end_time1').val(date2);
+        //             $('#effect_time1').parents('.form-group').removeClass('has-error');
+        //         }
+        //         else{
+        //             $('#start_time1').val('');
+        //             $('#end_time1').val('');
+        //         }
+        //     });
+        // }
+
+        //点击选择时间
+        $('body').on('click','.choice_time',function () {
+            nums = $(this).data('rule-id');
+            var clear_time = 0;
+            util.layDate('#effect_time'+nums,true,function(value, date, endDate){
+                var h=date.hours<10 ?"0"+date.hours : date.hours;
+                var m=date.minutes<10 ?"0"+date.minutes : date.minutes;
+                var s=date.seconds<10 ?"0"+date.seconds : date.seconds;
+                var h1=endDate.hours<10 ?"0"+endDate.hours : endDate.hours;
+                var m1=endDate.minutes<10 ?"0"+endDate.minutes : endDate.minutes;
+                var s1=endDate.seconds<10 ?"0"+endDate.seconds : endDate.seconds;
+                // var date1=date.year+'-'+date.month+'-'+1+' '+h+":"+m+":"+s;
+                // var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+h1+":"+m1+":"+s1;
+                date.minutes = date.minutes?date.minutes:0;
+                date.seconds = date.seconds?date.seconds:0;
+                endDate.minutes = endDate.minutes?endDate.minutes:0;
+                endDate.seconds = endDate.seconds?endDate.seconds:0;
+                var date1 = date.hours+','+date.minutes+','+date.seconds;//只存时分秒，PHP可以转成对应时间戳
+                var date2 = endDate.hours+','+endDate.minutes+','+endDate.seconds;
+                var Date1 = date.year+'-'+date.month+'-'+1+' '+date.hours+':'+date.minutes+':'+date.seconds;
+                var Date2 = endDate.year+'-'+endDate.month+'-'+1+' '+endDate.hours+':'+endDate.minutes+':'+endDate.seconds;
+                if (endDate.year!=date.year && endDate.month != date.month){
+                    var Date2 = date.year+'-'+date.month+'-'+1+' '+endDate.hours+':'+endDate.minutes+':'+endDate.seconds;
+                }
+                ha = parseInt(h);
+                ma = parseInt(m);
+                sa = parseInt(s);
+                ha1 = parseInt(h1);
+                ma1 = parseInt(m1);
+                sa1 = parseInt(s1);
+                if (ha+ma+sa>=ha1+ma1+sa1){
+                    // util.message('第'+nums +'条规则开始时间不能大于结束时间', 'danger', function () {
+                    util.message('规则开始时间不能大于结束时间', 'danger', function () {
+                        setTimeout(function(){},2000);
+                    });
+                    require(['laydate'],function(laydate){
+                        laydate.render({
+                            elem: '#effect_time'+nums
+                            ,value: ' ' //必须遵循format参数设定的格式
+                        });
+                        $('#start_time'+nums).val('');
+                        $('#end_time'+nums).val('');
+                    })
+                    return false;
+                }
+                // console.log(Date1);
+                // console.log(Date2);
+                //1、获取当前开始时间时间戳
+                var time_1 = DateTurnTime(Date1);
+                var time_2 = DateTurnTime(Date2);
+                // // console.log(time_1);return;
+                //2、查询除了选中的时间之外其他时间结束时间，如果当前时间戳在他们时间戳之间，则提示不正确且清空当前时间
+                $("input[id^=effect_time]").each(function (i,e) {
+                    if ($(this).data('rule-id') != nums){
+                        //过滤当前编辑的时间对象
+                        var rule_time = $(this).val();
+                        var rule_arr = rule_time.split("-");
+                        var rule_time_start = date.year+'-'+date.month+'-'+1+' '+ rule_arr[0]
+                        var rule_time_start = DateTurnTime(rule_time_start);
+                        var rule_time_end = date.year+'-'+date.month+'-'+1+' '+  rule_arr[1]
+                        var rule_time_end = DateTurnTime(rule_time_end)
+                        //
+                        // console.log(time_1)
+                        // console.log(time_2)
+                        // console.log(rule_time_start)
+                        // console.log(rule_time_end)
+                        if ((time_1 >= rule_time_start && time_1 <= rule_time_end) || (time_2 >= rule_time_start && time_2 <= rule_time_end)){
+                            util.message('所选时间段已存在', 'danger');
+                            clear_time = 1;
+                        }
+                    }
+
+                    // nums = $(this).data("rule-id")
+                    // var rule_id = $(this).find('#rule_id'+nums).val();/*规则id*/
+                    // var effect_time = $(this).find("input[name=effect_time]").val();/*时段*/
+                    // console.log('时段'+nums+'id==>'+effect_time);
+                    //
+                    // var virtual_num = $(this).find("input[name=virtual_num]").val();/*投放量*/
+                    // var space_end_time = $(this).find("input[name=space_end_time]").val();/*投放间隔区间*/
+                    //
+                    // var s_time = $(this).find("input[name=start_time]").val();
+                    // var e_time = $(this).find("input[name=end_time]").val();
+                    // if (space_end_time == '' || space_end_time == undefined || space_end_time <=0){
+                    //     util.message('投放间隔时间不正确',"danger");return false;
+                    // }
+                    // //分割时间段
+                    // if (effect_time == "" || effect_time == undefined) {
+                    //     util.message('请设置时间',"danger");return false;
+                    // }
+                    // // var arr = effect_time.split("-");
+                    // // var start_time = $.trim(arr[0]);
+                    // // var end_time = $.trim(arr[1]);
+                    // //拼接rule
+                    // // rule +=  rule_id + '¦'+start_time+'¦'+end_time+'¦'+virtual_num+'¦'+space_end_time + '§';
+                    // rule +=  rule_id + '¦'+s_time+'¦'+e_time+'¦'+virtual_num+'¦'+space_end_time + '§';
+                    // console.log('规则'+nums+': '+rule);
+                    // nums++;
+                });
+                if (clear_time == 1){
+                    // $("#effect_time2").attr('value',' ');
+                    require(['laydate'],function(laydate){
+                        laydate.render({
+                            elem: '#effect_time'+nums
+                            ,value: ' ' //必须遵循format参数设定的格式
+                        });
+                        $('#start_time'+nums).val('');
+                        $('#end_time'+nums).val('');
+                        clear_time = 0;
+                        return false;
+                    })
+                }else{
+                    if(value){
+                        $('#start_time'+nums).val(date1);
+                        $('#end_time'+nums).val(date2);
+                        $('#effect_time'+nums).parents('.form-group').removeClass('has-error');
+                    }else{
+                        $('#start_time'+nums).val('');
+                        $('#end_time'+nums).val('');
+                    }
+                }
+            });
+        });
+
+        var type_val = $('body').find("input[name='type']:checked").val();
+        if (type_val == 1) {
+            $('input[name="virtual_num1"]').val();
+            $('input[name="virtual_num1"]').attr("disabled","disabled");
+            $(".circle_barrage").addClass("hide");
+        } else {
+            $('input[name="virtual_num1"]').removeAttr("disabled");
+            if ($('input[name="state"]').val() != 0) {
+                $(".circle_barrage").removeClass("hide");
+            }
+        }
+
+        //添加规则
+        var nums=$("#load_rule_nums").val();
+        $('.addRule').on('click',function(){
+            nums++;
+            var html = '<tr class="rule_set" id="rule_set'+ nums +'" data-rule-id="'+ nums +'">';
+            html += '<td><div class="v-datetime-input-control"><label for="effect_time'+nums+'">';
+            html += '<input type="text" data-nums="'+ nums +'" class="form-control choice_time"  data-rule-id="'+nums+'" id="effect_time'+nums+'" placeholder="请选择时间" data-types="time"  autocomplete="off" name="effect_time"  required>';
+            html += '<i class="icon icon-calendar"></i>';
+            html += '<input type="hidden" id="start_time'+nums+'" name="start_time">';
+            html += '<input type="hidden" id="end_time'+nums+'" name="end_time">';
+            html += '<input type="hidden" id="rule_id'+nums+'" name="rule_id'+nums+'" >';
+            html += '</label></div></td>';
+            html += '<td><div class="input-group">';
+            html += '<input type="number" class="form-control virtual_num" step="1" name="virtual_num" id="virtual_num'+nums+'" data-temp="">';
+            html += '<span class="input-group-addon">条</span>';
+            html += '</div></td>';
+            html += '<td><div class="input-group"><span class="input-group-addon">0至</span>';
+            html += '<input type="number" class="form-control"  step="1" name="space_end_time" id="space_end_time'+nums+'" >';
+            html += '<span class="input-group-addon">秒</span></div></td>';
+            html += '<td><a href="javascript:;" class="text-danger del" data-rule-id="">删除</a></td>';
+            $('.last-tr').before(html);
+
+            //循环时间控件处理
+            // util.layDate('#effect_time'+nums,true,function(value, date, endDate){
+            //     var h=date.hours<10 ?"0"+date.hours : date.hours;
+            //     var m=date.minutes<10 ?"0"+date.minutes : date.minutes;
+            //     var s=date.seconds<10 ?"0"+date.seconds : date.seconds;
+            //     var h1=endDate.hours<10 ?"0"+endDate.hours : endDate.hours;
+            //     var m1=endDate.minutes<10 ?"0"+endDate.minutes : endDate.minutes;
+            //     var s1=endDate.seconds<10 ?"0"+endDate.seconds : endDate.seconds;
+            //     // var date1=date.year+'-'+date.month+'-'+1+' '+h+":"+m+":"+s;
+            //     // var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+h1+":"+m1+":"+s1;
+            //     var date1 = date.hours+','+date.minutes+','+date.seconds;//只存时分秒，PHP可以转成对应时间戳
+            //     var date2 = endDate.hours+','+endDate.minutes+','+endDate.seconds;
+            //     if (h+m+s>h1+m1+s1){
+            //         // util.message('第'+nums +'条规则开始时间不能大于结束时间', 'danger', function () {
+            //         util.message('规则开始时间不能大于结束时间', 'danger', function () {
+            //             setTimeout(function(){},2000);
+            //         });return false;
+            //     }
+            //     if(value){
+            //         $('#start_time'+nums).val(date1);
+            //         $('#end_time'+nums).val(date2);
+            //         $('#effect_time'+nums).parents('.form-group').removeClass('has-error');
+            //     }
+            //     else{
+            //         $('#start_time'+nums).val('');
+            //         $('#end_time'+nums).val('');
+            //     }
+            // });
+
+            //弹幕类型处理
+            var type_val = $('body').find("input[name='type']:checked").val();
+            if (type_val == 1) {
+                $('#virtual_num'+nums).val();
+                $('#virtual_num'+nums).attr("disabled","disabled");
+            } else {
+                $('virtual_num'+nums).removeAttr("disabled");
+            }
+        })
+
+        //删除规则
+        $('body').on('click','.del',function(){
+            // todo... ajax to delete data
+            /*            var rule_id = $(this).data("rule-id")
+                        if (rule_id) {
+                            $.ajax({
+                                type : "POST",
+                                url : "{$deleteOrderBarrageRuleUrl}",
+                                data : {
+                                    'rule_id' : rule_id,
+                                },
+                                success : function(data) {
+                                    if (data["code"] > 0) {
+                                        util.message(data["message"],'success');
+                                    }else{
+                                        util.message(data['message'],'danger');
+                                    }
+                                }
+                            });
+                        }*/
+
+            $(this).parent().parent().remove();
+            $("#load_rule_nums").val($("#load_rule_nums").val()-1);//减少一个
+        })
+
+        //循环投放开关时候判断当前时间是否处于规则时段内，如果处于，不能去开关循环，因为前端正在使用该规则
+        // $('body').on('click','#is_circle', function () {
+        //     var checked_statue = $(this).is(':checked') ? true : false;
+        //     var myDate = new Date();
+        //     var nowtime = Date.parse(myDate)/1000;
+        //     var year = myDate.getFullYear(); //获取当前年
+        //     var mon = myDate.getMonth() + 1; //获取当前月
+        //     var date = myDate.getDate(); //获取当前日
+        //     var y_m_d = year+'-'+mon+'-'+date;
+        //     var is_close = false;
+        //     $("input[id^=effect_time]").each(function (i,e) {
+        //         //过滤当前编辑的时间对象
+        //         var rule_time = $(this).val();
+        //         var rule_arr = rule_time.split("-");
+        //         var rule_time_start = y_m_d+' '+ rule_arr[0]
+        //         var rule_time_start = DateTurnTime(rule_time_start);
+        //         var rule_time_end = y_m_d+' '+  rule_arr[1]
+        //         var rule_time_end = DateTurnTime(rule_time_end)
+        //         if ((nowtime >= rule_time_start && nowtime <= rule_time_end)){
+        //             util.message('当前时段规则正在执行，请稍后再试！', 'danger');
+        //             is_close = true;
+        //             return false;
+        //         }
+        //     });
+        //     if (is_close){
+        //         var is_circle_statue = $("#is_circle_statue").val();
+        //         is_circle_statue = is_circle_statue==1?true:false;
+        //         $(this).attr("checked",is_circle_statue);
+        //     }
+        // })
+
+
+        util.validate($('.form-validate'),function(form){
+            var config_id = $("#config_id").val() ? $("#config_id").val() : '';
+            var state = $("#state").is(':checked') ? 1 : 0;//订单弹幕是否开启
+            var type = $('body').find("input[name='type']:checked").val();
+            var use_place =  $('body').find("input[name='use_place']:checked").val();
+            var is_circle = $("#is_circle").is(':checked') ? 1 : 0;//循环投放
+            var show_time = $("#show_time").val();//弹幕停留时间
+
+            var is_type = $("input[name='type']").is(":checked") ?1:0;//是否选中勾选开票类型
+            if (!is_type) {
+                util.message('选择弹幕类型', 'danger');return false;
+            }
+            // var is_use_place = $("#use_place").val();
+            if (!use_place) {
+                util.message('选择展示模块', 'danger');return false;
+            }
+            if (!show_time || show_time==0 || show_time== undefined) {
+                util.message('弹幕停留时间不能为空', 'danger');return false;
+            }
+            //多级活动规则控制
+            var obj = $(".table_rule tbody .rule_set");
+            if(obj.length==0){
+                util.message('请至少设置一种规则',"danger");return false;
+            }
+            //拼接数据
+            var rule = '';
+            // var nums = 1;
+            var is_allow = false;
+            $("tr[id^=rule_set]").each(function (i,e) {
+                nums = $(this).data("rule-id")
+                var rule_id = $(this).find('#rule_id'+nums).val();/*规则id*/
+                var effect_time = $(this).find("input[name=effect_time]").val();/*时段*/
+                if (!effect_time || effect_time==0 || effect_time== undefined) {
+                    is_allow = false;
+                    util.message('第'+nums+'时段不能为空', 'danger');return false;
+                }
+                var virtual_num = $(this).find("input[name=virtual_num]").val();/*投放量*/
+                var space_end_time = $(this).find("input[name=space_end_time]").val();/*投放间隔区间*/
+
+                var s_time = $(this).find("input[name=start_time]").val();
+                var e_time = $(this).find("input[name=end_time]").val();
+                if (space_end_time == '' || space_end_time == undefined || space_end_time <=0){
+                    is_allow = false;
+                    util.message('投放间隔时间不正确',"danger");return false;
+                }
+                //分割时间段
+                if (effect_time == "" || effect_time == undefined) {
+                    is_allow = false;
+                    util.message('请设置时间',"danger");return false;
+                }
+                // var arr = effect_time.split("-");
+                // var start_time = $.trim(arr[0]);
+                // var end_time = $.trim(arr[1]);
+                //拼接rule
+                // rule +=  rule_id + '¦'+start_time+'¦'+end_time+'¦'+virtual_num+'¦'+space_end_time + '§';
+                rule +=  rule_id + '¦'+s_time+'¦'+e_time+'¦'+virtual_num+'¦'+space_end_time + '§';
+                console.log('规则'+nums+': '+rule);
+                nums++;
+                is_allow = true;
+            })
+
+            if (is_allow == false){
+                util.message('规则设置不正确',"danger");return false;
+            }
+            // rule = rule.substring(1);
+            //去除最右侧
+            rule = (rule.substring(rule.length-1)=='§')?rule.substring(0,rule.length-1):rule;
+
+            $.ajax({
+                type : "POST",
+                url : "{$patchOrderBarrageSettingUrl}",
+                data : {
+                    'config_id' : config_id,
+                    'state' : state,
+                    'type' : type,
+                    'use_place' : use_place,
+                    'show_time' : show_time,
+                    'is_circle' : is_circle,
+                    'rule' : rule,
+                },
+                success : function(data) {
+                    if (data["code"] > 0) {
+                        util.message(data["message"],'success',"{:__URL('ADDONS_MAINorderBarrageSetting')}");
+                    } else {
+                        util.message(data['message'],'danger');
+                    }
+                }
+            });
+        })
+
+        //日期转时间戳
+        function DateTurnTime(strtime) {
+            var temp_date = new Date(strtime);
+            var temp_date = new Date(strtime.replace(/-/g, '/'));
+            return temp_date.getTime()/1000;
+        }
+    })
+</script>
+{/block}

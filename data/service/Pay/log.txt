@@ -1,0 +1,2 @@
+2021-12-12 13:53:06  {"productCode":"QUICK_WAP_PAY","body":"加盟店订单","subject":"加盟店订单","total_amount":"99.00","out_trade_no":"163928836434871000"}
+2021-12-16 08:48:00  {"productCode":"QUICK_WAP_PAY","body":"加盟店订单","subject":"加盟店订单","total_amount":"99.00","out_trade_no":"163928836434871000"}

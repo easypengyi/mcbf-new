@@ -1,0 +1,77 @@
+{block name="main"}
+<!-- page -->
+<form class="form-validate">
+    <div class="form-horizontal pt-15">
+        <div class="form-group">
+            <label class="col-md-2 control-label">充值金额</label>
+            <div class="col-md-5">
+                <div class="input-group w-200">
+                    <input type="number" class="form-control" min="0" name="recharge_money" required value="{if $website.recharge_money}{$website.recharge_money}{/if}">
+                    <div class="input-group-addon">元</div>
+                </div>
+                <div class="help-block mb-0">充值会员卡内余额，该余额只能消费抵扣，不能提现</div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-2 control-label">赠送金额</label>
+            <div class="col-md-5">
+                <div class="input-group w-200">
+                    <input type="number" class="form-control" min="0" name="give_money" required value="{if $website.give_money}{$website.give_money}{/if}">
+                    <div class="input-group-addon">元</div>
+                </div>
+                <div class="help-block mb-0">达到充值条件赠送的金额</div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-2 control-label"></label>
+            <div class="col-md-8">
+                <button class="btn btn-primary send" type="submit">保存</button>
+            </div>
+        </div>
+    </div>
+</form>
+{/block}
+{block name="script"}
+<script>
+    require(['util'],function(util){
+        //提交数据
+        util.validate($('.form-validate'), function (form) {
+            var recharge_money= $('input[name=recharge_money]').val();
+            var give_money= $('input[name=give_money]').val();
+            var id = "{$id}" ? "{$id}" : 0;
+
+            if(recharge_money == '') {
+                util.message('充值金额不能为空','danger');
+                return false;
+            }
+            if(give_money == '') {
+                util.message('赠送金额不能为空','danger');
+                return false;
+            }
+
+            var data = {};
+            data.recharge_money = recharge_money;
+            data.give_money = give_money;
+            data.id = id;
+            $(".send").attr('disabled','disabled');
+            $.ajax({
+                type: "post",
+                url:'{$addOrUpdateRechargeLevelUrl}',
+                data: data,
+                success:function (data) {
+                    if (data['code'] > 0) {
+                        util.message(data["message"], 'success',"{:__URL('ADDONS_MAINrechargeLevelList')}");
+                    } else {
+                        util.message(data["message"], 'danger',function(){
+                        });
+                    }
+                }
+            });
+        });
+
+    })
+
+</script>
+{/block}

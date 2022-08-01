@@ -1,0 +1,137 @@
+{block name="main"}
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">赠送券名称</label>
+                    <div class="v__controls">
+                        <input type="text" id="coupon_name" class="v__control_input" autocomplete="off" placeholder="请输入优惠券/礼品券名称">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">赠送方式</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="give_type">
+                            <option value="">请选择</option>
+                            {foreach name="give_type" item="vo"}
+                            <option value="{$vo.id}">{$vo.value}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<table class="table v-table table-auto-center">
+    <thead>
+    <tr class="order-list-item">
+        <th>赠送券名称</th>
+        <th>赠送方式</th>
+        <th>赠送人数</th>
+        <th>赠送时间</th>
+        <th class="col-md-2 pr-14 operationLeft">操作</th>
+    </tr>
+    </thead>
+    <tbody id="store_list">
+    </tbody>
+</table>
+<input type="hidden" id="page_index">
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+{/block}
+{block name="script"}
+<script id="list" type="text/html">
+    <%each data as item index%>
+    <tr>
+        <%if item.coupon_name && item.gift_name %>
+        <td>优惠券：<%item.coupon_name%><br>礼品券：<%item.gift_name%></td>
+        <%else if item.coupon_name%>
+        <td>优惠券：<%item.coupon_name%></td>
+        <%else%>
+        <td>礼品券：<%item.gift_name%></td>
+        <%/if%>
+        <td>
+            <%item.give_type_name%>
+            <%if item.give_type == 4|| item.give_type == 5 %>
+            <a href="javascript:void(0);" class="btn-operation userDetail" data-type="user_detail" data-id="<%item.record_id%>" >[ 展开 ]</a>
+            <div class="user_ids hidden" style="word-break:break-all">
+                <p><%item.give_uids%></p>
+            </div>
+            <%/if%>
+        </td>
+        <td><%item.total_give_user_num%></td>
+        <td><%item.give_time%></td>
+        <td class="operationLeft fs-0">
+            <a href="javascript:void(0);" class="btn-operation detail" data-type="detail" data-id="<%item.record_id%>">详情</a>
+        </td>
+    </tr>
+    <%/each%>
+</script>
+<script>
+    require(['util', 'tpl'], function (util, tpl) {
+        util.initPage(LoadingInfo);
+        $('.search').on('click', function () {
+            util.initPage(LoadingInfo);
+        });
+        $('#store_list').on('click', '.detail', function () {
+            var record_id = $(this).attr('data-id');
+            location.href = __URL('ADDONS_MAINgiveCouponRecordDetail&record_id=' + record_id);
+        });
+
+        // 查看会员uids
+        $('body').on('click','.userDetail',function(){
+            var user_id = $(this).siblings('.user_ids');
+            if (user_id.hasClass('hidden')){
+                $(this).html('[ 收起 ]');
+                user_id.removeClass('hidden');
+            } else{
+                $(this).html('[ 展开 ]');
+                user_id.addClass('hidden');
+            }
+        });
+
+        function LoadingInfo(page_index) {
+            $("#page_index").val(page_index);
+            var coupon_name = $("#coupon_name").val();
+            var give_type     = $("#give_type").val();
+
+            $.ajax({
+                type: "post",
+                url: "{$giveCouponRecordUrl}",
+                data: {
+                    "page_index": page_index,"coupon_name":coupon_name,"give_type":give_type
+                },
+                success: function (data) {
+                    var html = '<tr><td class="h-200" colspan="5">暂无符合条件的数据记录</td></tr>';
+                    if (data.data) {
+                        var lists=data.data;
+                        if (tpl('list', data)) {
+                            $("#store_list").html(tpl('list', data.data));
+                        } else {
+                            $("#store_list").html(html);
+                        }
+                        $('#page').paginator('option', {
+                            totalCounts: lists['total_count']  // 动态修改总数
+                        });
+                    } else {
+                        $("#store_list").html(html);
+                    }
+                }
+            });
+        }
+    });
+</script>
+{/block}

@@ -1,0 +1,615 @@
+{block name="main"}
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">商品名称</label>
+                    <div class="v__controls">
+                        <input type="text" id="search_name" name="search_name" class="v__control_input"
+                               placeholder="商品名称" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i>搜索</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<ul class="nav nav-tabs v-nav-tabs fs-12">
+    <li role="presentation" class="J-status active" data-status="-1">
+        <a href="javascript:;" class="flex-auto-center">全部<br>
+            <span class="J-living"></span></a></li>
+    <li role="presentation" class="J-status" data-status="0">
+        <a href="javascript:;" class="flex-auto-center">未审核<br>
+            <span class="J-uncheck"></span></a></li>
+    <li role="presentation" class="J-status" data-status="2">
+        <a href="javascript:;" class="flex-auto-center">审核通过<br>
+            <span class="J-uncheck"></span></a></li>
+    <li role="presentation" class="J-status" data-status="1">
+        <a href="javascript:;" class="flex-auto-center">审核中<br>
+            <span class="J-checked"></span></a></li>
+    <li role="presentation" class="J-status" data-status="3">
+        <a href="javascript:;" class="flex-auto-center">审核未通过<br>
+            <span class="J-advance"></span></a></li>
+    <input type="hidden" name="status" id="status" value="-1">
+</ul>
+<div id="J-operation">
+    <a class="btn btn-primary mb-15 J-goods_info">添加直播商品</a>
+    <a class="btn btn-primary mb-15 J-update_status">同步商品列表</a>
+    <span class="J-update_info" style="color:red;"></span>
+</div>
+<div class="mb-20 bg-info border-info padding-15">
+    添加商品（500次/天）、撤回审核（500次/天）、更新商品（1000次/天）、删除商品（1000次/天），请合理使用商品管理次数。
+</div>
+
+<table class="table v-table table-auto-center">
+    <thead>
+    <tr class="order-list-item">
+        <!--<th><input type="checkbox" name="selAll"></th>-->
+        <th class="col-md-2">商品</th>
+        <th>价格</th>
+        <th class="col-md-2">状态</th>
+        <th class="col-md-4 pr-14 operationLeft">操作</th>
+    </tr>
+    </thead>
+    <tbody id="live_list">
+    </tbody>
+</table>
+<input type="hidden" id="page_index">
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+
+
+
+<!-- page end -->
+
+{/block}
+{block name="script"}
+<script id="live_list_tpl" type="text/html">
+    <input type="hidden" value="<%addon_status.is_minipro%>" id="mini">
+    <%each data as item index%>
+    <tr>
+        <!-- 直播间信息 -->
+        <td>
+            <div class="media text-left" style="margin-left:80px;">
+                <div class="media-left">
+                    <p>
+                        <img src="<%item.goods_img%>" style="width:60px;height:60px;">
+                    </p>
+                </div>
+                <div class="media-body break-word">
+                    <div class="line-2-ellipsis line-title"><%item.goods_name%></div>
+                    <!--<div class="small-muted line-2-ellipsis"></div>-->
+                </div>
+            </div>
+
+        </td>
+        <%if item.price_type == 1%>
+        <td>￥<%item.price%></td>
+        <%/if%>
+        <%if item.price_type == 2%>
+        <td>￥<%item.price%> ~ ￥<%item.price2%></td>
+        <%/if%>
+        <%if item.price_type == 3%>
+        <td>原价：￥<%item.price%> <br > 现价：￥<%item.price2%></td>
+        <%/if%>
+        <!-- 状态 -->
+        <td>
+            <div>
+                <%if item.status == 0%>
+                <span class="label font-color-yellow">未审核</span>
+                <%/if%>
+                <%if item.status == 1%>
+                    <span class="label font-color-yellow">审核中</span>
+                <%/if%>
+                <%if item.status == 2%>
+                    <span class="label font-color-success">审核通过</span>
+                <%/if%>
+                <%if item.status == 3%>
+                    <span class="label font-color-red">审核未通过</span>
+                <%/if%>
+            </div>
+        </td>
+        <!-- 操作 -->
+        <td class="fs-0 operationLeft">
+            <!--<a href="javascript:;" class="btn-operation J-mplive_code link-pr">-->
+                <!--<span>链接</span>-->
+            <!--</a>-->
+            <a class="btn-operation link-pr" href="javascript:void(0);" data-goods_id="<%item.goods_id%>"> <span>链接</span>
+                <div class="link-pos">
+
+                </div>
+            </a>
+            <%if item.status == 2%>
+            <a href="javascript:;" class="btn-operation J-change_goods" data-goods_library_id="<%item.goods_library_id%>" data-status="<%item.status%>">
+                <span>修改价格</span>
+            </a>
+            <%/if%>
+            <%if item.status == 0%>
+            <a href="javascript:;" class="btn-operation J-change_goods"  data-goods_library_id="<%item.goods_library_id%>" data-status="<%item.status%>">
+                <span>更新商品</span>
+            </a>
+            <%/if%>
+            <%if item.status == 1%>
+            <a href="javascript:;" class="btn-operation J-change_goods"  data-goods_library_id="<%item.goods_library_id%>" data-status="<%item.status%>">
+                <span>撤销审核</span>
+            </a>
+            <%/if%>
+            <a href="javascript:;" class="btn-operation J-delete" data-mp_goods_id="<%item.mp_goods_id%>">
+                <span>删除</span>
+            </a>
+        </td>
+    </tr>
+    <%/each%>
+</script>
+
+<script>
+    require(['util', 'tpl'], function (util, tpl) {
+        util.copy();
+        tpl.helper('__URLS',function(str){
+            return  __URLS(str)
+        })
+        tpl.helper('__URL',function(str){
+            return  __URL(str)
+        })
+        //搜索
+        $('.search').click(function () {
+            LoadingInfo(1);
+        })
+        //点击J-check_status实现切换效果
+        $('.J-status').click(function () {
+            var status = $(this).data('status');
+            $('#status').val(status);
+            $(this).addClass('active').siblings().removeClass('active');
+            LoadingInfo(1);
+        })
+
+        util.initPage(LoadingInfo);
+
+        function LoadingInfo(page_index) {
+            //直播信息
+            var goods_name = $('#search_name').val();
+            $("#page_index").val(page_index);
+            var status = $('#status').val();
+            $.ajax({
+                type: "post",
+                url: "{$getMpLiveGoodsList}",
+                data: {
+                    "page_index": page_index,
+                    "goods_name": goods_name,
+                    "status": status,
+                },
+                success: function (data) {
+                    var html = '<tr><td class="h-200" colspan="8">暂无符合条件的数据记录</td></tr>';
+                    $('li[data-status=-1]').html('<a href="javascript:;" class="flex-auto-center">全部<br><span class="J-advance">('+ data['count']['total_count'] +')</span></a>');
+                    $('li[data-status=0]').html('<a href="javascript:;" class="flex-auto-center">未审核<br><span class="J-living">('+ data['count']['uncheck_count'] +')</span></a>');
+                    $('li[data-status=1]').html('<a href="javascript:;" class="flex-auto-center">审核中<br><span class="J-living">('+ data['count']['checking_count'] +')</span></a>');
+                    $('li[data-status=2]').html('<a href="javascript:;" class="flex-auto-center">审核通过<br><span class="J-uncheck">('+ data['count']['pass_count'] +')</span></a>');
+                    $('li[data-status=3]').html('<a href="javascript:;" class="flex-auto-center">审核未通过<br><span class="J-checked">('+ data['count']['forbid_count'] +')</span></a>');
+                    var update_date = data['update_info']['update_date'];
+                    if(update_date){
+                        $('.J-update_info').html('上次更新时间为 '+update_date);
+                    }
+                    if(data.data.length > 0){   
+                        if (tpl('live_list_tpl', data)) {
+                            $("#live_list").html(tpl('live_list_tpl', data));
+                        } else {
+                            $("#live_list").html(html);
+                        }
+                    }else {
+                        $("#live_list").html(html);
+                    }
+                    $('#page').paginator('option', {
+                        totalCounts: data['total_count']  // 动态修改总数
+                    });
+                }
+            });
+        }
+        //弹出填写商品信息框，添加直播商品
+        $('body').on('click','.J-goods_info',function(){
+            var html = '<form class="form-horizontal padding-15" id="">';
+            html += '<div class="form-group" id="sele_goods">\n' +
+                '                <label class="col-md-2 control-label"><span class="text-bright">*</span>商品</label>\n' +
+                '                <div class="col-md-5">\n' +
+                '                    <div id="selectGoods" class="form-control number-form-control bord-color J-add_live_goods">选择商品</div>\n' +
+                '                </div>\n' +
+                '            </div>';
+
+            html += '<div class="form-group">\n' +
+                '<label class="col-md-2 control-label">商品图片</label>\n' +
+                '<div class="col-md-5">\n' +
+                '<div class="picture-list goods-img" id="goods-img"><a href="javascript:;" class="plus-box" data-toggle="singlePicture"><i class="icon icon-plus"></i></a></div>\n' +
+                '<p class="help-block">建议200px * 200px，大小不能超过50K</p>\n' +
+                '</div>\n' +
+                '</div>';
+            html += '<div class="form-group"><label class="col-md-2 control-label" style="padding-top:0px;">商品名称</label><div class="col-md-5"><div class="input-group w-300"><input class="form-control" type="text" name="goods_name" value=""></div><p class="help-block">商品名称不能超过34个字符，即最多17个汉字</p></div></div>';
+            html += '<input class="form-control" type="hidden" id="goods_id" name="goods_id" value="">';
+            html += '<div class="form-group" id="iscondition">\n' +
+                '    <label class="col-md-2 control-label">价格形式</label>\n' +
+                '    <div class="col-md-8">\n' +
+                '        <div class="form-additional" style="padding:0px;border:none;background:white;width:auto;">\n' +
+                '            <div class="form-group">\n' +
+                '                <label class="col-md-4 control-label"><input type="radio" name="price_type" value="1" checked> 一口价</label>\n' +
+                '                <div class="col-md-7 control-group">\n' +
+                '                    <div class="input-group">\n' +
+                '                        <div class="input-group-addon">价格</div>\n' +
+                '                        <input type="number" class="form-control" min="0.01" step="0.01" name="one_price" value="">\n' +
+                '                        <div class="input-group-addon">元</div>\n' +
+                '                    </div>\n' +
+                '                </div>\n' +
+                '            </div>\n' +
+                '            <div class="form-group">\n' +
+                '                <label class="col-md-4 control-label"><input type="radio" name="price_type" value="2"> 价格区间</label>\n' +
+                '                <div class="col-md-7 control-group">\n' +
+                '                    <div class="input-group">\n' +
+                '                        <div class="input-group-addon">价格</div>\n' +
+                '                        <input type="text" class="form-control no-balance-point" required="" min="0.01" step="0.01" name="min_price" value="" placeholder="" aria-required="true" aria-describedby="conversion_point-error" aria-invalid="true">\n' +
+                '                        <div class="input-group-addon">~</div>\n' +
+                '                        <input type="text" class="form-control" min="0.01" step="0.01"  name="max_price" value="" placeholder="">\n' +
+                '                        <div class="input-group-addon">元</div>\n' +
+                '                    </div>\n' +
+                '                </div>\n' +
+                '            </div>\n' +
+                '            <div class="form-group">\n' +
+                '                <label class="col-md-4 control-label"><input type="radio" name="price_type" value="3"> 折扣价</label>\n' +
+                '                <div class="col-md-7 control-group">\n' +
+                '                    <div class="input-group">\n' +
+                '                        <div class="input-group-addon">原价</div>\n' +
+                '                        <input type="text" class="form-control no-balance-point" min="0.01" step="0.01" required="" name="market_price" value="" placeholder="">\n' +
+                '                        <div class="input-group-addon">元，现价</div>\n' +
+                '                        <input type="text" class="form-control" name="discount_price" min="0.01" step="0.01" value="" placeholder="">\n' +
+                '                        <div class="input-group-addon">元</div>\n' +
+                '                    </div>\n' +
+                '                </div>\n' +
+                '            </div>\n' +
+                '            <p class="help-block">该价格信息将显示在小程序直播列表中</p>'+
+                '        </div>\n' +
+                '    </div>\n' +
+                '</div>';
+
+            html += '</div>';
+            html += '</form>';
+            util.confirm('添加商品',html,function(){
+                //价格类型
+                var price_type = $('input[name=price_type]:checked').val();
+                //价格
+                if(price_type == 1){
+                    var price = $('input[name=one_price]').val();
+                }else if(price_type == 2){
+                    var price = $('input[name=min_price]').val();
+                    var price2 = $('input[name=max_price]').val();
+                    if(price == '' || price2 == ''){
+                        util.message('价格区间不能为空', 'danger');
+                        return false;
+                    }
+                }else if(price_type == 3){
+                    var price = $('input[name=market_price]').val();
+                    var price2 = $('input[name=discount_price]').val();
+                    if(price == '' || price2 == ''){
+                        util.message('原价和现价不能为空', 'danger');
+                        return false;
+                    }
+                    if( parseFloat(price) < parseFloat(price2) ){
+                        util.message('原价不能小于现价', 'danger');
+                        return false;
+                    }
+                }
+                //商品图片
+                var goods_img = $('.goods-img img').attr('src');
+                //商品名称
+                var goods_name = $('input[name=goods_name]').val();
+                if(goods_name == ''){
+                    util.message('商品名称不能为空', 'danger');
+                    return false;
+                }else{
+                    $goods_name_len = strlen(goods_name);
+                    //文档写的17个汉字错误，14个汉字  最少3个汉字
+                    if($goods_name_len > 28){
+                        util.message('商品名称不能超过28个字符，一个汉字对应2个字符', 'danger');
+                        return false;
+                    }
+                    if($goods_name_len < 6){
+                        util.message('商品名称不能少于6个字符，一个汉字对应2个字符', 'danger');
+                        return false;
+                    }
+                }
+                if(goods_img == ''){
+                    util.message('商品图片不能为空', 'danger');
+                }
+                var goods_id = $('#goods_id').val();
+                $.ajax({
+                    type:"post",
+                    url:"{$submitGoods}",
+                    data:{
+                        'goods_id' : goods_id,
+                        'goods_img' : goods_img,
+                        'goods_name' : goods_name,
+                        'price_type' : price_type,
+                        'price' : price,
+                        'price2' : price2,
+                    },
+                    async:true,
+                    success:function (data) {
+                        if (data["code"] > 0) {
+                            util.message( data["message"],'success', LoadingInfo(1));
+                        }else{
+                            util.message( data["message"],'danger');
+                        }
+                    }
+                });
+            },'xlarge')
+        })
+
+        //编辑商品信息
+        $('body').on('click','.J-change_goods',function(){
+
+            var status = $(this).data('status');
+            var goods_library_id = $(this).data('goods_library_id');
+
+            $.ajax({
+                type:"post",
+                url:"{$getGoodsLibraryInfo}",
+                data:{
+                    'goods_library_id':goods_library_id,
+                },
+                async:false,
+                success:function (data) {
+                    goods_info = data.data;
+                }
+            });
+            var one_price = '';
+            var min_price = '';
+            var max_price = '';
+            var market_price = '';
+            var discount_price = '';
+            var goods_name = goods_info['goods_name'] != '' ? goods_info['goods_name'] : '';
+            var goods_img = goods_info['goods_img'] != '' ? goods_info['goods_img'] : '';
+            var price_type = goods_info['price_type'] != '' ? goods_info['price_type'] : '';
+            var goods_library_id = goods_info['goods_library_id'] != '' ? goods_info['goods_library_id'] : '';
+            var mp_goods_id = goods_info['mp_goods_id'] != '' ? goods_info['mp_goods_id'] : '';
+            if(goods_img){
+                var goods_img_html = '<a href="javascript:void(0);" class="close-box"><i class="icon icon-danger" title="删除"></i><img src="'+goods_img+'"></a>';
+            }else{
+                var goods_img_html = '<a href="javascript:;" class="plus-box" data-toggle="singlePicture"><i class="icon icon-plus"></i></a>';
+            }
+            var checked1 = '';
+            var checked2= '';
+            var checked3 = '';
+            if(price_type == 1){
+                checked1 = 'checked';
+                one_price = goods_info['price'] != '' ? goods_info['price'] : '';
+            }
+            if(price_type == 2){
+                checked2 = 'checked';
+                min_price = goods_info['price'] != '' ? goods_info['price'] : '';
+                max_price = goods_info['price2'] != '' ? goods_info['price2'] : '';
+            }
+            if(price_type == 3){
+                checked3 = 'checked';
+                discount_price = goods_info['price2'] != '' ? goods_info['price2'] : '';
+                market_price = goods_info['price'] != '' ? goods_info['price'] : '';
+            }
+            var html = '<form class="form-horizontal padding-15" id="">';
+            //未审核
+            if(status == 0){
+                html += '<div class="form-group">\n' +
+                    '<label class="col-md-2 control-label">商品图片</label>\n' +
+                    '<div class="col-md-5">\n' +
+                    '<div class="picture-list goods-img2" id="goods-img2">'+ goods_img_html +'</div>\n' +
+                    '<p class="help-block">建议200px * 200px，大小不能超过50K</p>\n' +
+                    '</div>\n' +
+                    '</div>';
+                html += '<div class="form-group"><label class="col-md-2 control-label" style="padding-top:0px;">商品名称</label><div class="col-md-5"><div class="input-group w-300"><input class="form-control" type="text" name="goods_name2" value="'+ goods_name +'"></div><p class="help-block">商品名称不能超过34个字符，即最多17个汉字</p></div></div>';
+                var desc_title = '修改商品信息';
+            }else if(status == 2){
+                var desc_title = '修改价格';
+            }
+            html += '<input class="form-control" type="hidden" id="goods_id2" name="goods_id2" value="">';
+            html += '<div class="form-group" id="iscondition">\n' +
+                '    <label class="col-md-2 control-label">价格形式</label>\n' +
+                '    <div class="col-md-8">\n' +
+                '        <div class="form-additional" style="padding:0px;border:none;background:white;width:auto;">\n' +
+                '            <div class="form-group">\n' +
+                '                <label class="col-md-4 control-label"><input type="radio" name="price_type2" value="1" '+ checked1 +'> 一口价</label>\n' +
+                '                <div class="col-md-7 control-group">\n' +
+                '                    <div class="input-group">\n' +
+                '                        <div class="input-group-addon">价格</div>\n' +
+                '                        <input type="number" class="form-control" min="0.01" step="0.01" name="one_price2" value="'+ one_price +'">\n' +
+                '                        <div class="input-group-addon">元</div>\n' +
+                '                    </div>\n' +
+                '                </div>\n' +
+                '            </div>\n' +
+                '            <div class="form-group">\n' +
+                '                <label class="col-md-4 control-label"><input type="radio" name="price_type2" value="2" '+ checked2 +'> 价格区间</label>\n' +
+                '                <div class="col-md-7 control-group">\n' +
+                '                    <div class="input-group">\n' +
+                '                        <div class="input-group-addon">价格</div>\n' +
+                '                        <input type="text" class="form-control no-balance-point" required="" min="0.01" step="0.01" name="min_price2" value="'+ min_price +'" placeholder="" aria-required="true" aria-describedby="conversion_point-error" aria-invalid="true">\n' +
+                '                        <div class="input-group-addon">~</div>\n' +
+                '                        <input type="text" class="form-control" min="0.01" step="0.01"  name="max_price2" value="'+ max_price +'" placeholder="">\n' +
+                '                        <div class="input-group-addon">元</div>\n' +
+                '                    </div>\n' +
+                '                </div>\n' +
+                '            </div>\n' +
+                '            <div class="form-group">\n' +
+                '                <label class="col-md-4 control-label"><input type="radio" name="price_type2" value="3" '+ checked3 +'> 折扣价</label>\n' +
+                '                <div class="col-md-7 control-group">\n' +
+                '                    <div class="input-group">\n' +
+                '                        <div class="input-group-addon">原价</div>\n' +
+                '                        <input type="text" class="form-control no-balance-point" min="0.01" step="0.01" required="" name="market_price2" value="'+ market_price +'" placeholder="">\n' +
+                '                        <div class="input-group-addon">元，现价</div>\n' +
+                '                        <input type="text" class="form-control" name="discount_price2" min="0.01" step="0.01" value="' + discount_price + '" placeholder="">\n' +
+                '                        <div class="input-group-addon">元</div>\n' +
+                '                    </div>\n' +
+                '                </div>\n' +
+                '            </div>\n' +
+                '            <p class="help-block">该价格信息将显示在小程序直播列表中</p>'+
+                '        </div>\n' +
+                '    </div>\n' +
+                '</div>';
+            html += '<input type="hidden" id="goods_library_id" name="goods_library_id" value="'+ goods_library_id +'">';
+            html += '<input type="hidden" id="mp_goods_id" name="mp_goods_id" value="'+ mp_goods_id +'">';
+            html += '</div>';
+            html += '</form>';
+            util.confirm(desc_title,html,function(){
+                //价格类型
+                var price_type = $('input[name=price_type2]:checked').val();
+                //价格
+
+                if(price_type == 1){
+                    var price = $('input[name=one_price2]').val();
+                }else if(price_type == 2){
+                    var price = $('input[name=min_price2]').val();
+                    var price2 = $('input[name=max_price2]').val();
+                    if(price == '' || price2 == ''){
+                        util.message('价格区间不能为空', 'danger');
+                        return false;
+                    }
+                }else if(price_type == 3){
+                    //文档写的是错误的，price为原价， price2为现价，不然会报错
+                    var price = $('input[name=market_price2]').val();
+                    var price2 = $('input[name=discount_price2]').val();
+                    if(price == '' || price2 == ''){
+                        util.message('原价和现价不能为空', 'danger');
+                        return false;
+                    }
+                }
+                //商品图片
+                if(status == 0){
+                    var goods_img = $('.goods-img2 img').attr('src');
+                    //商品名称
+                    var goods_name = $('input[name=goods_name2]').val();
+                    if(goods_name == ''){
+                        util.message('商品名称不能为空', 'danger');
+                        return false;
+                    }else{
+                        $goods_name_len = strlen(goods_name);
+                        if($goods_name_len > 28){
+                            util.message('商品名称不能超过28个字符，一个汉字对应2个字符', 'danger');
+                            return false;
+                        }
+                        if($goods_name_len < 6){
+                            util.message('商品名称不能少于6个字符，一个汉字对应2个字符', 'danger');
+                            return false;
+                        }
+                    }
+                    if(goods_img == ''){
+                        util.message('商品图片不能为空', 'danger');
+                    }
+                }
+
+                var goods_library_id = $('#goods_library_id').val();
+                var mp_goods_id = $('#mp_goods_id').val();
+                $.ajax({
+                    type:"post",
+                    url:"{$updateMpliveGoods}",
+                    data:{
+                        'mp_goods_id' : mp_goods_id,
+                        'goods_library_id' : goods_library_id,
+                        'goods_img' : goods_img,
+                        'goods_name' : goods_name,
+                        'price_type' : price_type,
+                        'price' : price,
+                        'price2' : price2,
+                    },
+                    async:true,
+                    success:function (data) {
+                        if (data["code"] > 0) {
+                            util.message( data["message"],'success', LoadingInfo(1));
+                        }else{
+                            util.message( data["message"],'danger');
+                        }
+                    }
+                });
+            },'xlarge')
+        })
+
+        //判断字符串长度
+        function strlen(str){
+            var len = 0;
+            for (var i=0; i<str.length; i++) {
+                var c = str.charCodeAt(i);
+                //单字节加1
+                if ((c >= 0x0001 && c <= 0x007e) || (0xff60<=c && c<=0xff9f)) {
+                    len++;
+                }
+                else {
+                    len+=2;
+                }
+            }
+            return len;
+        }
+        // $('.J-add_live_goods').click(function () {
+        $('body').on('click', '.J-add_live_goods', function () {
+            //0为商家店铺商品 1为全平台的商品
+            var goods_type = 1;
+            util.mpliveGoodsDialog('url:'+'{:__URL("ADDONS_MAINmodalMpliveGoodsList")}&t='+(new Date()).getTime()+'&goods_type='+goods_type,function(data){
+            })
+        })
+        //更新商品状态
+        $('.J-update_status').click(function(){
+            $.ajax({
+                'url':'{$updateGoodsStatus}',
+                'type':'post',
+                'data':{},
+                'success':function(data){
+                    if (data["code"] > 0) {
+                        util.message( data["message"],'success', LoadingInfo(1));
+                    }else{
+                        util.message( data["message"],'danger');
+                    }
+                }
+            })
+        })
+        //删除商品
+        $('body').on('click', '.J-delete',function(){
+            var mp_goods_id = $(this).data('mp_goods_id');
+            $.ajax({
+                'url':'{$deleteMpliveGoods}',
+                'type':'post',
+                'data':{mp_goods_id : mp_goods_id},
+                'success':function(data){
+                    if (data["code"] > 0) {
+                        util.message( data["message"],'success', LoadingInfo(1));
+                    }else{
+                        util.message( data["message"],'danger');
+                    }
+                }
+            })
+        })
+
+        //当经过链接的时候再加载二维码
+        $('body').on('mouseover', '.link-pr', function(){
+            if($(this).attr('mark')){
+                return;
+            }
+            var goods_id = $(this).data('goods_id');
+            var mini = $('#mini').val();
+            var html = '<div class="link-arrow">' +
+                ' <form class="form-horizontal"> ';
+            if(mini == 1){
+                html += ' <div class="form-group"> <label class="col-md-2 control-label">小程序端</label> <div class="col-md-10"> <div class="input-group"> <input class="form-control" type="text" disabled value="' + 'packages/goods/detail?goods_id=' + goods_id + '"> <span class="input-group-btn btn btn-primary bbllrr0 copy" data-clipboard-text="' + 'packages/goods/detail?goods_id=' + goods_id + '">复制链接</span> </div> </div> </div> ';
+            }
+            if(mini == 1){
+                html += '<div class="flex-1"> <div class="mb-04"><img src="'+ __URL(PLATFORMMAIN + '/goods/getGoodsDetailQr') +'?goods_id='+ goods_id +'&qr_type=2&mp_path=packages/goods/detail" class="qr-img"></div> <p>(小程序二维码)</p> </div>';
+            }
+            html += ' </div> </div>';
+            $(this).find('.link-pos').html(html);
+            $(this).attr('mark', true);
+        })
+
+    })
+
+
+</script>
+{/block}
