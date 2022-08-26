@@ -6,7 +6,7 @@
                     <span class="text">基本信息</span>
 					<input type="hidden" id="uid" value="{$list[0]['uid']}">
                 </div>
-                <div class="row panel-detail">   
+                <div class="row panel-detail">
                 	<div class="col-md-6">
                         <div class="item">
                             <div class="media">
@@ -16,12 +16,18 @@
 							  <div class="media-body">
 							    <p class="p">ID：{$list[0]['uid']}{if $list[0]['user_status']!=1} <a href="javascript:void(0);" class="text-primary ml-15 delBlackList" data-id ="{$list[0]['uid']}">移除黑名单</a>{else}<a href="javascript:void(0);" class="text-primary ml-15 joinBlackList" data-id ="{$list[0]['uid']}">加入黑名单</a>{/if}</p>
 							    <p class="p">昵称：{if $list[0]['user_name']}{$list[0]['user_name']}{elseif $list[0]['nick_name']}{$list[0]['nick_name']}{else/}未设置昵称{/if}</p>
-							    <p class="p">手机号码：{$list[0]['user_tel']}</p>
+								<p class="p">真实姓名：{$list[0]['real_name']}</p>
+							  	<p class="p">手机号码：{$list[0]['user_tel']}</p>
 								  <p class="p">会员等级:
 									  <select id="level" class="form-control select-form-control inline-block">
 										  {foreach name="level_list['data']" item="value"}
 										  <option value="{$value['level_id']}" {if $value['level_id']==$list[0]['member_level']}selected{/if}>{$value.level_name}</option>
 										  {/foreach}
+									  </select></p>
+								  <p class="p">对接人:
+									  <select id="is_pu" class="form-control select-form-control inline-block">
+										  <option value="0" {if $list[0]['is_pu'] == 0}selected{/if}>否</option>
+										  <option value="1" {if $list[0]['is_pu'] == 1}selected{/if}>是</option>
 									  </select></p>
 							  </div>
 							</div>
@@ -30,7 +36,7 @@
                     <div class="col-md-6">
                         <div class="item">
                             <div class="media-body">
-								<p class="p flex flex-pack-justify">余额：<span class="default_balance">{$list[0]['balance']}</span>元 <a href="javascript:void(0);" class="text-primary ml-15 adjustBalance" data-id ="{$list[0]['uid']}">调整余额</a></p>
+								<p class="p flex flex-pack-justify">余额：<span class="default_balance">{$list[0]['balance']}</span>元 <a href="javascript:void(0);" class="text-primary ml-15 adjustBalance" data-id ="{$list[0]['uid']}">调整余额</a> <a href="javascript:void(0);" class="text-primary ml-15 adjustCreateOrder" data-id ="{$list[0]['uid']}">兑换商品</a></p>
 								<p class="p flex flex-pack-justify">积分：<span class="default_point">{$list[0]['point']}</span> <a href="javascript:void(0);" class="text-primary ml-15 adjustPoint" data-id ="{$list[0]['uid']}">调整积分</a></p>
 								<p class="p flex flex-pack-justify">美丽分：<span class="default_beautiful_point">{$list[0]['beautiful_point']}</span> <a href="javascript:void(0);" class="text-primary ml-15 adjustBeautifulPoint" data-id ="{$list[0]['uid']}">调整美丽分</a></p>
 								<p class="p">成长值：{$list[0]['growth_num']}</p>
@@ -124,7 +130,7 @@
 		                    </thead>
 		                    <tbody class="list1">
 
-		                        
+
 		                    </tbody>
 		                </table>
 						<nav aria-label="Page navigation" class="clearfix">
@@ -144,7 +150,7 @@
 		                    </thead>
 		                    <tbody class="list2">
 
-		                        
+
 		                    </tbody>
 		                </table>
 						<nav aria-label="Page navigation" class="clearfix">
@@ -152,6 +158,32 @@
 						</nav>
 	                </div>
 				</div>
+<style>
+
+	.control-label {
+		text-align: right;
+		margin-bottom: 0;
+		padding-top: 7px;
+	}
+</style>
+ <div style="display: none;">
+	 <form class="form-horizontal padding-15" id="create_order" >
+		 <div class="form-group">
+			 <label class="col-md-3 control-label">商品</label>
+			 <div class="col-md-8">
+				 <p class="help-block" style="color: black">{$goods.goods_name}</p>
+			 </div>
+		 </div>
+		 <div class="form-group">
+			 <label class="col-md-3 control-label">数量</label>
+			 <div class="col-md-8">
+				 <input type="number" id="adjustNum" value="1" min="1" class="form-control" onkeydown="if(event.keyCode==13){event.keyCode=0;event.returnValue=false;}" />
+				 <p class="help-block">输入你需要兑换的数量</p>
+			 </div>
+		 </div>
+
+	 </form>
+ </div>
                 <!-- page end -->
 {/block}
 {block name="script"}
@@ -299,7 +331,46 @@ require(['util'],function(util){
                     }
                 });
             })
-        })
+        });
+
+	// 兑换商品
+	$('.adjustCreateOrder').on('click',function(){
+		var id = $(this).data('id');
+		var html = $('#create_order').html();
+		// var html = '<form class="form-horizontal padding-15" id="">';
+		// html += '<div class="form-group"><label class="col-md-3 control-label">商品</label><div class="col-md-8"><input type="number" id="adjustBalance" class="form-control" onkeydown="if(event.keyCode==13){event.keyCode=0;event.returnValue=false;}" /><p class="help-block">输入负值时代表减少余额</p></div></div>';
+		// html += "<div class='form-group'>" ;
+		// html +="<label class='col-md-3 control-label'>备注</label>";
+		// html +="<div class='col-md-8'>";
+		// html +="<textarea class='form-control' id='adjustBalance_memo' rows='4' placeholder='输入备注的内容'></textarea>";
+		// html +="</div>";
+		// html += '</form>';
+		util.confirm('兑换商品',html,function(){
+			var num = this.$content.find('#adjustNum').val();
+			if(num <= 0){
+				util.message('购买的数量必须大于0','danger');
+				return false;
+			}
+
+			$.ajax({
+				type : "post",
+				url : "{:__URL('wapapi/order/sysOrderCreate')}",
+				data : {
+					"id" : id,
+					"num" : num,
+					"sys_model": 1
+				},
+				success : function(data) {
+					if (data["code"] === 0) {
+						util.message(data["message"],'success',getList($('#page_index').val()));
+					}else{
+						util.message(data["message"],'danger');
+					}
+				}
+			});
+		})
+	});
+
     // 调整积分
 	$('.adjustPoint').on('click',function(){
             var id = $(this).data('id');
@@ -405,6 +476,30 @@ require(['util'],function(util){
             });
         })
     })
+
+	// 修改等级
+	$('#is_pu').on('change',function(){
+		var is_pu = $(this).val();
+		var uid = $('#uid').val();
+		util.alert('是否确认修改？',function(){
+			$.ajax({
+				type : "post",
+				url : "{:__URL('PLATFORM_MAIN/Member/adjustMemberPu')}",
+				async : true,
+				data : {
+					"uid" : uid,
+					"is_pu":is_pu
+				},
+				success : function(data) {
+					if (data["code"] > 0) {
+						util.message(data["message"],'success',location.reload());
+					}else{
+						util.message(data["message"],'danger');
+					}
+				}
+			});
+		})
+	})
     // 加入黑名单
 	$('.joinBlackList').on('click',function(){
             var uid = $(this).data('id');

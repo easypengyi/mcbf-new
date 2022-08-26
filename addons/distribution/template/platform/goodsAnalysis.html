@@ -1,5 +1,5 @@
 
-{block name="main"} 
+{block name="main"}
                <!-- page -->
                 <!--<form action="" class="form">
                     <div class="v-form-inline">
@@ -90,14 +90,14 @@
                 <div class="screen-title">
                     <span class="text">数据列表</span>
                 </div>
-               
+
                 <table class="table v-table table-auto-center">
                     <thead>
                         <tr class="order-list-item">
                             <th>排行</th>
                             <th class="col-md-6">会员</th>
                             <th>推荐人数</th>
-                            <th>累计佣金</th>
+                            <th>累计奖励积分</th>
                             <th>可用积分</th>
                         </tr>
                     </thead>
@@ -113,16 +113,16 @@
 <script>
 require(['util'],function(util){
     util.initPage(LoadingInfo(1,1,'month'));
-    
+
     function LoadingInfo(page_index,types,times) {
-        
+
         console.log('types',types);
         console.log('times',times);
-        
+
         $.ajax({
             type: "post",
             url: "{$distributionRankingUrl}",
-            async: true, 
+            async: true,
             data: {
                 "page_index": page_index,
                 "types": types,
@@ -131,7 +131,7 @@ require(['util'],function(util){
             },
             success: function (data) {
                 console.log('data',data);
-                
+
                 var html = '';
                 // $("#account_money").html(data['account'][0]);
                 // $("#account_sum").html(data['account'][1]);

@@ -31,6 +31,13 @@
 							<option value="1" {if $info['isdistributor']==1}selected{/if}>待审核</option>
 						</select>
 					</div>
+					<div class="p">
+						<span class="text-label">对接人：</span>
+						<select name="is_pu" id="is_pu" class="form-control select-form-control inline-block">
+							<option value="0" {if $info['is_pu'] == 0}selected{/if}>否</option>
+							<option value="1" {if $info['is_pu'] == 1}selected{/if}>是</option>
+						</select>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -40,9 +47,9 @@
 			<div class="media-body">
 				<p class="p">推荐人：{if $info['referee_name']}{$info['referee_name']}{else}总店{/if} </p>
 				<p class="p">推广订单：{if $info['extensionordercount']}{$info['extensionordercount']}{else}0{/if} </p>
-				<p class="p">推广订单金额：{if $info['extensionmoney']}{$info['extensionmoney']}{else}0.00{/if}</p>
-				<p class="p">佣金总额：{if $info['commission']}{$info['commission']}{else}0.00{/if}</p>
-				<p class="p">已提佣金：{if $info['withdrawals']}{$info['withdrawals']}{else}0.00{/if}</p>
+				<p class="p">推广订单积分：{if $info['extensionmoney']}{$info['extensionmoney']}{else}0.00{/if}</p>
+				<p class="p">积分总数：{if $info['commission']}{$info['commission']}{else}0.00{/if}</p>
+				<p class="p">已兑换积分：{if $info['withdrawals']}{$info['withdrawals']}{else}0.00{/if}</p>
 				<p class="p">申请时间：{$info['apply_distributor_time']}</p>
 				<p class="p">成为分销商时间：{$info['become_distributor_time']}</p>
 			</div>
@@ -389,6 +396,7 @@
             var status = $("#status").val();
             var level = $("#level").val();
             var uid = $("#uid").val();
+			var is_pu = $("#is_pu").val();
             var team_agent = $("#team_agent").val();
             var area_agent = $("#area_agent").val();
             var global_agent = $("#global_agent").val();
@@ -400,7 +408,7 @@
                 type: "post",
                 url : "{$updateDistributorInfoUrl}",
                 data : {
-                    "uid":uid,"status":status,"real_name":real_name,"level":level, "team_agent" : team_agent, "area_agent" : area_agent,"global_agent":global_agent,"area_id":area_type,"province_id":selProvinces,"city_id":selCities,"district_id":selDistricts
+                    "uid":uid,"status":status,"is_pu":is_pu,"real_name":real_name,"level":level, "team_agent" : team_agent, "area_agent" : area_agent,"global_agent":global_agent,"area_id":area_type,"province_id":selProvinces,"city_id":selCities,"district_id":selDistricts
                 },
                 async: true,
                 success: function (data) {

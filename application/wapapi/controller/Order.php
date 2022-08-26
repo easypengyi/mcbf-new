@@ -1,6 +1,6 @@
 <?php
 
-namespace app\wapapi\controller; 
+namespace app\wapapi\controller;
 
 use addons\abroadreceivegoods\model\VslCountryListModel;
 use addons\bargain\service\Bargain;
@@ -14,6 +14,7 @@ use addons\presell\service\Presell;
 use addons\receivegoodscode\server\ReceiveGoodsCode as ReceiveGoodsCodeSer;
 use addons\supplier\model\VslSupplierModel;
 use data\model\RabbitOrderRecordModel;
+use data\model\VslGoodsSkuModel;
 use data\service\Config;
 use data\model\DistrictModel;
 use data\model\VslMemberRechargeModel;
@@ -60,7 +61,10 @@ class Order extends BaseController
     {
         parent::__construct();
         if (!IS_CLI) {
-            if (!$this->uid) {
+            $sys = $_POST;
+            $sys_model = isset($sys['sys_model']) ? $sys['sys_model'] : 0; //后台过来无需验证--后台兑换商品
+            //var_dump($sys_model);die;
+            if (!$this->uid && $sys_model == 0) {
                 echo json_encode(['code' => LOGIN_EXPIRE, 'message' => '登录信息已过期，请重新登陆'], JSON_UNESCAPED_UNICODE);
                 exit;
             }
@@ -258,7 +262,7 @@ class Order extends BaseController
                 $order_list[$k]['order_item_list'][$key_sku]['refund_status'] = $item['refund_status'];
 
                 $order_list[$k]['order_item_list'][$key_sku]['member_operation'] = $item['member_operation'] ? $item['member_operation'] : [];
-                //幸运拼活动，删除退款按钮 
+                //幸运拼活动，删除退款按钮
                 if($order['order_type'] == 15 && $item['member_operation']) {
                     foreach ($item['member_operation'] as $k3 => $v3) {
                         if($v3['no'] == 'refund') {
@@ -266,7 +270,7 @@ class Order extends BaseController
                         }
                     }
                     $order_list[$k]['order_item_list'][$key_sku]['member_operation'] =  $item['member_operation'] = array_values($item['member_operation']);
-                   
+
                 }
                 //判断是否是预售
                 if (!empty($order['presell_id']) && $this->is_presell) {
@@ -388,16 +392,16 @@ class Order extends BaseController
         $order_mdl = new VslOrderModel();
         $order_id = request()->post('order_id');
         $order_type_list = $order_mdl->getInfo(['order_id' => $order_id], 'order_type, money_type, out_trade_no, out_trade_no_presell, presell_id,website_id,shop_id,invoice_tax,website_id,group_id,bargain_id');
-        
+
         $service_order = new OrderService();
         //地区限购
         $goods_name_area = '';
         $area_check = $service_order->isOrderGoodsBelongAreaList($order_id,$goods_name_area);
-        
+
         if($area_check){
             return json(AjaxReturn(FAIL,[],'商品('.$goods_name_area.')属于该收货地区限购商品'));
         }
-        
+
         $max_data = [
             'order_id'      => $order_id,
             'order_type'    => $order_type_list['order_type'],
@@ -828,7 +832,7 @@ class Order extends BaseController
             $order_status_info['member_operation'] = array(['no' => 'logistics', 'name' => '查看物流', 'icon_class' => 'icon icon-preview-l',]);
         }
         $order_detail['member_operation'] = $order_status_info['member_operation'];
-        
+
         $order_detail['no_delivery_id_array'] = [];
         foreach ($order_info['order_goods_no_delive'] as $v_goods) {
             $order_detail['no_delivery_id_array'][] = $v_goods['order_goods_id'];
@@ -888,7 +892,7 @@ class Order extends BaseController
                     }
                 }
             }
-            //幸运拼活动，删除退款按钮 
+            //幸运拼活动，删除退款按钮
             if($order_info['order_type'] == 15) {
                 foreach ($order_goods[$k]['member_operation'] as $k1 => $v1) {
                     if($v1['no'] == 'refund') {
@@ -936,7 +940,7 @@ class Order extends BaseController
         if($order_info['membercard_deduction_money']>0){
             $order_detail['promotion_money'] = "{$order_detail['promotion_money']}" - "{$order_info['membercard_deduction_money']}";
         }
-        
+
         if (!empty($temp_member_refund_operation)) {
             $order_detail['member_operation'] = array_merge($order_detail['member_operation'], $temp_member_refund_operation);
         }
@@ -960,7 +964,7 @@ class Order extends BaseController
         }
         //订单优惠
         $order_detail['promotion_money'] = $order_detail['order_promotion_money'];//service里面就算好了，不需要重新计算。与后台保持一样？ by sgw
-        
+
         return json(['code' => 1,
             'message' => '获取成功',
             'data' => $order_detail
@@ -1234,7 +1238,7 @@ class Order extends BaseController
      */
     public function refundDetail()
     {
-       
+
         $order_goods_id = request()->post('order_goods_id');
         $order_id = request()->post('order_id');
         $presell_id = request()->post('presell_id', '');
@@ -1571,7 +1575,7 @@ class Order extends BaseController
             return json(AjaxReturn(LACK_OF_PARAMETER));
         }
 
-        $cancel_order = $orderService->orderGoodsCancel($order_id, $order_goods_id); 
+        $cancel_order = $orderService->orderGoodsCancel($order_id, $order_goods_id);
         return json($cancel_order);
     }
 
@@ -1621,7 +1625,7 @@ class Order extends BaseController
     public function orderCreate($post_data = '')
     {
         try{
-        
+
             if (empty($post_data)) {
                 $post_data = request()->post('order_data/a');
             }
@@ -1855,17 +1859,17 @@ class Order extends BaseController
                             $post_data['order_type'] = 7;
                         }
                     }else{
-                        
+
                         if($post_data['group_id'] && getAddons('groupshopping', $website_id)){
                             $post_data['order_type'] = 5;
                         }
                         $goods_key = 'goods_'.$sku_list['goods_id'].'_'.$sku_list['sku_id'];
                         //原子判断的商品的库存
-                        
+
                         for($c=0;$c<$sku_list['num'];$c++){
                             $goods_stock = $redis->decr($goods_key);
                         }
-                        
+
                         if($goods_stock < 0){
                             $is_lack_stock = true;
                             $redis->set($goods_key, $sku_list['num'] + $goods_stock);
@@ -1883,7 +1887,7 @@ class Order extends BaseController
                 return $res;
                 exit;
             }
-           
+
             if($order_type == 'seckill_order'){//如果是秒杀订单
 //                $this->productSeckillOrderCreate($order_business, $order_service, $post_data, $payment_info, $calculate_result);
                 $push_arr = $this->productSeckillOrderCreate($post_data);
@@ -2079,7 +2083,7 @@ class Order extends BaseController
                 $presell_id = $new_sku[0]['presell_id'];
             }
             //该处判断预约是否已满  -- 变更至预约档期模块内进行, 预约只能有一款商品
-            
+
             $check_goods_id = 0;
             $goods_type = '';
             if($new_sku[0]['goods_type'] == 6){
@@ -2090,8 +2094,8 @@ class Order extends BaseController
                 //如果是预约订单 只能由一款商品 循环取出商品id
                 $customform_server = new CustomFormServer();
                 $check_result = $customform_server->checkScheduleNum($custom_order, $check_goods_id, $custom_id);
-               
-                if ($check_result == false) { 
+
+                if ($check_result == false) {
                     $order_create->actRedisRefoundStock($post_data);
                     return json(['code' => -1, 'message' => '当前时间段预约已满', 'custom_type' => 'order_create']);
                 }
@@ -2176,10 +2180,10 @@ class Order extends BaseController
                         (in_array($sku_info['goods_id'], $vvs['full_cut']['goods_limit']) || $vvs['full_cut']['range_type'] == 1)) {
                         // 有包邮的设定 && (商品在goods_limit里面 || 活动商品是全部商品)
                         $payment_info[$shop_id]['goods_list'][$sku_id]['shipping_fee'] = 0;
-                        
+
                         continue;
                     }
-                    
+
                     if (empty($temp_goods[$sku_info['goods_id']])) {
                         $temp_goods[$sku_info['goods_id']]['count'] = $sku_info['num'];
                         $temp_goods[$sku_info['goods_id']]['goods_id'] = $sku_info['goods_id'];
@@ -2195,7 +2199,7 @@ class Order extends BaseController
                             $payment_info[$kks]['goods_list'][$sku_id]['shipping_fee'] = 0;
                         }
                     }
-                    
+
                 }
 
                 // 计算邮费
@@ -2262,7 +2266,7 @@ class Order extends BaseController
                 if($post_data['shopkeeper_id']){
                     $is_deduction = 0;
                 }
-                
+
 
                 $point_deduction = $order_business->pointDeductionOrder($payment_info[$kks]['goods_list'],$is_deduction,$shipping_type,$website_id,$uid,$sub_point);
                 //TODO 处理total_amount
@@ -2403,7 +2407,7 @@ class Order extends BaseController
                     $order_info['shop_order_money'] = $order_info['shop_order_money'] + $vv['platform_member_price'] + $order_info['total_deduction_money'];
                     //运费 -- 满减送优惠
                     //预售不参与满减
-                    
+
                     if (!empty((array)($vv['full_cut'])) && $vv['full_cut']['free_shipping']) {
                         // $order_info['shipping_fee'] = $shipping_fee + $shipping_fee_total;
                         //包邮不需要加之前的运费
@@ -2427,7 +2431,7 @@ class Order extends BaseController
                         $order_info['shop_promotion_money'] += $vv['full_cut']['discount'];
                         $order_info['shop_promotion_money'] += $shipping_fee_total;//运费满减
                     }
-                    
+
                     //优惠卷
                     if ($coupon_data) {
                         if ($coupon_data['shop_id']) {
@@ -2859,7 +2863,7 @@ class Order extends BaseController
         } else {
             $condition['out_trade_no'] = $out_trade_no;
             $recharge_info = $member_recharge->getInfo($condition);
-            $info = $order->get_status_by_outno($out_trade_no); 
+            $info = $order->get_status_by_outno($out_trade_no);
             $orderId = $order->getOrderIdByOutno($out_trade_no);//获取订单id，多单返回0；
             $payment_info = $payment->getInfo($condition);
             if (strstr($out_trade_no, 'QD')) {
@@ -3317,7 +3321,7 @@ class Order extends BaseController
                 }
             }
         }
-        
+
         foreach ($return_data['shop'] as $kk => $vv) {
 
             $order_info = [];
@@ -3454,7 +3458,7 @@ class Order extends BaseController
                 $order_info['shop_total_amount'] += $all_actual_price-$allgoodsprice;
                 $change_state = 1;
             }
-            
+
             //自营店的也要修正
             if($shop_id == 0 && $vv['platform_member_price'] < 0){
                 $order_info['platform_promotion_money'] += $all_actual_price-$allgoodsprice;
@@ -3682,7 +3686,7 @@ class Order extends BaseController
                 //edit for 2020/10/15 秒杀订单变更 积分抵扣不用额外平台补贴
                 // $order_info['shop_order_money'] += $order_info['deduction_money'];
                 $order_info['shop_order_money'] = $order_info['shop_order_money'];
-    
+
                 if ($order_info['pay_money'] != 0) {
                     $order_info['order_status'] = 0;
                     $order_info['pay_status'] = 0;
@@ -3899,7 +3903,7 @@ class Order extends BaseController
         $post_data = request()->post('order_data/a');
         return $this -> orderCreate($post_data);
     }
-    
+
     /**
      * 查看是否满足限购、起购条件
      * @param $data
@@ -3991,20 +3995,20 @@ class Order extends BaseController
         if ($res_max_buy <0 ){
             return AjaxReturn(-1, [], '超过限购数');
         }
-        
+
         return AjaxReturn(SUCCESS);
     }
     /**
      * 更新物流
      */
-    public function updatsExc() 
+    public function updatsExc()
     {
-        
+
         set_time_limit(0);
         ini_set('max_execution_time', '0');
         ini_set('memory_limit', '1000M');
 
-        $post_data = request()->post('order_data/a'); 
+        $post_data = request()->post('order_data/a');
         $list = $post_data['showapi_res_body']['expressList'];
         foreach ($list as $key => $value) {
             unset($exinfo);
@@ -4059,5 +4063,144 @@ class Order extends BaseController
             'code' => 1,
             'data' => $store_list
         ]);
+    }
+
+    /**
+     * 后台兑换订单
+     *
+     * @return \multitype|\think\response\Json
+     */
+    public function sysOrderCreate(){
+        try{
+
+            $uid = request()->post('id', '');
+            $num = request()->post('num', 1);
+//            $res = $this->balance_pay('165942930077601000', $uid);
+//            return $res;
+
+            $goodsModel = new VslGoodsModel();
+            $goodsSkuModel = new VslGoodsSkuModel();
+            $goods = $goodsModel->getInfo(['goods_id'=> VslGoodsModel::DEFAULT_GOODS_ID], 'goods_id,goods_name');
+            $sku = $goodsSkuModel->getInfo(['goods_id'=> $goods['goods_id']], 'sku_id,price');
+            $pay_money = $sku['price'] * $num;
+
+            $member = new MemberAccount();
+            $member_account = $member->getMemberAccount($uid); // 用户余额
+            $balance = $member_account['balance'];
+            if ($balance < $pay_money) {
+                $data['code'] = -1;
+                $data['message'] = "余额不足。";
+                return json($data);
+            }
+
+            $goods['anchor_id'] = "";
+            $goods['bargain_id'] = "";
+            $goods['channel_id'] = "";
+            $goods['discount_id'] = "";
+            $goods['discount_price'] = $sku['price'];
+            $goods['num'] = $num;
+            $goods['presell_id'] = "";
+            $goods['price'] = $sku['price'];
+            $goods['seckill_id'] = "";
+            $goods['sku_id'] = $sku['sku_id'];
+            $goods_list[] = $goods;
+
+            $shop_list[] = [
+                'goods_list'=> $goods_list,
+                'leave_message'=> "",
+                'shop_id'=> 0,
+                'rule_id'=> "",
+                'coupon_id'=> "",
+                'receive_goods_code'=> [],
+                'shop_amount'=> $pay_money,
+            ];
+            $post_data = [
+                'custom_order'=> '',
+                'is_deduction'=> 0,
+                'is_membercard_deduction'=> 0,
+                'order_from'=> 2,
+                'total_amount'=> $pay_money,
+                'shop_list'=> $shop_list
+            ];
+
+            #查看是否已经绑定上级，而且开启了强制绑定
+            $distributorServer = new \addons\distribution\service\Distributor();
+            $check = $distributorServer->getDistributionSite($this->website_id);
+            $referee_check = 0;
+            if(isset($check['referee_check']) && $check['referee_check'] == 1 && $check['is_use'] == 1){
+                $memberModel = new \data\model\VslMemberModel();
+                $member = $memberModel->getInfo(['uid'=>$uid],['referee_id,default_referee_id,isdistributor']);
+                if(empty($member['referee_id']) && empty($member['default_referee_id'])){
+                    $referee_check = 1;
+                }else if(empty($member['referee_id']) && $member['default_referee_id'] && $member['isdistributor'] != 2 ){
+                    $req = $distributorServer->becomeLowerByOrder($uid,$member['default_referee_id']);
+                    if($req != 2){
+                        $referee_check = 1;
+                    }
+                }
+                if($member['isdistributor'] == 2){
+                    $referee_check = 0;
+                }
+            }
+            if($referee_check == 1){
+                return json(['code' => -6, 'message' => '请先帮绑定上级']);
+            }
+            $post_data['uid'] = $uid;
+            $website_id = $this->website_id;
+            $post_data['website_id'] = $website_id;
+            $ip = get_ip();
+            $post_data['ip'] = $ip;
+            $ws_token = $post_data['ws_token'] ? : '';
+
+            if(empty($ws_token)){
+                $order_data['post_data'] = $post_data;
+                $res = $this->queueOrderCreate($order_data);
+                $code = $res->getCode();
+                if($code == 200){
+                    $data = $res->getData();
+                    $out_trade_no = $data['data']['out_trade_no'];
+                    $res = $this->balance_pay($out_trade_no, $uid);
+                }
+                return $res;
+            }
+        }catch (\Exception $e){
+            $msg = $e->getLine().' 错误：'.$e->getMessage();
+        }
+    }
+
+    //余额支付
+    public function balance_pay($out_trade_no, $uid)
+    {
+        $order = new VslOrderModel();
+        try {
+            $order_service = new OrderService();
+            $order_info = $order->getInfo(['out_trade_no|out_trade_no_presell' => $out_trade_no], 'order_id, order_type,order_status,pay_money,pay_status,money_type');
+            if ($order_info['pay_status']==2 && $order_info['pay_money']!=0){
+                return AjaxReturn(FAIL,[],'请勿重复支付!');
+            }
+            $res = 0;
+            if($order_info){
+                $res = $order_service->orderOnLinePay($out_trade_no, 5, 0, 1);
+            }
+
+            $from_type = 1;
+            if ($res == 1) {
+                $account_flow = new MemberAccount();
+                $order_id_list = $order->field('order_id, pay_money')->where(['out_trade_no' => $out_trade_no])->select();
+                foreach ($order_id_list as $k => $v) {
+                    $account_flow->addMemberAccountData(2, $uid, 0, $v['pay_money'], $from_type, $v['order_id'], '商城订单，余额支付');
+                }
+//                $this->paySuccess2UpdataInvoiceInfo($out_trade_no);
+                return AjaxReturn(0, [],'操作成功');
+            }else{
+                return AjaxReturn(-1, [],'操作失败');
+            }
+            //修改账户余额
+        } catch (\Exception $e) {
+
+            $data['code'] = -2;
+            $data['message'] = "服务器内部错误。";
+            return json($data);
+        }
     }
 }

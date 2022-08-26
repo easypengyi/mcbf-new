@@ -73,7 +73,7 @@ class Wapstore extends baseStore
         }
         if (!isApiLegal()) {
             $data['code'] = -2;
-            $data['message'] = '接口签名错误';
+            $data['message'] = '接口签名错误-';
             echo json_encode($data, JSON_UNESCAPED_UNICODE);
             exit;
         }
@@ -2226,7 +2226,7 @@ class Wapstore extends baseStore
                 'for_store'                     => 1
             ];
             $addGoods = $goods->addOrEditGoods($goods_data);
-    
+
             if (!$addGoods) {
                 return json(['code' => -2, 'message' => '无法使用快捷收银']);
             }
@@ -2997,7 +2997,7 @@ class Wapstore extends baseStore
         ]);
     }
     /**
-     * 奖金详情页 
+     * 奖金详情页
      */
     public function storeCommission(){
         $storeServer = new storeServer();
@@ -3040,7 +3040,7 @@ class Wapstore extends baseStore
             }
         }
         if ($type == 1) {
-            //如果是汇聚自动打款，则不需要签约 
+            //如果是汇聚自动打款，则不需要签约
             //变更 2020、09、21变更为签约模式
             $webConfig = new WebConfig();
             $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
@@ -3207,7 +3207,7 @@ class Wapstore extends baseStore
             }
         }
             if($type==1){
-                //如果是汇聚自动打款，则不需要签约 
+                //如果是汇聚自动打款，则不需要签约
                 //变更 2020、09、21变更为签约模式
                 $webConfig = new WebConfig();
                 $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
@@ -3324,7 +3324,7 @@ class Wapstore extends baseStore
     {
         $assistant_id = $this->assistantId;
         $storeServer = new storeServer();
-        $account_list = $storeServer->getMemberBankAccount($assistant_id); 
+        $account_list = $storeServer->getMemberBankAccount($assistant_id);
         if ($account_list) {
             $bank = new VslBankModel();
             foreach ($account_list as $k => $v) {
@@ -3559,7 +3559,7 @@ class Wapstore extends baseStore
         $mobile = $info['mobile'];
         $validdate = $info['validdate'];
         $cvv2 = $info['cvv2'];
-        $pay = new UnifyPay(); 
+        $pay = new UnifyPay();
         $res = $pay->tlSigning($bank_type, $account_number, $bank_card, $bank_username, $mobile, $validdate, $cvv2, $uid, $this->website_id);
         if ($res['retcode'] == 'SUCCESS') {
             if ($res['trxstatus'] == 1999) {

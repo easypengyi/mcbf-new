@@ -116,7 +116,7 @@ class Distribution extends baseDistribution
         }
         $distributor = new DistributorService();
         $uid = isset($_POST['uid']) ? $_POST['uid'] : '';
-        
+
         $referee_id = isset($_POST['referee_id']) ? $_POST['referee_id'] : '';
         $retval = $distributor->updateRefereeDistributor($uid, $referee_id);
         if ($retval) {
@@ -300,6 +300,7 @@ class Distribution extends baseDistribution
         $distributor_level_id = request()->post("level", '');
         $team_agent = request()->post("team_agent", '');
         $status = request()->post("status", '');
+        $is_pu = request()->post("is_pu", false);
         $real_name = request()->post("real_name", '');
         $area_agent = request()->post("area_agent", '');
         $global_agent = request()->post("global_agent", '');
@@ -358,6 +359,9 @@ class Distribution extends baseDistribution
         }
         if ($real_name) {
             $data['real_name'] = $real_name;
+        }
+        if ($is_pu !== false) {
+            $data['is_pu'] = $is_pu;
         }
         $res = $member->updateDistributorInfo($data, $uid);
         if ($res) {
@@ -1515,6 +1519,27 @@ class Distribution extends baseDistribution
         if ($retval > 0) {
             $data['code'] = 0;
             $data['message'] = "申请成功";
+        } else {
+            $data['code'] = -1;
+            $data['message'] = getErrorInfo($retval);
+        }
+        return json($data);
+    }
+
+    /**
+     * 手动结算佣金
+     *
+     * @param array $params
+     * @return \think\response\Json
+     */
+    public function commissionToMember($params = array())
+    {
+        $uid = $this->uid;
+        $distributor = new DistributorService();
+        $retval = $distributor->addDistributorCommissionMember($uid);
+        if ($retval > 0) {
+            $data['code'] = 0;
+            $data['message'] = "操作成功";
         } else {
             $data['code'] = -1;
             $data['message'] = getErrorInfo($retval);

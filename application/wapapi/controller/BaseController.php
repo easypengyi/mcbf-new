@@ -17,10 +17,10 @@ class BaseController extends Controller
     protected $uid;
 
     protected $instance_id;
-    
+
     protected $website_id;
 
-    
+
     protected $is_member;
 
     protected $shop_name;
@@ -65,6 +65,7 @@ class BaseController extends Controller
         $this->user = new Member();
         $this->model = $this->user->getRequestModel();
         $website_id = checkUrl();
+        $website_id = 1;
         if (empty($website_id) && is_numeric($website_id)) {
             echo json_encode(AjaxReturn(LACK_OF_PARAMETER), JSON_UNESCAPED_UNICODE);
             exit;
@@ -97,9 +98,9 @@ class BaseController extends Controller
                 }
         }
         if(!IS_CLI){
-            if (!isApiLegal() && !in_array($action, ['joinpaytransferurlback','joinpayallocfundsurlback','joinpayfastreturnurlback','joinpaybankurlback','joinpaybankurlback','joinpayautocomsendurlback','joinpayautosendurlback','joinpayreturnurlback','joinpayurlback','joinpayaliurlback','wchaturlback', 'wchatpay', 'aliurlback', 'alipay', 'aliPayReturn', 'recieve_card', 'wchatpay_api','withdraw','withdrawurlback','payurlbacks','ethpayurlback','eospayurlback','refundurlback','tlurlback','setgoodgather','ethchainurlback','gpayurlback','livemsgcallback','actlivedata']) && !in_array($addons_action, ['showuserqrcode', 'userarchivevoucherpackage', 'userarchivecoupon']) && !in_array($addons_controller, ['goodhelper']) && $controller != 'polyapi' && $controller != 'gjpapi' && $controller != 'dsfgoodsapi' && $controller != 'wchat') {
+            if (!isApiLegal() && !in_array($action, ['sysordercreate', 'joinpaytransferurlback','joinpayallocfundsurlback','joinpayfastreturnurlback','joinpaybankurlback','joinpaybankurlback','joinpayautocomsendurlback','joinpayautosendurlback','joinpayreturnurlback','joinpayurlback','joinpayaliurlback','wchaturlback', 'wchatpay', 'aliurlback', 'alipay', 'aliPayReturn', 'recieve_card', 'wchatpay_api','withdraw','withdrawurlback','payurlbacks','ethpayurlback','eospayurlback','refundurlback','tlurlback','setgoodgather','ethchainurlback','gpayurlback','livemsgcallback','actlivedata']) && !in_array($addons_action, ['showuserqrcode', 'userarchivevoucherpackage', 'userarchivecoupon']) && !in_array($addons_controller, ['goodhelper']) && $controller != 'polyapi' && $controller != 'gjpapi' && $controller != 'dsfgoodsapi' && $controller != 'wchat') {
                 $data['code'] = -2;
-                $data['message'] = '接口签名错误';
+                $data['message'] = '接口签名错误--';
                 echo json_encode($data, JSON_UNESCAPED_UNICODE);
                 exit;
             }
@@ -148,8 +149,8 @@ class BaseController extends Controller
     }
     public function initInfo()
     {
-        
-        
+
+
         $ssl =  \think\Request::instance()->domain().\think\Request::instance()->url();
         if(strpos($ssl, '/menu/addonmenu')){
             $auth_method = \request()->param('addons');

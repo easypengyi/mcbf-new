@@ -87,7 +87,7 @@
                         <p>{$user_count_num}</p>
                     </div>
                     <div class="flex-1 padding-15">
-                        <h3 class="strong">可用余额</h3>
+                        <h3 class="strong">剩余积分</h3>
                         <p id="user_balance">{$user_balance_num}</p>
                     </div>
                     <div class="flex-1 padding-15">
@@ -121,7 +121,7 @@
                             <th>注册时间</th>
                             <th class="col-md-2 pr-14 operationLeft">操作</th>
                         </tr>
-                    </thead> 
+                    </thead>
                     <tbody id="list">
 
                     </tbody>
@@ -214,8 +214,8 @@ require(['util'],function(util){
                                 if(data["data"][i]["refree_country_code_long"] && data["data"][i]["refree_country_code_long"] !='0086'){
                                     html += '<p class="p"><span class="label label-danger">'+data["data"][i]["refree_country"] + '(' +data["data"][i]["refree_country_code_long"] +')</span></p>';
                                 }
-                            } 
-                            
+                            }
+
                             html +='</td>';
                         }else{
                         	html += '<p class="p">总店</p>';
@@ -227,12 +227,10 @@ require(['util'],function(util){
                             html +='<img src="/public/static/images/headimg.png" height="30" width="30" alt="">';
                         }
 
-                        if(data["data"][i]["user_name"]){
-                            html +='<div class="line-1-ellipsis">'+data["data"][i]["user_name"] +'</div>';
-                        }else if(data["data"][i]["nick_name"]){
-                            html +='<div class="line-1-ellipsis">'+data["data"][i]["nick_name"] +'</div>';
+                        if(data["data"][i]["real_name"]){
+                            html +='<div class="line-1-ellipsis">'+data["data"][i]["real_name"] +'</div>';
                         }else{
-                            html +='<div class="line-1-ellipsis">未设置昵称</div>';
+                            html +='<div class="line-1-ellipsis">未设置</div>';
                         }
                         if(data["data"][i]["user_status"] == 0) {
                             html += '<p class="p"><span class="label label-default">黑名单</span></p>';
@@ -408,10 +406,10 @@ require(['util'],function(util){
      * 会员数据导出
      */
     $('.dataExcel').on('click',function(){
-        var tip1 = document.getElementById("tip1").innerText; 
+        var tip1 = document.getElementById("tip1").innerText;
         var tip1 = parseInt(tip1)+parseInt(1);
         var total_tips2=tip1>99?"99+":tip1;
-       
+
 		var search_text = $("#user").val();
 		var member_id = $("#member_id").val();
         var user_group = $("#user_group").val();

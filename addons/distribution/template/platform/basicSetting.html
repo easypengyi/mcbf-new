@@ -25,9 +25,9 @@
 							<div class="col-md-5">
 								<select class="form-control" id="distribution_pattern" name="distribution_pattern" required >
 									<option value="">请选择</option>
-									<option value="1"  {if condition="$website.distribution_pattern eq 1"} selected="selected"{/if}>一级分销</option>
-									<option value="2"  {if condition="$website.distribution_pattern eq 2"} selected="selected"{/if}>二级分销</option>
-									<option value="3"  {if condition="$website.distribution_pattern eq 3"} selected="selected"{/if}>三级分销</option>
+									<option value="1"  {if condition="$website.distribution_pattern eq 1"} selected="selected"{/if}>初级奖励</option>
+<!--									<option value="2"  {if condition="$website.distribution_pattern eq 2"} selected="selected"{/if}>二级分销</option>-->
+<!--									<option value="3"  {if condition="$website.distribution_pattern eq 3"} selected="selected"{/if}>三级分销</option>-->
 								</select>
 							</div>
 						</div>
@@ -38,11 +38,11 @@
 									<input type="checkbox" name="purchasetype" id="purchasetype" {if condition="$website.purchase_type eq 1"}checked{/if}>
 									<label for="purchasetype" class=""></label>
 								</div>
-								<div class="mb-0 help-block">开启分销内购，分销商自己购买商品，可享受一级佣金，上级享受二级佣金，上上级享受三级佣金。</div>
+								<div class="mb-0 help-block">开启分销内购，分销商自己购买商品，可享受初级奖励</div>
 							</div>
 						</div>
 						<div class="form-group">
-							<label class="col-md-2 control-label">固定佣金按件计算</label>
+							<label class="col-md-2 control-label">固定奖励按件计算</label>
 							<div class="col-md-5">
 								<div class="switch-inline">
 									<input type="checkbox" name="distribution_piece" id="distribution_piece" {if condition="$website.distribution_piece eq 1"}checked{/if}>
@@ -102,7 +102,7 @@
 										</div>
 									</div>
 									<div class="form-group">
-										<label class="col-md-4 control-label form-control-static"><input type="checkbox" name="distributorconditions" value="4"> 
+										<label class="col-md-4 control-label form-control-static"><input type="checkbox" name="distributorconditions" value="4">
 											<input type="radio" name="order_status" value="1" {if condition="$website.order_status eq 1"}checked{/if}>  购买商品，并完成订单
 											<input type="radio" name="order_status" value="2" {if condition="$website.order_status eq 2"}checked{/if}> 购买商品，并完成付款（售后不会取消身份）
 										</label>
@@ -129,7 +129,7 @@
 													</thead>
 													<tbody id="goods_list">
 														{if $website.goods_list}
-														{foreach $website.goods_list as $vo} 
+														{foreach $website.goods_list as $vo}
 															<tr>
 															<td>
 															<div class="showUser media text-left ">
@@ -148,13 +148,13 @@
 													</tbody>
 												</table>
 										</div>
-										
+
 									</div>
 								</div>
 							</div>
 						</div>
 						<div class="form-group">
-							<label class="col-md-2 control-label"><span class="text-bright">*</span>成为分销商下线条件</label>
+							<label class="col-md-2 control-label"><span class="text-bright">*</span>成为经销商下线条件</label>
 							<div class="col-md-8">
 								<div>
 								<label class="radio-inline">
@@ -177,23 +177,23 @@
 							</div>
 						</div>
 						<div class="form-group">
-							<label class="col-md-2 control-label">分销商自动审核</label>
+							<label class="col-md-2 control-label">经销商自动审核</label>
 							<div class="col-md-5">
 								<div class="switch-inline">
 									<input type="checkbox" name="distributorcheck" id="distributorcheck" {if condition="$website.distributor_check eq 1"}checked{/if}>
 									<label for="distributorcheck" class=""></label>
 								</div>
-                                <div class="mb-0 help-block">开启后无需手动审核分销商</div>
+                                <div class="mb-0 help-block">开启后无需手动审核经销商</div>
 							</div>
 						</div>
 						<div class="form-group">
-							<label class="col-md-2 control-label">分销商必须完善资料</label>
+							<label class="col-md-2 control-label">经销商必须完善资料</label>
 							<div class="col-md-5">
 								<div class="switch-inline">
 									<input type="checkbox" name="distributorDatum" id="distributorDatum" {if condition="$website.distributor_datum eq 1"}checked{/if}>
 									<label for="distributorDatum" class=""></label>
 								</div>
-								<div class="mb-0 help-block">开启后未完善资料的分销商在提现时必须完善资料。</div>
+								<div class="mb-0 help-block">开启后未完善资料的经销商在提现时必须完善资料。</div>
 							</div>
 						</div>
 						<div class="form-group">
@@ -203,7 +203,7 @@
 									<input type="checkbox" name="distributorgrade" id="distributorgrade" {if condition="$website.distributor_grade eq 1"}checked{/if}>
 									<label for="distributorgrade" class=""></label>
 								</div>
-								<div class="mb-0 help-block">开启后，分销商按照权重顺序跳级或跳降级，只要升级或降级条件满足则会一直执行。</div>
+								<div class="mb-0 help-block">开启后，经销商按照权重顺序跳级或跳降级，只要升级或降级条件满足则会一直执行。</div>
 							</div>
 						</div>
 
@@ -237,7 +237,7 @@
         }
    }
         $("input[name='distributorconditions']").click(function () {
-			
+
             if($(this).is(':checked')){
 				var vals=$(this).val();
 				if(vals!=5 || $("input[name='selectgoods_id']").val()==''){
@@ -375,7 +375,7 @@
             var distribution_piece = $("input[name='distribution_piece']").is(':checked')? 1 : 0;
             var distributorDatum = $("input[name='distributorDatum']").is(':checked')? 1 : 0;
             var distributorcondition = $("input[name='distributorcondition']:checked").val();
-			
+
             var distributorconditions = $("input:checkbox[name='distributorconditions']:checked").map(function(index,elem) {
                 return $(elem).val();
             }).get().join(',');
@@ -389,7 +389,7 @@
             var refereecheck = $("input[name='refereecheck']").is(':checked')? 1 : 2;
             var distributorgrade = $("input[name='distributorgrade']").is(':checked')? 1 : 2;
 			var arr=distributorconditions.split(',');
-			
+
 			if(isInArray(arr,"5")){
 				var selectgoods_ids = $("input[name='selectgoods_ids']").val(); //购买n商品成为身份
 				var strs = new Array(); //定义一数组
@@ -401,10 +401,10 @@
 				}
 				if(strs.length>0){
 					selectgoods_ids = strs.join(",");
-					
+
 				}else{
 					selectgoods_ids = ''
-					
+
 				}
 			}else{
 				var goods_id ='';
@@ -419,7 +419,7 @@
 				var order_status = -1;
 			}
             var lower_condition = $("input[name='lower_condition']:checked").val();
-			
+
             $.ajax({
                 type:"post",
                 url:"{$basicSettingUrl}",

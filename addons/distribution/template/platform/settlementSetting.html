@@ -44,7 +44,7 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label"><span class="text-bright">*</span>佣金到账节点</label>
+						<label class="col-md-2 control-label"><span class="text-bright">*</span>积分奖励到账节点</label>
 						<div class="col-md-5">
 							<select class="form-control w-200" name="commission_arrival" id="commission_arrival" required>
 								<!--<option value="">请选择</option>-->
@@ -55,7 +55,7 @@
 						</div>
 					</div>
                     <div class="form-group">
-                        <label class="col-md-2 control-label">佣金提现免审核</label>
+                        <label class="col-md-2 control-label">积分奖励提现免审核</label>
                         <div class="col-md-5">
                             <div class="switch-inline">
                                 <input type="checkbox" name="withdrawals_check" id="withdrawals_check" {if condition="$website.withdrawals_check eq 1"}checked{/if}>
@@ -65,7 +65,7 @@
                         </div>
                     </div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">佣金提现打款方式</label>
+						<label class="col-md-2 control-label">积分奖励提现打款方式</label>
 						<div class="col-md-5">
 							<label class="radio-inline">
 								<input type="radio" name="make_money" value="1" {if condition="$website.make_money eq 1"}checked{/if}> 自动

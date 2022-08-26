@@ -7,6 +7,7 @@ use addons\orderbarrage\model\VslOrderBarrageVirtualModel;
 use addons\orderbarrage\server\OrderBarrage;
 use data\model\VslOrderModel;
 use data\service\Events;
+use data\service\Order;
 use think\Controller;
 use think\Cache;
 use data\model\websiteModel;
@@ -323,6 +324,11 @@ class Task extends Controller
      * 每分钟执行事件
      */
     public function minutesTask(){
+//        $order = new Order();
+//        $order->orderComplete(71, 1);
+//        echo 'success';
+//        die;
+
         $time = time()-60;
         $cache = Cache::get("vsl_minutes_task");
         if(!empty($cache) && $time<$cache)
@@ -335,14 +341,14 @@ class Task extends Controller
             $website = new websiteModel();
             $website_id = $website->Query([],'website_id');
             foreach ($website_id as $k=>$v){
-                $event->ordersComplete($v);
+//                $event->ordersComplete($v);
                 $event->ordersClose($v);
                 $event->channelOrdersClose($v);//渠道商订单关闭
                 $event->ordersCloseGroup($v);
 //                $event->presell_order_close($v);
                 $event->updateSeckillUncheckGoodsPromotionType($v);//将忘记审核的已进行秒杀商品去掉活动类型
                     $event->ordersComment($v); //自动评论设置
-                    $event->deleteExcels($v); //删除失效文件
+//                    $event->deleteExcels($v); //删除失效文件
             }
             Cache::set("vsl_minutes_task", time());
                 $this->unlock('minutes_task');
@@ -397,7 +403,7 @@ class Task extends Controller
         }
         return 1;
     }
-    
+
 
     public function payDistribution()
     {
@@ -423,9 +429,9 @@ class Task extends Controller
         }
     }
 
-   
-    
-    
+
+
+
     /*
      * 自动发货
      * ** */
@@ -700,7 +706,7 @@ class Task extends Controller
         }
         unset($v);
         echo ok;
-    } 
+    }
 
     /**
      * 定时将过期的赠送优惠券返还。
@@ -888,9 +894,9 @@ class Task extends Controller
             $this->unlock('channel_orders_close_line');
         }
         return 1;
-        
+
     }
-    
+
     /*
      * 增值应用订单关闭
      */
@@ -947,7 +953,7 @@ class Task extends Controller
         }
         return 1;
     }
-    
+
     /*
      * 自动评论设置
      */
@@ -1194,7 +1200,7 @@ class Task extends Controller
             }
             $limit = $start.','.$page_size;
             $orderids = $order->Query(['order_status' => 4], 'order_id', $limit,'order_id asc');
-            
+
             if(!$orderids){
                 file_put_contents($path . '/start', $saveStart);
                 file_put_contents($path . '/now', $start);
@@ -1336,7 +1342,7 @@ class Task extends Controller
             return 1;
         }
     }
-    
+
     public function changeOrderBonus()
     {
         if(!is_dir('addons/areabonus') && !is_dir('addons/globalbonus') && !is_dir('addons/teambonus')){
@@ -1363,7 +1369,7 @@ class Task extends Controller
         }
         $orderBonus = objToArr(Db::table('vsl_order_bonus')->alias('a')->join('vsl_order b','a.order_id=b.order_id')->where(['a.order_id' => ['in', $orderids]])->field('a.*,b.create_time,b.finish_time')->select());
         $insertData = [];
-        
+
         if(!$orderBonus){
             echo 0;
             exit;

@@ -10,13 +10,13 @@
 				<tr class="order-list-item">
 					<th>等级名称</th>
 					{if $website['distribution_pattern']>=1}
-					<th>一级返佣</th>
+					<th>初级奖励</th>
 					{/if}
 					{if $website['distribution_pattern']>=2}
-					<th>二级返佣</th>
+					<th>中级奖励</th>
 					{/if}
 					{if $website['distribution_pattern']>=3}
-					<th>三级返佣</th>
+					<th>最高奖励</th>
 					{/if}
 					<th>升级条件</th>
 					<th>降级条件</th>
@@ -65,23 +65,23 @@
                             html += '<td>' + data["data"][i]["level_name"] + '</td>';
                             if (pattern>=1){
                                 if(data["data"][i]["recommend_type"]==1){
-                                    html += '<td>' + data["data"][i]["commission1"] + '%佣金<br>' + data["data"][i]["commission_point1"] + '%积分<br>' + data["data"][i]["commission_beautiful_point1"] + '%美丽分</td>';
+                                    html += '<td>' + data["data"][i]["commission1"] + '%奖励<br>' + data["data"][i]["commission_point1"] + '%积分<br>' + data["data"][i]["commission_beautiful_point1"] + '%美丽分</td>';
 								}else{
-                                    html += '<td>' + data["data"][i]["commission11"] + '元佣金<br>' + data["data"][i]["commission_point11"] + '积分<br>' + data["data"][i]["commission_beautiful_point11"] + '%美丽分</td>';
+                                    html += '<td>' + data["data"][i]["commission11"] + '分奖励<br>' + data["data"][i]["commission_point11"] + '积分<br>' + data["data"][i]["commission_beautiful_point11"] + '%美丽分</td>';
 								}
 							}
                             if(pattern>=2){
                                 if(data["data"][i]["recommend_type"]==1){
-                                    html += '<td>' + data["data"][i]["commission2"] + '%佣金<br>' + data["data"][i]["commission_point2"] + '%积分<br>' + data["data"][i]["commission_beautiful_point2"] + '%美丽分</td>';
+                                    html += '<td>' + data["data"][i]["commission2"] + '%奖励<br>' + data["data"][i]["commission_point2"] + '%积分<br>' + data["data"][i]["commission_beautiful_point2"] + '%美丽分</td>';
                                 }else{
-                                    html += '<td>' + data["data"][i]["commission22"] + '元佣金<br>' + data["data"][i]["commission_point22"] + '积分<br>' + data["data"][i]["commission_beautiful_point22"] + '%美丽分</td>';
+                                    html += '<td>' + data["data"][i]["commission22"] + '分奖励<br>' + data["data"][i]["commission_point22"] + '积分<br>' + data["data"][i]["commission_beautiful_point22"] + '%美丽分</td>';
                                 }
 							}
                             if(pattern>=3){
                                 if(data["data"][i]["recommend_type"]==1){
-                                    html += '<td>' + data["data"][i]["commission3"] + '%佣金<br>' + data["data"][i]["commission_point3"] + '%积分<br>' + data["data"][i]["commission_beautiful_point3"] + '%美丽分</td>';
+                                    html += '<td>' + data["data"][i]["commission3"] + '%奖励<br>' + data["data"][i]["commission_point3"] + '%积分<br>' + data["data"][i]["commission_beautiful_point3"] + '%美丽分</td>';
                                 }else{
-                                    html += '<td>' + data["data"][i]["commission33"] + '元佣金<br>' + data["data"][i]["commission_point33"] + '积分<br>' + data["data"][i]["commission_beautiful_point33"] + '%美丽分</td>';
+                                    html += '<td>' + data["data"][i]["commission33"] + '分奖励<br>' + data["data"][i]["commission_point33"] + '积分<br>' + data["data"][i]["commission_beautiful_point33"] + '%美丽分</td>';
                                 }
                             }
                             html += '<td>';

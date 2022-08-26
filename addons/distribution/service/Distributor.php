@@ -9,6 +9,7 @@ namespace addons\distribution\service;
 use addons\areabonus\service\AreaBonus;
 use addons\bonus\model\VslAgentLevelModel;
 use addons\bonus\model\VslBonusAccountModel;
+use addons\bonus\model\VslOrderBonusLogModel;
 use addons\customform\server\Custom as CustomSer;
 use addons\distribution\model\VslDistributorAccountRecordsModel;
 use addons\globalbonus\service\GlobalBonus;
@@ -27,6 +28,7 @@ use data\service\BaseService as BaseService;
 use data\model\UserModel;
 use addons\distribution\model\VslDistributorLevelModel as DistributorLevelModel;
 use data\service\Config as ConfigService;
+use data\service\Events;
 use data\service\Member;
 use data\service\Order\OrderStatus;
 use addons\distribution\model\VslOrderDistributorCommissionModel;
@@ -1510,6 +1512,12 @@ class Distributor extends BaseService
         $commission = new VslDistributorAccountModel();
         $commission_info = $commission->getInfo(['uid' => $uid], '*');
         $result['commission'] = $commission_info['commission'];
+        //是否是对接人
+        if($result['is_pu'] == 1){
+            $result['com_commission'] = $this->comCommission($uid, $website_id);
+        }else{
+            $result['com_commission'] = 0;
+        }
         $result['withdrawals'] = $commission_info['withdrawals'];
         $result['freezing_commission'] = $commission_info['freezing_commission'];
         $result['total_commission'] = sprintf("%.2f", $commission_info['freezing_commission'] + $commission_info['commission'] + $commission_info['withdrawals']);
@@ -1527,7 +1535,7 @@ class Distributor extends BaseService
             $result['selforder_money'] = $order_model->getSum(['buyer_id' => $uid, 'order_status' => 4, 'is_distribution' => 1], 'order_money'); //自购分销订单金额
             $result['selforder_number'] = $order_model->getCount(['buyer_id' => $uid, 'order_status' => 4, 'is_distribution' => 1], 'order_id'); //自购分销订单数
 
-            $user_info = $user->getInfo(['uid' => $uid], 'user_headimg,user_name,nick_name');
+            $user_info = $user->getInfo(['uid' => $uid], 'user_headimg,user_name,nick_name,real_name,user_tel');
             $result['user_headimg'] = $user_info['user_headimg']; //获取分销商头像
             $info = $distributor->getInfo(['uid' => $uid], '*'); //获取分销商信息
             if ($user_info['user_name']) {
@@ -1535,7 +1543,8 @@ class Distributor extends BaseService
             } else {
                 $result['member_name'] = $user_info['nick_name']; //获取会员名称
             }
-            $result['mobile'] = $info['mobile']; //获取分销商手机号
+            $result['real_name'] = $user_info['real_name'];
+            $result['mobile'] = $user_info['user_tel']; //获取分销商手机号
             $distributor_level_id = $info['distributor_level_id'];
             $level = new DistributorLevelModel();
             $result['level_name'] = $level->getInfo(['id' => $distributor_level_id], 'level_name')['level_name']; //等级名称
@@ -1625,6 +1634,160 @@ class Distributor extends BaseService
         }
 
         return $result;
+    }
+
+    /**
+     * 获取对接人的可发放佣金
+     *
+     * @param $uid
+     */
+    public function comCommission($uid, $website_id)
+    {
+        $amount = 0;
+        //获取下面的所有人
+        $uids = $this->sort($uid);
+//        $ids = [];
+//        foreach ($uids as $i){
+//            $ids[] = $i['uid'];
+//        }
+//        sort($ids);
+//        var_dump(json_encode($ids));
+        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
+        $res = $this->rec_list_files($uid, $lists);
+        $ids = [];
+        foreach ($res as $i){
+            $ids[] = $i['uid'];
+        }
+//        sort($ids);
+//        var_dump(json_encode($ids));die;
+        if(count($ids)){
+            //获取一级佣金 二级佣金 三级佣金
+            $order_commission = new VslOrderDistributorCommissionModel();
+            $order_model = new VslOrderModel();
+            $order_lists = $order_model->getQuery(['website_id'=>1, 'order_status' => 3, 'buyer_id'=> array('in', $ids)], 'order_id');
+            $order_ids = [];
+            foreach ($order_lists as $item){
+                $order_ids[] = $item['order_id'];
+            }
+            if(count($order_ids)){
+                $order_amount =  $order_commission->getSum(['website_id'=>1, 'cal_status' => 0, 'order_id'=> array('in', $order_ids)], 'commission');
+                //获取团队佣金
+                $bonusLogModel = new VslOrderBonusLogModel();
+                $bonus_amount = $bonusLogModel->getSum(['website_id'=>1, 'order_id'=> array('in', $order_ids),'team_return_status'=>0, 'team_cal_status' => 0], 'team_bonus');
+                $amount = $order_amount + $bonus_amount;
+            }
+        }
+
+        return $amount;
+    }
+
+    /**
+     * 过滤同个等级多个对接人的情况
+     *
+     * @param $pid
+     * @param $from
+     * @return array
+     *
+     */
+    public function rec_list_files($pid, $from)
+    {
+        $arr = [];
+        foreach($from as $key=> $item) {
+            if($item['is_pu'] == 1 && $item['uid'] != $pid) {
+                continue;
+            }
+            if(!isset($item['children'])){
+                $arr[] = $item;
+            }
+            if(isset($item['children'])){
+                $children = $item['children'];
+                unset($item['children']);
+                $arr[] = $item;
+                $arr = array_merge($arr, $this->rec_list_files($pid, $children));
+            }
+        }
+        return $arr;
+    }
+
+    /**
+     * 生成树结构
+     *
+     * @param $data
+     * @param string $pk
+     * @param string $pid
+     * @param string $child
+     * @param int $root
+     * @return array|bool
+     */
+    public function sort_data($data, $pk = 'id', $pid = 'pid', $child = 'children', $root = 0)
+    {
+        // 创建Tree
+        $tree = [];
+        if (!is_array($data)) {
+            return false;
+        }
+
+        //创建基于主键的数组引用
+        $refer = [];
+        foreach ($data as $key => $value_data) {
+            $refer[$value_data[$pk]] = &$data[$key];
+        }
+        foreach ($data as $key => $value_data) {
+            // 判断是否存在parent
+            $parentId = $value_data[$pid];
+            if ($root == $parentId) {
+                $tree[] = &$data[$key];
+            } else {
+                if (isset($refer[$parentId])) {
+                    $parent = &$refer[$parentId];
+                    $parent[$child][] = &$data[$key];
+                }
+            }
+        }
+
+        return $tree;
+    }
+
+    /**
+     *
+     *
+     * @param $id
+     * @param $data
+     * @return array
+     */
+    public static function sort1($id, $data)
+    {
+        $arr = [];
+        foreach($data as $k => $v){
+            //从小到大 排列
+            if($v['referee_id'] == $id){
+                $arr[] = $v;
+                $arr = array_merge(self::sort1($v['uid'], $data), $arr);
+            }
+        }
+        return $arr;
+    }
+
+    /**
+     * 获取代理下的所有用户
+     *
+     * @param $top_id
+     * @return array
+     */
+    public function sort($top_id)
+    {
+        $memberModel = new VslMemberModel();
+        $lists = $memberModel->getQuery(['referee_id'=>array('>', 0)], 'uid,referee_id,is_pu');
+        $users = [];
+        foreach ($lists as $item){
+            $users[] = [
+                'uid'=> $item['uid'],
+                'referee_id'=> $item['referee_id'],
+                'is_pu'=> $item['is_pu']
+            ];
+        }
+        $arr = self::sort1($top_id, $users);
+        return $arr;
     }
 
     /**
@@ -7973,5 +8136,25 @@ class Distributor extends BaseService
             return 2;
         }
         return 0;
+    }
+
+    /**
+     * 完成订单，并结算订单佣金
+     *
+     * @param $uid
+     * @return int|string
+     */
+    public function addDistributorCommissionMember($uid){
+        $website_id = $this->website_id;
+        $uids = $this->sort($uid);
+        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
+        $res = $this->rec_list_files($uid, $lists);
+        $ids = [];
+        foreach ($res as $i){
+            $ids[] = $i['uid'];
+        }
+        $event = new Events();
+        $res = $event->checkOrdersComplete($website_id, $ids);
+        return $res;
     }
 }

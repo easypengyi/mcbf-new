@@ -59,10 +59,10 @@ class Member extends BaseController
     public $notice;
     public $login_verify_code;
     private $rpcType = '';
-    
+
     public function __construct()
     {
-        
+
         parent::__construct();
         $this->rpcType = Configs::get('blockchain.rpcType');
         $action = request()->action();
@@ -278,7 +278,8 @@ class Member extends BaseController
         }
         $json_data['country_code'] = $member_info['user_info']['country_code'];
         $json_data['ppl'] = $member_info['user_info']['now_pay_length'];//用户设置的支付密码长度
-        
+        $json_data['is_pu'] = $member_info['is_pu'];
+
         //领货码
         $isLeastOne = $addonSer->isAddonsIsLeastOne('receivegoodscode',$this->website_id);
         if ($isLeastOne){
@@ -294,7 +295,7 @@ class Member extends BaseController
             }
             $json_data['receivegoodscode'] = $code_data;
         }
-        
+
         $data['data'] = $json_data;
         $data['code'] = 0;
         return json($data);
@@ -392,7 +393,7 @@ class Member extends BaseController
     {
         $config = new AddonsConfigService();
         $out_trade_no = request()->post('out_trade_no', '');
-        
+
         if (strstr($out_trade_no, 'QD')) {
             $res = $this->getChannelPayValue($out_trade_no);
             return $res;
@@ -537,14 +538,14 @@ class Member extends BaseController
             $data['data']['end_time'] = $zero2 + ($shop_config['order_buy_close_time'] * 60);
         }
         $data['data']['balance'] = $member_account['balance'];
-        
+
         //支付密码开关
         $payPassRes = $config_service->getClosePayPassword($this->website_id );
         $data['data']['cpp'] = 0;
         if ($payPassRes){
             $data['data']['cpp'] = $payPassRes['value'] ? 1: 0;//1关闭
         }
-        
+
         return json($data);
 
     }
@@ -689,7 +690,7 @@ class Member extends BaseController
             $webConfig = new WebConfig();
             $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
             if($joinPay['is_use'] == 1 && $joinPay['value']['wx_use'] == 1){
-                $result = $pay->joinPay($out_trade_no, 'JSAPI', $red_url,$this->realm_ip,$joinPay['value']); 
+                $result = $pay->joinPay($out_trade_no, 'JSAPI', $red_url,$this->realm_ip,$joinPay['value']);
                 return json($result);
             }
             $res = $pay->wchatPay($out_trade_no, 'JSAPI', $red_url);
@@ -718,11 +719,11 @@ class Member extends BaseController
             $webConfig = new WebConfig();
             $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
             if($joinPay['is_use'] == 1 && $joinPay['value']['wx_use'] == 1){
-                $result = $pay->joinPay($out_trade_no, 'JSAPI', $red_url,$this->realm_ip,$joinPay['value']); 
+                $result = $pay->joinPay($out_trade_no, 'JSAPI', $red_url,$this->realm_ip,$joinPay['value']);
                 $result['mweb_url'] = $result['mweb_url'] . "&redirect_url=" . $call_url;
                 return json($result);
             }
-            $res = $pay->wchatPay($out_trade_no, 'MWEB', $red_url); 
+            $res = $pay->wchatPay($out_trade_no, 'MWEB', $red_url);
             if ($res["return_code"] && $res["return_code"] == "SUCCESS") {
                 $res['mweb_url'] = $res['mweb_url'] . "&redirect_url=" . $call_url;
                 $data['data'] = $res;
@@ -742,7 +743,7 @@ class Member extends BaseController
             $webConfig = new WebConfig();
             $joinPay = $webConfig->getConfig($this->instance_id, 'MPJOINPAY', $this->website_id);
             if($joinPay['is_use'] == 1 && $joinPay['value']['fastpay_is_use'] == 1){
-                $result = $pay->joinPay($out_trade_no, 'JSAPI', $red_url,$this->realm_ip,$joinPay['value']); 
+                $result = $pay->joinPay($out_trade_no, 'JSAPI', $red_url,$this->realm_ip,$joinPay['value']);
                 return json($result);
             }
             $res = $pay->wchatPayMir($out_trade_no, 'JSAPI', $red_url);
@@ -776,7 +777,7 @@ class Member extends BaseController
             $webConfig = new WebConfig();
             $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAYAPP', $this->website_id);
             if($joinPay['is_use'] == 1 && $joinPay['value']['fastpay_is_use'] == 1){
-                $result = $pay->joinPay($out_trade_no, 'WEIXIN_APP', $red_url,$this->realm_ip,$joinPay['value']);  
+                $result = $pay->joinPay($out_trade_no, 'WEIXIN_APP', $red_url,$this->realm_ip,$joinPay['value']);
                 return json($result);
             }
 
@@ -838,13 +839,13 @@ class Member extends BaseController
         $red_url = $this->realm_ip . "/wapapi/pay/gpayUrlBack";
         $pay = new UnifyPay();
 		$gbpay = new globalpay();
-        if ($type == 6) {			
-			$data = $pay->globePayMir($out_trade_no);			
+        if ($type == 6) {
+			$data = $pay->globePayMir($out_trade_no);
 			if ($data) {
                 $user  = new UserModel();
 				$openid = $user->getInfo(['uid'=>$this->uid],'mp_open_id')['mp_open_id'];
 				$config_service = new WebConfig();
-				$payconfig = $config_service->getConfig(0, 'GPPAY', $this->website_id);							
+				$payconfig = $config_service->getConfig(0, 'GPPAY', $this->website_id);
 				if($payconfig['value']['currency'] == 'CNY'){
 					$orderprice=$data['pay_money']*100;
 				}else{
@@ -884,10 +885,10 @@ class Member extends BaseController
                 return json($data);
             }
         }else{
-			$data = $pay->globePayMir($out_trade_no);			
+			$data = $pay->globePayMir($out_trade_no);
 			if ($data) {
 				$config_service = new WebConfig();
-				$payconfig = $config_service->getConfig(0, 'GLOPAY', $this->website_id);							
+				$payconfig = $config_service->getConfig(0, 'GLOPAY', $this->website_id);
 				if($payconfig['value']['currency'] == 'CNY'){
 					$orderprice=$data['pay_money']*100;
 				}else{
@@ -991,7 +992,7 @@ class Member extends BaseController
             $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
             if($joinPay['is_use'] == 1 && $joinPay['value']['ali_use'] == 1){
                 $pay = new UnifyPay();
-                $result = $pay->joinPay($out_trade_no, 'ALIH5', $notify_url,$this->realm_ip,$joinPay['value'],$return_url); 
+                $result = $pay->joinPay($out_trade_no, 'ALIH5', $notify_url,$this->realm_ip,$joinPay['value'],$return_url);
                 return json($result);
             }
             $pay = new UnifyPay();
@@ -1013,7 +1014,7 @@ class Member extends BaseController
             $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAYAPP', $this->website_id);
             if($joinPay['is_use'] == 1 && $joinPay['value']['ali_use'] == 1){
                 $pay = new UnifyPay();
-                $result = $pay->joinPay($out_trade_no, 'ALIH5', $notify_url,$this->realm_ip,$joinPay['value'],$return_url); 
+                $result = $pay->joinPay($out_trade_no, 'ALIH5', $notify_url,$this->realm_ip,$joinPay['value'],$return_url);
                 return json($result);
             }
             $pay = new UnifyPay();
@@ -1075,8 +1076,8 @@ class Member extends BaseController
                 return json(AjaxReturn($checkGroup));
             }
         }
-        //查询是否汇聚快捷支付 汇聚使用无短支付 
-        //--查询是否汇聚快捷支付 汇聚使用有短支付 
+        //查询是否汇聚快捷支付 汇聚使用无短支付
+        //--查询是否汇聚快捷支付 汇聚使用有短支付
         $webConfig = new WebConfig();
         $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
         if($joinPay['is_use'] == 1 && $joinPay['value']['fastpay_is_use'] == 1){
@@ -1158,7 +1159,7 @@ class Member extends BaseController
         $id = request()->post('id', '');
         $smscode = request()->post('smscode', '');
         $thpinfo = htmlspecialchars_decode(stripslashes(request()->post('thpinfo', '')));
-        //--查询是否汇聚快捷支付 汇聚使用无短支付 
+        //--查询是否汇聚快捷支付 汇聚使用无短支付
         $webConfig = new WebConfig();
         $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
         if($joinPay['is_use'] == 1 && $joinPay['value']['fastpay_is_use'] == 1){
@@ -1270,7 +1271,7 @@ class Member extends BaseController
                     $payGradeServer = new PayGradeServer();
                     $account_flow = new MemberAccount();
                     $result = $account_flow->addMemberAccountData(2, $this->uid, 0, $pay_info['pay_money'], 1, $pay_info['type_alis_id'], $pay_info['pay_body'].'，余额支付');
-                   
+
                     if($result > 0){
                         //支付成功后处理回调
                         $payGradeServer->orderOnLinePay($out_trade_no, 5);
@@ -1278,7 +1279,7 @@ class Member extends BaseController
                         $data['message'] = "支付成功";
                         return json($data);
                     }else{
-                        
+
                         $data['code'] = -1;
                         $data['message'] = "支付失败";
                         return json($data);
@@ -1291,7 +1292,7 @@ class Member extends BaseController
                         $order = new VslChannelOrderModel();
                         $text = '渠道商采购';
                         $from_type = 27;
-                    }else{ 
+                    }else{
                         $order_info = $order->getInfo(['out_trade_no|out_trade_no_presell' => $out_trade_no], 'order_id, order_type,order_status,pay_money,pay_status,money_type');
                         if ($order_info['pay_status']==2 && $order_info['pay_money']!=0){
                             return AjaxReturn(FAIL,[],'请勿重复支付!');
@@ -1312,9 +1313,9 @@ class Member extends BaseController
                                 }
                             }
                         }
-                        
+
                         if($order_info){
-                            $res = $order_service->orderOnLinePay($out_trade_no, 5, 0, 1); 
+                            $res = $order_service->orderOnLinePay($out_trade_no, 5, 0, 1);
                         }
                         $from_type = 1;
                     }
@@ -1478,7 +1479,7 @@ class Member extends BaseController
     {
         $out_trade_no = request()->post('out_trade_no', '');
         $password = request()->post('password', '');
-    
+
         //密码长度
         $config = new ConfigSer();
         $pay_length = $config->getPayPasswordLength($this->website_id);
@@ -1639,7 +1640,7 @@ class Member extends BaseController
         if ($use_password && !pregMatchPayPass($password,$pay_length)){
             return AjaxReturn(PAY_PASS_LENGTH_ERROR);
         }
-    
+
         if ($real_password != encryptPayPass($password)) {
             $data['code'] = '-1';
             $data['data'] = '';
@@ -1680,7 +1681,7 @@ class Member extends BaseController
             $data['message'] = "请先开启通联配置";
             return json($data);
         }
-    
+
         //后台设置不验证密码
         $check_passwd = true;
         $payPassRes = $config->getClosePayPassword($this->website_id );
@@ -1690,7 +1691,7 @@ class Member extends BaseController
                 $check_passwd = false;
             }
         }
-        
+
         //先验证支付密码
         $real_password = $this->get_user_password();
         if (empty($real_password) && $check_passwd) {
@@ -1921,7 +1922,7 @@ class Member extends BaseController
             #需要加转出的记录
 
             $sql = "select a.*,b.`coupon_id`,b.`uid`,b.`state`,c.`shop_name`,c.`shop_id` from `vsl_coupon_type` as a left JOIN  `vsl_coupon` as b on a.coupon_type_id = b.coupon_type_id left join `vsl_shop` as c on b.`shop_id` = c.`shop_id` AND a.`website_id`= c.`website_id` where (b.`send_uid` = " . $this->uid . " or (b.`uid` = " . $this->uid . " and b.`send_uid` > 0)) and a.`website_id` = " . $this->website_id;
-            
+
             $count = Db::query($sql);
             $sql = "select a.*,b.`coupon_id`,b.`uid`,b.`send_uid`,b.`state`,c.`shop_name`,c.`shop_id` from `vsl_coupon_type` as a left JOIN  `vsl_coupon` as b on a.coupon_type_id = b.coupon_type_id left join `vsl_shop` as c on b.`shop_id` = c.`shop_id` AND a.`website_id`= c.`website_id` where (b.`send_uid` = " . $this->uid . " or (b.`uid` = " . $this->uid . " and b.`send_uid` > 0)) and a.`website_id` = " . $this->website_id  . " limit $start , $page_size";
 
@@ -1952,7 +1953,7 @@ class Member extends BaseController
             }else{
                 $result[$k]['num'] = '-1';
             }
-            
+
             if($v['send_uid']){
                 $send_user_info = $user->getInfo(['uid' => $v['send_uid']], 'nick_name,user_name,user_tel,user_headimg');
                 if ($send_user_info['user_name']) {
@@ -1978,7 +1979,7 @@ class Member extends BaseController
     //提现账户列表
     public function bank_account()
     {
-        $account_list = $this->user->getMemberBankAccount(); 
+        $account_list = $this->user->getMemberBankAccount();
         if ($account_list) {
             $bank = new VslBankModel();
             foreach ($account_list as $k => $v) {
@@ -2106,7 +2107,7 @@ class Member extends BaseController
         $mobile = $info['mobile'];
         $validdate = $info['validdate'];
         $cvv2 = $info['cvv2'];
-        $pay = new UnifyPay(); 
+        $pay = new UnifyPay();
         $res = $pay->tlSigning($bank_type, $account_number, $bank_card, $bank_username, $mobile, $validdate, $cvv2, $this->uid, $this->website_id);
         if ($res['retcode'] == 'SUCCESS') {
             if ($res['trxstatus'] == 1999) {
@@ -2220,7 +2221,7 @@ class Member extends BaseController
             }
         }
         if ($type == 1) {
-            //如果是汇聚自动打款，则不需要签约 
+            //如果是汇聚自动打款，则不需要签约
             //变更 2020、09、21变更为签约模式
             $webConfig = new WebConfig();
             $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
@@ -2394,7 +2395,7 @@ class Member extends BaseController
                 'smscode'=>$smscode,
                 'q1_OrderNo'=>$q1_OrderNo,
             );
-            
+
             $joinpay = new Joinpay();
             $req = $joinpay->smsSign($joinPay['value'],$apl_info);
             if($req['resp_code'] == 'SUCCESS' && $req['biz_code'] == 'JS000000'){
@@ -2492,13 +2493,13 @@ class Member extends BaseController
                 return json($data);
             }
         }else{
-            
+
             $member = new VslMemberBankAccountModel();
             $member->delData(['id'=>$id]);
             $data['message'] = '解绑成功';
             $data['code'] = 1;
             return json($data);
-            
+
         }
 
 
@@ -2541,7 +2542,7 @@ class Member extends BaseController
             }
         }
             if($type==1){
-                //如果是汇聚自动打款，则不需要签约 
+                //如果是汇聚自动打款，则不需要签约
                 //变更 2020、09、21变更为签约模式
                 $webConfig = new WebConfig();
                 $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
@@ -2788,10 +2789,10 @@ class Member extends BaseController
         if ($use_password && !pregMatchPayPass($password,$pay_length)){
             return AjaxReturn(PAY_PASS_LENGTH_ERROR);
         }
-        
+
         //记录设置的密码长度，用于商家变更了密码长度，可以提示用户进行支付密码升级
         $pay_password_len = strlen($password);
-        
+
         $password = encryptPayPass($password);
         $condition['website_id'] = $this->website_id;
         $condition['user_tel'] = Session::get('sendMobile');
@@ -2935,7 +2936,7 @@ class Member extends BaseController
             'district' => $district,
             'address' => $address,
             'zip_code' => $zip_code,
-            'is_default' => $is_default 
+            'is_default' => $is_default
         );
         }else {
             if (empty($consigner) || empty($mobile) || empty($country_id) || empty($address)) {
@@ -3029,7 +3030,7 @@ class Member extends BaseController
             $address_list[$k]['english_country_name'] = $v['country_info']['english_country_name'] ?: '';
             $address_list[$k]['type'] = $v['type'];
         }
-        
+
         return json(['code' => 1, 'message' => '获取成功', 'data' => ['address_list' => $address_list,'page_count'=> $list['page_count'],'total_count'=> $list['total_count']]]);
     }
 
@@ -3358,6 +3359,7 @@ class Member extends BaseController
         $list = [];
         $bonus = $config->getConfig(0,"BONUSCOPYWRITING",$this->website_id, 1);
         if ($bonus && isset($bonus['bonus_name'])) {
+            $bonus['bonus_name'] = '绩效积分';
             $list['common'] = $bonus;
         } else {
             $list['common'] = array(
@@ -3396,7 +3398,7 @@ class Member extends BaseController
             );
         }
         $team = $config->getConfig(0, 'TEAMAGREEMENT', $this->website_id, 1);
-        
+
         if ($team && isset($team['withdrawals_team_bonus'])) {
             $list['team'] = $team;
 
@@ -3420,7 +3422,7 @@ class Member extends BaseController
     }
 
     //查看是否有邀请码
-    public function checkReferee() 
+    public function checkReferee()
     {
         //查询是否有分销应用
         $extend_code = request()->post('extend_code', '');//邀请码
@@ -3437,14 +3439,14 @@ class Member extends BaseController
             $this->user->addScanRecords($uid, $referee_id, $poster_id, $poster_type);
         }
         $distributionStatus = getAddons('distribution', $this->website_id);
-        //查询是否已经有推荐人，并且开启 必须购买商品才能成为下线 
-       
+        //查询是否已经有推荐人，并且开启 必须购买商品才能成为下线
+
         if(($member_referee || $member_referee===0) && $member_info['isdistributor'] != 2 && $member_info['lower_condition']==2 && $referee_id && $uid && $referee_id != $uid){
             $memberModel = new VslMemberModel();
             $memberModel->save(['default_referee_id'=>$referee_id],['uid'=>$uid]);
             return json(['code' => 0, 'message' => '不符合推荐条件']);
         }
-        
+
         if ($distributionStatus == 1 && $member_referee === null && $referee_id != $uid && $referee_id && $uid && ($member_info['isdistributor'] != 2 ||  ($list['distributor_condition']==3 && empty($member_info['referee_id'])) )) {
             $res = $this->user->updateMemberInfo($referee_id);
             if ($res == 1) {
@@ -3782,7 +3784,7 @@ class Member extends BaseController
                 break;
             case 2:
                 //余额提现
-                // 得到本店的提现设置 注意缓存 
+                // 得到本店的提现设置 注意缓存
                 $config = new Config();
                 $withdraw_info = $config->getConfig($this->instance_id, 'WITHDRAW_BALANCE');
                 $charge = 0;
@@ -3911,13 +3913,13 @@ class Member extends BaseController
                 $market_eth = $blocks->ethRmb();
                 $base = $blocks->getBlockChainSite($this->website_id);
                 $charge = substr(sprintf("%.7f", $pay_money*$base['service_charge']/$market_eth/100),0,-1);
-                
+
                 break;
             case 9:
                 //ETH转账
                 $blocks = new Block();
-                $result = $blocks->ethGasCharge(1,3,$this->uid,$address); 
-                
+                $result = $blocks->ethGasCharge(1,3,$this->uid,$address);
+
                 if ($result['code'] == 1) {
                     $charge = $blocks->decimalNotation($result['data']['gasFee']);
                 } else {
@@ -3929,9 +3931,9 @@ class Member extends BaseController
             case 10:
                 //5ETH兑换
                 $blocks = new Block();
-                
+
                 $result = $blocks->ethGasCharge(1,2,$this->uid);
-               
+
                 if ($result['code'] == 1) {
                     $charge = $blocks->decimalNotation($result['data']['gasFee']);
                 } else {
@@ -3941,7 +3943,7 @@ class Member extends BaseController
                 }
                 break;
             case 11:
-                //积分兑换成eth 
+                //积分兑换成eth
                 $blocks = new Block();
                 $result = $blocks->ethGasCharge($gas, 1, $this->uid);
                 if ($result['code'] == 1) {
@@ -3972,7 +3974,7 @@ class Member extends BaseController
                 if($result2['code']==200){
                     $netPrice =  $result2['data']['netPrice'];
                     $netcharge = $charge * $netPrice;
-                    
+
                 }else{
                     $netcharge = 0;
                 }
@@ -4039,7 +4041,7 @@ class Member extends BaseController
                 }
                 break;
                         }
-       
+
         if($types == 14 || $types == 15 || $types == 13){
             $rdata = array(
                 'cpucharge' => $cpucharge,
@@ -4450,7 +4452,7 @@ class Member extends BaseController
         $num = request()->post('num', 1);
         // $remark = request()->post('remark', '');
         $coupon_id = request()->post('coupon_id', '');
-        
+
         if(empty($type)){
             $data['code'] = '-1';
             $data['message'] = "请选择类型";
@@ -4462,7 +4464,7 @@ class Member extends BaseController
             $data['message'] = "受让人ID或手机号不能为空";
             return json($data);
         }
-        
+
         //查询会员是否存在
         if ($user_id) {
             $user_service = new User();
@@ -4518,7 +4520,7 @@ class Member extends BaseController
         $data['point'] = $member_info['beautiful_point'];
         $data['point_detail'] = $this->object2array($member_point_list);
         foreach ($data['point_detail']['data'] as $k=>$v){
-            
+
             if($v['sign'] == -1){
                 $data['point_detail']['data'][$k]['number'] = "-".$v['number'];
             }else if(floatval($v['number']) > 0){
@@ -4526,7 +4528,7 @@ class Member extends BaseController
             }
             $data['point_detail']['data'][$k]['text'] = str_replace("积分",$point_style,$v['text']);
             $data['point_detail']['data'][$k]['type_name'] = str_replace("积分",$point_style,$v['type_name']);
-            
+
         }
         $data['point_detail']['page_index'] = $page_index;
         $result['code'] = 0;
@@ -4545,7 +4547,7 @@ class Member extends BaseController
         $remark = request()->post('remark', '');
 
         $uid = $this->uid;
-        
+
         $key = 'uid'.$uid.'_transBeautifulPoint_website_id_'.$this->website_id;
         // $is_lock = lock($key, 5);
         // if($is_lock == false){
@@ -4605,13 +4607,13 @@ class Member extends BaseController
     }
     public function checkMemberLower(){
         $user_tel = request()->post('user_tel', '');//推荐手机号
-       
+
         if(empty($user_tel)){
             return json(['code' => -1, 'message' => '请填写推荐人手机号']);
         }
         $distributorServer = new Distributor();
         $check = $distributorServer->getDistributionSite($this->website_id);
-        //查询是否已经有推荐人，并且开启 必须购买商品才能成为下线 
+        //查询是否已经有推荐人，并且开启 必须购买商品才能成为下线
         if(isset($check['referee_check']) && $check['referee_check'] == 1 && $check['is_use'] == 1){
             $userModel = new UserModel();
             $user_info = $userModel->getInfo(['user_tel'=>$user_tel,'is_member'=>1,'is_system'=>0],'uid');

@@ -21,8 +21,11 @@ class VslGoodsModel extends BaseModel {
         'description'  =>  '',
         'goods_spec_format'  =>  ''
     ];
+
+    const DEFAULT_GOODS_ID = 55;
+
     protected $autoWriteTimestamp = true;
-    
+
     public function album_picture()
     {
         return $this->belongsTo('AlbumPictureModel','picture','pic_id');
@@ -49,7 +52,7 @@ class VslGoodsModel extends BaseModel {
     public function getSeckillGoodsInfo($condition){
 //        $this->alias()->field()->select
     }
-    
+
     /**
      * 供应商市场
      */
@@ -86,7 +89,7 @@ class VslGoodsModel extends BaseModel {
         $count = $this->viewCount($viewObj,$condition);
         return $count;
     }
-    
+
     /**
      * 商家端查询供应商市场商品列表数量（过滤关闭的供应商商品）
      */
@@ -97,7 +100,7 @@ class VslGoodsModel extends BaseModel {
         $count = $this->viewCount($viewObj,$condition);
         return $count;
     }
-    
+
     /*
      * 供应商对应店铺单个商品
      */
@@ -111,7 +114,7 @@ class VslGoodsModel extends BaseModel {
                         ->find();
         return $goods_info;
     }
-    
+
     /*
      * 店铺已选供应商的全部商品列表
      */

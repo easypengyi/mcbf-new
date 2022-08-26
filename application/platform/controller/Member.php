@@ -1,13 +1,17 @@
 <?php
 namespace app\platform\controller;
 
+use addons\bonus\model\VslOrderBonusLogModel;
+use addons\distribution\model\VslOrderDistributorCommissionModel;
 use addons\distribution\service\Distributor;
 use addons\merchants\server\Merchants;
 use data\model\UserModel;
+use data\model\VslGoodsModel;
 use data\model\VslMemberBalanceWithdrawModel;
 use data\model\VslMemberGroupModel;
 use data\model\VslMemberLevelModel;
 use data\model\VslMemberModel;
+use data\model\VslOrderModel;
 use data\service\ExcelsExport;
 use data\service\Member as MemberService;
 use data\service\Address;
@@ -115,12 +119,49 @@ class Member extends BaseController
      */
     public function memberDetail()
     {
+//        $uid = 7569;
+//        //获取下面的所有人
+//        $uids = $this->sort($uid);
+//        $ids = [];
+//        foreach ($uids as $i){
+//            $ids[] = $i['uid'];
+//        }
+//        sort($ids);
+//        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
+//        $res = $this->rec_list_files($uid, $lists);
+////        echo json_encode($lists);
+//        $ids = [];
+//        foreach ($res as $i){
+//            $ids[] = $i['uid'];
+//        }
+//        sort($ids);
+//        $amount = 0;
+//        if(count($ids)){
+//            //获取一级佣金 二级佣金 三级佣金
+//            $order_commission = new VslOrderDistributorCommissionModel();
+//            $order_model = new VslOrderModel();
+//            $order_lists = $order_model->getQuery(['website_id'=>1, 'order_status' => 3, 'buyer_id'=> array('in', $ids)], 'order_id');
+//            $order_ids = [];
+//            foreach ($order_lists as $item){
+//                $order_ids[] = $item['order_id'];
+//            }
+//            if(count($order_ids)){
+//                $order_amount =  $order_commission->getSum(['website_id'=>1, 'cal_status' => 0, 'order_id'=> array('in', $order_ids)], 'commission');
+//                //获取团队佣金
+//                $bonusLogModel = new VslOrderBonusLogModel();
+//                $bonus_amount = $bonusLogModel->getSum(['website_id'=>1, 'order_id'=> array('in', $order_ids),'team_return_status'=>0, 'team_cal_status' => 0], 'team_bonus');
+//                $amount = $order_amount + $bonus_amount;
+//            }
+//        }
+//
+//        var_dump($amount);
+//        die;
         $member = new MemberService();
         $member_id = request()->get('member_id');
         $condition['su.uid'] = $member_id;
         $condition['su.website_id'] = $this->website_id;
         $list = $member->getMemberList(1, 0, $condition, '');
-        
+
         // 查询会员等级
         $list1 = $member->getMemberLevelList(1, 0,['website_id'=>$this->website_id]);
         $this->assign('list',$list['data']);
@@ -135,7 +176,103 @@ class Member extends BaseController
                 $this->assign('info',$info);
             }
         }
+        //套餐
+        $goodsModel = new VslGoodsModel();
+        $goods =  $goodsModel->getInfo(['goods_id'=>VslGoodsModel::DEFAULT_GOODS_ID],'goods_id,goods_name');
+        $this->assign('goods', $goods);
+
         return view($this->style . 'Member/memberDetail');
+    }
+
+    public function rec_list_files($pid, $from)
+    {
+        $arr = [];
+        foreach($from as $key=> $item) {
+            if($item['is_pu'] == 1 && $item['uid'] != $pid) {
+                continue;
+            }
+            if(!isset($item['children'])){
+                $arr[] = $item;
+            }
+            if(isset($item['children'])){
+                $children = $item['children'];
+                unset($item['children']);
+                $arr[] = $item;
+                $arr = array_merge($arr, $this->rec_list_files($pid, $children));
+            }
+        }
+        return $arr;
+    }
+
+    public function sort_data($data, $pk = 'id', $pid = 'pid', $child = 'children', $root = 0)
+    {
+        // 创建Tree
+        $tree = [];
+        if (!is_array($data)) {
+            return false;
+        }
+
+        //创建基于主键的数组引用
+        $refer = [];
+        foreach ($data as $key => $value_data) {
+            $refer[$value_data[$pk]] = &$data[$key];
+        }
+        foreach ($data as $key => $value_data) {
+            // 判断是否存在parent
+            $parentId = $value_data[$pid];
+            if ($root == $parentId) {
+                $tree[] = &$data[$key];
+            } else {
+                if (isset($refer[$parentId])) {
+                    $parent = &$refer[$parentId];
+                    $parent[$child][] = &$data[$key];
+                }
+            }
+        }
+
+        return $tree;
+    }
+
+    /**
+     *
+     *
+     * @param $id
+     * @param $data
+     * @return array
+     */
+    public static function sort1($id, $data)
+    {
+        $arr = [];
+        foreach($data as $k => $v){
+            //从小到大 排列
+            if($v['referee_id'] == $id){
+                $arr[] = $v;
+                $arr = array_merge(self::sort1($v['uid'], $data), $arr);
+            }
+        }
+        return $arr;
+    }
+
+    /**
+     * 获取代理下的所有用户
+     *
+     * @param $top_id
+     * @return array
+     */
+    public function sort($top_id)
+    {
+        $memberModel = new VslMemberModel();
+        $lists = $memberModel->getQuery(['referee_id'=>array('>', 0)], 'uid,referee_id,is_pu');
+        $users = [];
+        foreach ($lists as $item){
+            $users[] = [
+                'uid'=> $item['uid'],
+                'referee_id'=> $item['referee_id'],
+                'is_pu'=> $item['is_pu']
+            ];
+        }
+        $arr = self::sort1($top_id, $users);
+        return $arr;
     }
 
     /**
@@ -340,6 +477,27 @@ class Member extends BaseController
             $res = $member->adjustMemberLevel($level_id,$uid);
         }
         $this->addUserLogByParam("修改用户会员等级", $res);
+        return AjaxReturn($res);
+    }
+
+
+    /**
+     * 修改 当前会员是否为对接人
+     */
+    public function adjustMemberPu()
+    {
+        $member = new MemberService();
+        $is_pu = request()->post("is_pu", 0);
+        $uid = request()->post("uid", 0);
+        $ids = explode(',',$uid);
+        if(count($ids)>1){
+            foreach ($ids as $v) {
+                $res = $member->adjustMemberPu($is_pu, $v);
+            }
+        }else{
+            $res = $member->adjustMemberPu($is_pu,$uid);
+        }
+        $this->addUserLogByParam("修改用户为对接人", $res);
         return AjaxReturn($res);
     }
 
@@ -592,7 +750,7 @@ class Member extends BaseController
             $list = $member->getMemberBalanceWithdraw($page_index, PAGESIZE, $condition, 'ask_for_date desc');
             return $list;
         } else {
-            return view($this->style . "Member/memberWithdrawalApply"); 
+            return view($this->style . "Member/memberWithdrawalApply");
         }
     }
     /**
@@ -929,7 +1087,7 @@ class Member extends BaseController
             [
                 "<",
                 strtotime($end_create_date)
-            ] 
+            ]
         ];
         $condition['su.is_member'] = 1;
         if($search_text){
@@ -1025,7 +1183,7 @@ class Member extends BaseController
     }
     /**
      * 后台手动添加新用户
-     */ 
+     */
     public function register(){
         $member = new MemberService();
         $mobile = request()->post("mobile", '');
@@ -1034,10 +1192,10 @@ class Member extends BaseController
         $referee_id = request()->post("referee_id", '');
         $pic = request()->post("pic", '');
         $nickname = request()->post("nickname", '');
-        //校验手机号 
+        //校验手机号
         if(!preg_match("/^[1][3,4,5,6,7,8,9][0-9]{9}$/", $mobile)){
             return json(['code' => 0,'message' => '请输入正确的手机号码']);
-        } 
+        }
         if(!preg_match("/^(\w){6,20}$/", $password)){
             return json(['code' => 0,'message' => '请输入由6-20个字母、数字、下划线组成的密码']);
         }
@@ -1081,7 +1239,7 @@ class Member extends BaseController
         $search_text = request()->post('search_text','');
         $page_index = request()->post('page_index',1);
         $page_size = request()->post('page_size',PAGESIZE);
-    
+
         $condition = [
             'su.website_id' => $this->website_id,
             'su.instance_id' => 0,
@@ -1113,5 +1271,5 @@ class Member extends BaseController
         $list = $member->getPointList($page_index, $page_size, $condition, $order = '', $field = '*');
         return $list;
     }
-    
+
 }

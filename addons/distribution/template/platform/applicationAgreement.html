@@ -13,7 +13,7 @@
 			<div role="tabpanel" class="tab-pane tab-pane fade in active" id="protocols">
 				<form class="form-horizontal form-validate1 pt-15">
 					<div class="form-group">
-						<label class="col-md-2 control-label"><span class="text-bright">*</span>注册分销商海报图片</label>
+						<label class="col-md-2 control-label"><span class="text-bright">*</span>注册经销商海报图片</label>
 						<div class="col-md-5">
 							<div class="picture-list" id="Logo">
 								{if $website.logo}
@@ -50,74 +50,74 @@
 					</div>
 					{/if}
 					<div class="form-group">
-						<label class="col-md-2 control-label">分销商名称</label>
+						<label class="col-md-2 control-label">经销商名称</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="distributor_name" placeholder="分销商"  value="{if $website.distributor_name}{$website.distributor_name}{else}分销商{/if}" >
+								<input type="text" class="form-control" id="distributor_name" placeholder="经销商名称"  value="{if $website.distributor_name}{$website.distributor_name}{else}分销商{/if}" >
 							</div>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">佣金</label>
+						<label class="col-md-2 control-label">奖励</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="commission" placeholder="佣金"   value="{if $website.commission}{$website.commission}{else}佣金{/if}" >
+								<input type="text" class="form-control" id="commission" placeholder="奖励"   value="{if $website.commission}{$website.commission}{else}佣金{/if}" >
 							</div>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">分销佣金</label>
+						<label class="col-md-2 control-label">分销奖励</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="distribution_commission"  placeholder="分销佣金" value="{if $website.distribution_commission}{$website.distribution_commission}{else}分销佣金{/if}" >
+								<input type="text" class="form-control" id="distribution_commission"  placeholder="分销奖励" value="{if $website.distribution_commission}{$website.distribution_commission}{else}分销佣金{/if}" >
 							</div>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">可提现佣金</label>
+						<label class="col-md-2 control-label">可提现奖励积分</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="withdrawable_commission"  placeholder="可提现佣金" value="{if $website.withdrawable_commission}{$website.withdrawable_commission}{else}可提现佣金{/if}" >
+								<input type="text" class="form-control" id="withdrawable_commission"  placeholder="可提现奖励积分" value="{if $website.withdrawable_commission}{$website.withdrawable_commission}{else}可提现佣金{/if}" >
 							</div>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">累积佣金</label>
+						<label class="col-md-2 control-label">累积奖励积分</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="total_commission"  placeholder="累积佣金" value="{if $website.total_commission}{$website.total_commission}{else}累积佣金{/if}" >
+								<input type="text" class="form-control" id="total_commission"  placeholder="累积奖励积分" value="{if $website.total_commission}{$website.total_commission}{else}累积佣金{/if}" >
 							</div>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">已提现佣金</label>
+						<label class="col-md-2 control-label">已兑换积分</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="withdrawals_commission"  placeholder="已提现佣金" value="{if $website.withdrawals_commission}{$website.withdrawals_commission}{else}已提现佣金{/if}" >
+								<input type="text" class="form-control" id="withdrawals_commission"  placeholder="已兑换积分" value="{if $website.withdrawals_commission}{$website.withdrawals_commission}{else}已提现佣金{/if}" >
 							</div>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">冻结佣金</label>
+						<label class="col-md-2 control-label">冻结积分</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="frozen_commission"  placeholder="冻结佣金" value="{if $website.frozen_commission}{$website.frozen_commission}{else}冻结佣金{/if}" >
+								<input type="text" class="form-control" id="frozen_commission"  placeholder="冻结积分" value="{if $website.frozen_commission}{$website.frozen_commission}{else}冻结佣金{/if}" >
 							</div>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">提现中</label>
+						<label class="col-md-2 control-label">兑换中</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="withdrawal" placeholder="提现中"  value="{if $website.withdrawal}{$website.withdrawal}{else}提现中{/if}" >
+								<input type="text" class="form-control" id="withdrawal" placeholder="兑换中"  value="{if $website.withdrawal}{$website.withdrawal}{else}提现中{/if}" >
 							</div>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">佣金明细</label>
+						<label class="col-md-2 control-label">积分明细</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="commission_details"   placeholder="佣金明细" value="{if $website.commission_details}{$website.commission_details}{else}佣金明细{/if}" >
+								<input type="text" class="form-control" id="commission_details"   placeholder="积分明细" value="{if $website.commission_details}{$website.commission_details}{else}佣金明细{/if}" >
 							</div>
 						</div>
 					</div>
@@ -130,15 +130,15 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">我的团队</label>
+						<label class="col-md-2 control-label">我的客户</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="my_team" placeholder="我的团队"  value="{if $website.my_team}{$website.my_team}{else}我的团队{/if}" >
+								<input type="text" class="form-control" id="my_team" placeholder="我的客户"  value="{if $website.my_team}{$website.my_team}{else}我的团队{/if}" >
 							</div>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">团队级别名称</label>
+						<label class="col-md-2 control-label">客户身份名称</label>
 						<div class="col-md-5">
 							<div class="input-group">
 								<input type="text" class="form-control" id="team1" placeholder="一级"  value="{if $website.team1}{$website.team1}{else}一级{/if}" >
@@ -154,10 +154,10 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">我的客户</label>
+						<label class="col-md-2 control-label">我的用户</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="my_customer" placeholder="我的客户"  value="{if $website.my_customer}{$website.my_customer}{else}我的客户{/if}" >
+								<input type="text" class="form-control" id="my_customer" placeholder="我的用户"  value="{if $website.my_customer}{$website.my_customer}{else}我的客户{/if}" >
 							</div>
 						</div>
 					</div>
@@ -178,10 +178,10 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-md-2 control-label">成为分销商</label>
+						<label class="col-md-2 control-label">成为经销商</label>
 						<div class="col-md-5">
 							<div class="input-group">
-								<input type="text" class="form-control" id="become_distributor"  placeholder="成为分销商" value="{if $website.become_distributor}{$website.become_distributor}{else}成为分销商{/if}" >
+								<input type="text" class="form-control" id="become_distributor"  placeholder="成为经销商" value="{if $website.become_distributor}{$website.become_distributor}{else}成为分销商{/if}" >
 							</div>
 						</div>
 					</div>

@@ -20,7 +20,7 @@ class VslMemberViewModel extends BaseModel {
      * @return unknown
      */
     public function getViewList($page_index, $page_size, $condition, $order, $field = ''){
-    
+
         $queryList = $this->getViewQuery($page_index, $page_size, $condition, $order, $field);
         $queryCount = $this->getViewCount($condition);
         $list = $this->setReturnList($queryList, $queryCount, $page_size);
@@ -36,14 +36,14 @@ class VslMemberViewModel extends BaseModel {
      */
     public function getViewQuery($page_index, $page_size, $condition, $order, $field = '')
     {
-        $field = $field ?: 'nm.uid, nm.member_level,nm.default_referee_id,nm.isdistributor,nml.level_name,nm.growth_num, nm.group_id,su.real_name,nm.reg_time, nm.memo,
+        $field = $field ?: 'nm.uid, nm.member_level,nm.default_referee_id,nm.isdistributor,nml.level_name,nm.growth_num, nm.group_id,su.real_name,nm.reg_time, nm.memo,nm.is_pu,
         nml.level_name, nml.goods_discount, su.uid,su.user_headimg, su.instance_id, su.user_name, su.user_status, su.user_headimg, su.is_system, su.is_member, su.user_tel,
         su.user_tel_bind, su.user_qq, su.qq_openid, su.qq_info, su.user_email, su.user_email_bind, su.wx_openid, su.wx_sub_time, su.wx_notsub_time, su.wx_is_sub, su.wx_info,
         su.other_info, su.reg_time, su.current_login_ip, su.current_login_time, su.current_login_type, su.last_login_time, su.last_login_ip, su.last_login_type, su.login_num,
         su.real_name, su.sex, su.birthday, su.location, su.nick_name, su.wx_unionid, su.qrcode_template_id,nm.referee_id, sus.user_name as referee_user_name,
         sus.nick_name as referee_nick_name, sus.user_tel as referee_user_tel, sus.user_headimg as referee_user_headimg, nm.extend_code, nm.is_merchants,su.country_code,
         sus.country_code as refree_country_code,sp.id as shop_id';
-        
+
         //设置查询视图
         $viewObj = $this->alias('nm')
                         ->join('vsl_member_level nml','nm.member_level = nml.level_id','left')

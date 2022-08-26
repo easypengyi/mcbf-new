@@ -70,7 +70,7 @@ class Member extends User
 {
 
     private $upload_type = 1;
-    function __construct() 
+    function __construct()
     {
         parent::__construct();
     }
@@ -120,7 +120,7 @@ class Member extends User
                 $member_level_id = $level_info['level_id'];
                 $member = new VslMemberModel();
                 $referee_id = $member->getInfo(['extend_code'=>$extend_code,'website_id' => $this->website_id],'uid')['uid'];
-                
+
                 if(!$referee_id || !$extend_code){
                     //不存在推荐人
                     $data = array(
@@ -140,7 +140,7 @@ class Member extends User
                         'website_id' => $this->website_id
                     );
                 }
-                
+
                 $member->save($data);
                 // 查看是否是海报/任务的推荐场景
                 // 添加会员账户
@@ -408,7 +408,7 @@ class Member extends User
         $order_account = new OrderAccount();
         foreach ($result['data'] as $k => $v) {
             $group_names= '';
-            
+
             if($v['group_id']){
                 $group_id = explode(',',$v['group_id']);
                 foreach ($group_id as $value){
@@ -422,7 +422,7 @@ class Member extends User
             $result['data'][$k]['point'] = $member_account->getMemberPoint($v['uid']);
             $result['data'][$k]['beautiful_point'] = $member_account->getMemberBeautifulPoint($v['uid']);
             $result['data'][$k]['balance'] = $member_account->getMemberBalance($v['uid']);
-            
+
             $result['data'][$k]['order_num'] = $order_account->getShopSaleNumSum(['buyer_id' => $v['uid'], 'order_status' => [['>', '0'], ['<', '5']]]);
             $result['data'][$k]['order_money'] = $order_account->getMemberSaleMoney(['buyer_id' => $v['uid'], 'order_status' => [['>', '0'], ['<', '5']]]);
             $result['data'][$k]['reg_time'] = date('Y-m-d H:i:s', $v['reg_time']);
@@ -1462,7 +1462,7 @@ class Member extends User
     public function getMemberViewHistory()
     {
         $has_history = Cookie::has('goodshistory');
-        
+
         if ($has_history) {
             $goods_id_array = Cookie::get('goodshistory');
             $goodsSer = new Goods();
@@ -1868,6 +1868,13 @@ class Member extends User
         }
         return $member->save(['member_level'=>$level_id,'growth_num'=>$memberLevel['growth_num']],['uid'=>$uid]);
     }
+
+    public function adjustMemberPu($is_pu,$uid)
+    {
+        $member = new VslMemberModel();
+        return $member->save(['is_pu'=>$is_pu],['uid'=>$uid]);
+    }
+
     /**
      * 查询会员的等级下是否有会员
      *
@@ -2799,7 +2806,7 @@ class Member extends User
             return $order_list;
         }
     }
-    
+
     /*
      * 验证支付密码
      */
@@ -2817,7 +2824,7 @@ class Member extends User
         }
         return 1;
     }
-    
+
     /*
      * 访客记录
      */
@@ -3237,7 +3244,7 @@ class Member extends User
                 }
                 if($info['type']==6){//单个赠品
                     $order_business = new OrderBusiness();
-                    $gift_server = new GiftServer(); 
+                    $gift_server = new GiftServer();
                     $address_id = (int)input('address_id');
                     $order_from = input('order_from',2);
                     if ($address_id==0) {
@@ -3317,42 +3324,42 @@ class Member extends User
     public function updateMemberDistributor($uid)
     {
         $member = new Distributor();
-        $res = $member->updateMemberDistributor($uid); 
+        $res = $member->updateMemberDistributor($uid);
         return $res;
     }
-    //设为股东   
+    //设为股东
     public function updateMemberGlobal($uid)
     {
         $member = new GlobalBonus();
-        $res = $member->setStatus($uid,2); 
+        $res = $member->setStatus($uid,2);
         return $res;
     }
-    //设为区代 
+    //设为区代
     public function updateMemberArea($uid)
     {
         $member = new AreaBonus();
-        $res = $member->setStatus($uid,2); 
+        $res = $member->setStatus($uid,2);
         return $res;
     }
     //设为队长
     public function updateMemberTeam($uid)
     {
         $member = new TeamBonus();
-        $res = $member->setStatus($uid,2); 
+        $res = $member->setStatus($uid,2);
         return $res;
     }
     //设为渠道商
     public function updateMemberChannel($uid)
     {
         $member = new ChannelServer();
-        $res = $member->setStatus($uid); 
+        $res = $member->setStatus($uid);
         return $res;
     }
     //设为店长
     public function updateMemberMicroshop($uid)
     {
         $member = new MicroShopService();
-        $res = $member->setStatus($uid);  
+        $res = $member->setStatus($uid);
         return $res;
     }
 
@@ -3376,7 +3383,7 @@ class Member extends User
     public function registerPlaMember($data = array())
     {
         #导入写死 1
-        
+
         try{
             $this->website_id = $this->website_id ?: Session::get('shopwebsite_id');
              $params = [
@@ -3390,7 +3397,7 @@ class Member extends User
                  'nickname'              => $data['nickname'],
              ];
             $res = parent::add($params);
-            
+
             if ($res > 0) {
                 // 获取默认会员等级id
                 $member_level_id = $data['level_id'];
@@ -3413,11 +3420,11 @@ class Member extends User
                     'website_id' => $this->website_id
                 );
                 $member_account->save($data1);
-                
+
                 $distributionStatus = getAddons('distribution', $this->website_id);
-                
+
                 if($distributionStatus == 1 && $referee_id && $res){
-                    
+
                     //更新推荐人分销分红信息
                     $distribution = new Distributor();
                     $distribution->updateDistributorLevelInfo($referee_id);
@@ -3450,7 +3457,7 @@ class Member extends User
             return $e->getMessage();
         }
     }
-    
+
     /**
      * 查询会员信息
      * @param array  $condition
@@ -3475,7 +3482,7 @@ class Member extends User
      */
     public function getMemberLevelOfUsers ($member_level_id, $user_field='*',$can_not_empty = false, $website_id ='', $offset=0, $limit=0)
     {
-    
+
         $website_id = $website_id ?: $this->website_id;
         $condition = [
             'website_id'        => $website_id,
@@ -3544,7 +3551,7 @@ class Member extends User
         $user_count = $userSer->getUserCount($user_condition);
         return $user_count;//查询的字段数组
     }
-    
+
     /**
      * 获取对应会员标签下所有用户信息（一个用户有多个标签）
      * @param  int  $group_id eg: 1,2,3
@@ -3558,7 +3565,7 @@ class Member extends User
         $website_id = $website_id ?: $this->website_id;
         $condition['website_id'] = $website_id;
         $condition[] = ['exp', "concat(',',group_id,',') regexp concat(',$group_id,')"];//正则匹配有交集的数据
-    
+
         $uidsRes        = $this->getMemberData($condition, 'uid');
         //循环uid查询用户信息
         $uidsArr        = array_column($uidsRes, 'uid');
@@ -3579,7 +3586,7 @@ class Member extends User
                 'uid'               => ['in', $uids_str]
             ];
         }
-    
+
         $userFieldsRes = $userSer->getUserData($user_condition, $user_field, '', $offset, $limit);
         return $userFieldsRes;//查询的字段数组
     }
@@ -3658,7 +3665,7 @@ class Member extends User
         }
         $userFieldsRes = $userSer->getUserData($user_condition, $user_field, '', $offset, $limit);
         return $userFieldsRes;//查询的字段数组
-        
+
     }
     /**
      * 获取对应分销商等级下所有用户数量
@@ -3699,7 +3706,7 @@ class Member extends User
         return $user_count;//查询的字段数组
 
     }
-    
+
      /*
      * 获取提现状态名称
      */

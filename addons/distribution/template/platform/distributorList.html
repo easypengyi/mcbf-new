@@ -41,7 +41,7 @@
                         <div class="v__control-group">
                             <label class="v__control-label"></label>
                             <div class="v__controls">
-                                <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a> 
+                                <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
                                 <a class="btn btn-success ml-15 dataExcel">导出EXCEL</a>
                             </div>
                         </div>
@@ -65,8 +65,8 @@
 					<th>推荐人</th>
 					<th>分销商</th>
 					<th>姓名/手机</th>
-					<th>分销等级/下级人数</th>
-					<th>可用佣金/已提现佣金</th>
+					<th>经销等级/推荐单数</th>
+					<th>可用积分/已兑换积分</th>
 					<th>状态</th>
 					<th class="col-md-2 pr-14 operationLeft">操作</th>
 				</tr>
@@ -98,13 +98,13 @@
             var iphone = $("#iphone").val();
             $.ajax({
                 type : "post",
-                url : '{$distributorListUrl}', 
+                url : '{$distributorListUrl}',
                 async : true,
                 data : {
                     "page_index" : page_index, "referee_name" : referee_name,"search_text" : search_text, "level_id" : level, "isdistributor" : status,"iphone":iphone
                 },
                 success : function(data) {
-                    
+
                     if(data['page_count']>=3){
                         if(merchant_status==1){
                             var html = '';
@@ -131,7 +131,7 @@
                             }else{
                                 html += '<td><img src="/public/static/images/headimg.png" width="30" height="30">';
                             }
-                            html += '<span class="block mt-04">' + data['data'][i]["user_name"] + '</span></td>';
+                            html += '<span class="block mt-04">' + data['data'][i]["real_name"] + '</span></td>';
                             if(data["data"][i]['isdistributor'] == 3){
                                 html += '<td>需要完善分销资料</td>';
                             }else{
@@ -171,7 +171,7 @@
                                         html += '<a class="btn-operation" href="' +__URL('PLATFORM_MAIN/order/orderlist?distributor_id='+ data['data'][i]['uid']) +'" target="_blank">订单</a>';                                        if(data['data'][i]['lower_id'].length>0){
                                             html += '<a class="btn-operation" href="' +__URL('ADDONS_MAINlowerDistributorList&types=1&distributor_id='+ data['data'][i]['uid']) +'">推广下线</a>';
                                         }
-                                        
+
                                         html += '<a class="btn-operation del" href="javascript:;" data-id="' + data['data'][i]['uid'] +'">移除</a>';
                                         html += '</td>';
 									}
@@ -245,13 +245,13 @@
                 var uid = $(this).data('id');
                 var url= __URL(PLATFORMMAIN + '/system/updateReferee3');
                 util.confirm('选择区代信息','url:'+url,function(){
-                   
+
                     var area_agent = $("#area_agent").val();
                     var area_type = $("#area_type").val();
                     var selProvinces = $("#selProvinces").val();
                     var selCities = $("#selCities").val();
                     var selDistricts = $("#selDistricts").val();
-                  
+
                     util.alert('确定把该会员设为区代？',function(){
                         $.ajax({
                         type: "post",
@@ -277,7 +277,7 @@
         //     $('.becomeArea').on('click',function(){
         //         $(".tooltip.fade.top.in").remove();
         //         var uid = $(this).data('id');
-      
+
         //         util.alert('确定把该会员设为股东？',function(){
         //             $.ajax({
         //                 type : "post",
@@ -393,10 +393,10 @@
         * 会员数据导出
         */
         $('.dataExcel').on('click',function(){
-            var tip1 = document.getElementById("tip1").innerText; 
+            var tip1 = document.getElementById("tip1").innerText;
             var tip1 = parseInt(tip1)+parseInt(1);
             var total_tips2=tip1>99?"99+":tip1;
-            
+
             var level = $("#level").val();
             var search_text = $("#search_text").val();
             var referee_name = $("#referee_name").val();
@@ -512,7 +512,7 @@
 
             })
         })
-        
+
         $('body').on('click','.save',function(){
             var status = $(this).data('type');
             var uid = $(this).data('id');

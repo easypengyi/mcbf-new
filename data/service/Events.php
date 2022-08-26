@@ -354,7 +354,7 @@ class Events extends BaseService {
         try {
             $config = new Config();
             $config_info = $config->getConfig(0, 'ORDER_DELIVERY_COMPLETE_TIME', $website_id);
-            if ($config_info['value'] !== '') {
+            if ($config_info['value'] > 0) {
                 $complete_time = $config_info['value'];
             } else {
                 $complete_time = 3; //7天 20220726-修改
@@ -365,6 +365,48 @@ class Events extends BaseService {
                 'sign_time' => array('LT', $time),
                 'website_id' => $website_id
             );
+            $order_list = $order_model->getQuery($condition, 'order_id', '');
+            if (!empty($order_list)) {
+                $order = new Order();
+                foreach ($order_list as $k => $v) {
+                    if (!empty($v['order_id'])) {
+                        $order->orderComplete($v['order_id'], $website_id);
+                    }
+                }
+                unset($v);
+            }
+            return 1;
+        } catch (\Exception $e) {
+            recordErrorLog($e);
+            return $e->getMessage();
+        }
+    }
+
+    /**
+     * 手动完成代理下的订单
+     *
+     * @param int $website_id
+     * @param $uids
+     * @return int|string
+     */
+    public function checkOrdersComplete($website_id = 0, $uids) {
+        $order_model = new VslOrderModel();
+        try {
+            $config = new Config();
+            $config_info = $config->getConfig(0, 'ORDER_DELIVERY_COMPLETE_TIME', $website_id);
+            if ($config_info['value'] > 0) {
+                $complete_time = $config_info['value'];
+            } else {
+                $complete_time = 3; //7天 20220726-修改
+            }
+            $time = time() - 3600 * 24 * $complete_time;
+            $condition = array(
+                'order_status' => 3,
+                'sign_time' => array('LT', $time),
+                'website_id' => $website_id,
+                'buyer_id' => array('in', $uids)
+            );
+
             $order_list = $order_model->getQuery($condition, 'order_id', '');
             if (!empty($order_list)) {
                 $order = new Order();
