@@ -617,7 +617,7 @@ class Member extends BaseController
         $distributor=new Distributor();
         $uid=isset($_POST['uid'])?$_POST['uid']:'';
         $referee_id=isset($_POST['referee_id'])?$_POST['referee_id']:'';
-        $retval=$distributor->updateRefereeDistributor($uid,$referee_id);
+        $retval=$distributor->updateRefereeDistributor($uid,$referee_id, $this->uid);
         return AjaxReturn($retval);
     }
     /**
@@ -1269,6 +1269,31 @@ class Member extends BaseController
         $condition['nmar.account_type'] = 3;
         $member = new MemberService();
         $list = $member->getPointList($page_index, $page_size, $condition, $order = '', $field = '*');
+        return $list;
+    }
+
+    /**
+     * 会员推荐人修改记录
+     */
+    public function refereeLogDetail()
+    {
+        $member_id = request()->get('member_id');
+        $page_index = request()->get('page_index',1);
+        $page_size = request()->get('page_size',PAGESIZE);
+        $condition['l.uid'] = $member_id;
+        $member = new MemberService();
+        $list = $member->getRefereeLogList($page_index, $page_size, $condition, $order = '', $field = '*');
+        return $list;
+    }
+
+
+    public function commissionLogDetail(){
+        $member_id = request()->get('member_id');
+        $page_index = request()->get('page_index',1);
+        $page_size = request()->get('page_size',PAGESIZE);
+        $condition['uid'] = $member_id;
+        $member = new Distributor();
+        $list = $member->getMemberCommissionList($page_index, $page_size, $condition);
         return $list;
     }
 

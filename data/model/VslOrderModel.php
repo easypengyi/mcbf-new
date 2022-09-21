@@ -143,7 +143,7 @@ class VslOrderModel extends BaseModel {
      * 获取列表
      * @param unknown $page_index
      * @param unknown $page_size
-     * @param unknown $condition 
+     * @param unknown $condition
      * @param unknown $order
      * @return \data\model\multitype:number
      */
@@ -175,7 +175,7 @@ class VslOrderModel extends BaseModel {
      * @param unknown $page_index
      * @param unknown $page_size
      * @param unknown $condition
-     * @param unknown $order 
+     * @param unknown $order
      * @return unknown
      */
     public function getViewList2($page_index, $page_size, $condition, $order, $field = ''){
@@ -189,7 +189,7 @@ class VslOrderModel extends BaseModel {
      * 获取列表
      * @param unknown $page_index
      * @param unknown $page_size
-     * @param unknown $condition 
+     * @param unknown $condition
      * @param unknown $order
      * @return \data\model\multitype:number
      */
@@ -238,5 +238,54 @@ class VslOrderModel extends BaseModel {
         return $viewObj;
         // $count = $this->Query($viewObj,$condition);
         // return $count;
+    }
+
+    /**后台添加区分普通会员或者分销商身份**/
+    /**
+     * 获取列表返回数据格式
+     * @param unknown $page_index
+     * @param unknown $page_size
+     * @param unknown $condition
+     * @param unknown $order
+     * @return unknown
+     */
+    public function getViewList4($page_index, $page_size, $condition, $order){
+
+        $queryList = $this->getViewQuery4($page_index, $page_size, $condition, $order);
+        $queryCount = $this->getViewCount4($condition);
+        $list = $this->setReturnList($queryList, $queryCount, $page_size);
+        return $list;
+    }
+
+    /**
+     * 获取列表
+     * @param unknown $page_index
+     * @param unknown $page_size
+     * @param unknown $condition
+     * @param unknown $order
+     * @return \data\model\multitype:number
+     */
+    public function getViewQuery4($page_index, $page_size, $condition, $order)
+    {
+        //设置查询视图
+        $viewObj = $this->alias('nm')
+            ->join('sys_user su','nm.buyer_id= su.uid','left')
+            ->field('nm.order_id,nm.order_no,nm.order_money,nm.order_status,nm.sign_time,su.uid,su.nick_name,su.real_name,su.user_tel');
+
+        $list = $this->viewPageQuery($viewObj, $page_index, $page_size, $condition, $order);
+        return $list;
+    }
+    /**
+     * 获取列表数量
+     * @param unknown $condition
+     * @return \data\model\unknown
+     */
+    public function getViewCount4($condition)
+    {
+        $viewObj = $this->alias('nm')
+            ->join('vsl_member su','nm.buyer_id= su.uid','left')
+            ->field('nm.order_id');
+        $count = $this->viewCount($viewObj,$condition);
+        return $count;
     }
 }

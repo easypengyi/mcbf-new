@@ -18,6 +18,7 @@ use addons\teambonus\service\TeamBonus;
 use data\model\VslAccountModel;
 use data\model\VslMemberAccountRecordsModel;
 use data\model\VslMemberModel;
+use data\model\VslMemberRefereeLogModel;
 use data\model\VslMemberViewModel;
 use data\model\VslOrderGoodsModel;
 use data\model\VslOrderModel;
@@ -251,17 +252,18 @@ class Distributor extends BaseService
     /**
      * 修改推荐人
      */
-    public function updateRefereeDistributor($uid, $referee_id)
+    public function updateRefereeDistributor($uid, $referee_id, $admin_uid = 0)
     {
         if ($uid != $referee_id) {
             $shop = new VslMemberModel();
             $data = array(
                 "referee_id" => $referee_id
             );
+            $user_info = $shop->getInfo(['uid' => $uid], 'referee_id');
             $res = $shop->save($data, [
                 'uid' => $uid
             ]);
-            $this->addRefereeLog($uid, $referee_id, $this->website_id, $this->instance_id);
+            $this->addRefereeLog($uid, $referee_id, $this->website_id, $this->instance_id, $user_info['referee_id'], $admin_uid);
             if ($referee_id) {
                 $this->updateDistributorLevelInfo($referee_id);
             }
@@ -6271,6 +6273,50 @@ class Distributor extends BaseService
         }
         return $list;
     }
+
+    /**
+     * 获取用户佣金流水列表
+     */
+    public function getMemberCommissionList($page_index, $page_size, $condition)
+    {
+        $commission_account = new VslDistributorAccountRecordsViewModel();
+        $list = $commission_account->getViewList1($page_index, $page_size, $condition);
+        if (!empty($list['data'])) {
+            $order_no = [];
+            foreach ($list['data'] as $k => $v) {
+                $str_name = '团队佣金';
+                if(strrpos($v['records_no'], 'CR') !== false){
+                    $str_name = '一级佣金';
+                }
+                $list['data'][$k]['commission_type'] = $str_name;
+                $list['data'][$k]['commission'] = '+' . abs($list['data'][$k]['commission']);
+                $list['data'][$k]['create_time'] = date('Y-m-d H:i:s', $v['create_time']);
+                $order_no[] = $v['data_id'];
+            }
+            //获取订单详情
+            $order_model = new VslOrderModel();
+            $where['order_no'] = array('in', array_unique($order_no));
+            $orders = $order_model->getViewList4(0, 0, $where,'');
+            $order_list = objToArr($orders);
+
+
+            $order_data = [];
+            foreach($order_list['data'] as $v){
+                $v['user_info'] = ($v['nick_name'])?$v['nick_name']:($v['user_name']?$v['user_name']:($v['user_tel']?$v['user_tel']:$v['uid']));
+                $order_data[$v['order_no']] = $v;
+            }
+
+            foreach ($list['data'] as $k => &$item) {
+                $item['user_info'] = '';
+                if(isset($order_data[$item['data_id']])){
+                    $item['user_info'] = $order_data[$item['data_id']]['user_info'];
+                    $item['uid'] = $order_data[$item['data_id']]['uid'];
+                }
+            }
+
+        }
+        return $list;
+    }
     /**
      * 前台佣金流水列表
      */
@@ -7269,7 +7315,7 @@ class Distributor extends BaseService
     /**
      * 增加绑定上下级记录
      */
-    public function addRefereeLog($uid, $referee_id, $website_id, $shop_id = 0)
+    public function addRefereeLog($uid, $referee_id, $website_id, $shop_id = 0, $org_referee_id = 0, $admin_uid = 0)
     {
         $distributorRefereeLogModel = new VslDistributorRefereeLogModel();
         $check_info = $distributorRefereeLogModel->getInfo(['uid' => $uid, 'website_id' => $website_id], '*');
@@ -7311,6 +7357,18 @@ class Distributor extends BaseService
             ];
             $distributorRefereeLogModel->save($data);
         }
+        //添加修改记录
+        $memberRefereeLogModel = new VslMemberRefereeLogModel();
+        //添加修改记录
+        $log = [
+            'uid' => $uid,
+            'org_referee_id'=> $org_referee_id,
+            'referee_id' => $referee_id,
+            'update_time' => date('Y-m-d H:i:s'),
+            'create_uid'=> $admin_uid
+        ];
+        $memberRefereeLogModel->save($log);
+
         return;
     }
     /**

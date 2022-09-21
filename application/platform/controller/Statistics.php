@@ -1,18 +1,21 @@
 <?php
 namespace app\platform\controller;
 
+use addons\bonus\model\VslOrderBonusLogModel;
+use addons\distribution\model\VslOrderDistributorCommissionModel;
 use data\model\VslOrderGoodsModel;
 use data\service\Order;
 use data\service\Goods;
 use data\service\Member;
 use data\model\VslOrderGoodsViewModel;
 use data\model\VslOrderModel;
+use data\service\Order as OrderService;
 
 /**
  * 系统模块控制器
  *
  * @author  www.vslai.com
- *        
+ *
  */
 class Statistics extends BaseController
 {
@@ -241,7 +244,7 @@ class Statistics extends BaseController
             if ($end_date != "") {
                 $condition["no.create_time"][] = [
                     "<",
-                    strtotime($end_date) 
+                    strtotime($end_date)
                 ];
             }
             if($goods_name){
@@ -249,7 +252,7 @@ class Statistics extends BaseController
             }
             if($sort==1){
                 $order = 'sum(nog.num) desc';
-            }elseif($sort==2){ 
+            }elseif($sort==2){
                 // $order = 'sum(nog.real_money*nog.num) desc';
                 $order = 'sumMoney desc';
             }
@@ -257,8 +260,8 @@ class Statistics extends BaseController
             $condition["no.is_deleted"] = 0;
             $condition["no.order_status"] = [['>','0'],['<','5']];
             $orderGoods = new VslOrderGoodsViewModel();
-           
-            $list = $orderGoods->getOrderGoodsRankList($pageindex, PAGESIZE, $condition, $order); 
+
+            $list = $orderGoods->getOrderGoodsRankList($pageindex, PAGESIZE, $condition, $order);
             $list['account'] = ['1','2','4'];
             $money=0.00;
             $count=0;
@@ -282,7 +285,7 @@ class Statistics extends BaseController
             return view($this->style . "Statistics/goodsAnalysis");
         }
     }
-    
+
     /*
      * 订单分布
      */
@@ -375,7 +378,7 @@ class Statistics extends BaseController
                 }
             }
             $list['area_info'] = $order->getOrderDistributionList(1, 0, $condition,'',$group,$field);
-            
+
             $order_service = new Order();
             //订单来源
             $condition1['order_from'] = 1;// 微信
@@ -500,6 +503,84 @@ class Statistics extends BaseController
                 $between
             ];
             return $array;
+        }
+    }
+
+    /**
+     * 基于订单统计积分情况
+     *
+     * @return Ambigous <multitype:number , multitype:number unknown >
+     */
+    public function memberBalance() {
+        if (request()->isAjax()) {
+            $page_index = request()->post('page_index', 1);
+            $page_size = request()->post('page_size', PAGESIZE);
+            $order_no = request()->post('order_no', '');
+            $order_status = request()->post('order_status', '');
+            $buyer_id = request()->post('buyer_id', '');
+
+            if (!empty($order_no)) {
+                $condition['order_no'] = array(
+                    'like',
+                    '%' . $order_no . '%'
+                );
+            }
+
+            if (!empty($buyer_id)) {
+                $condition['buyer_id'] = $buyer_id;
+            }
+
+            if (!empty($order_status)) {
+                $condition['order_status'] = $order_status;
+            }else{
+                $condition['order_status'] = array('in', [3, 4]);
+            }
+
+            $order_commission = new VslOrderDistributorCommissionModel();
+            $order_commission_ids =  $order_commission->getQuery(['website_id'=>1, 'pay_status'=> 1], 'order_id');
+            $order_commission_ids = objToArr($order_commission_ids);
+            $a_orderIds = dealArray(array_column($order_commission_ids, 'order_id'), false, true);
+            //获取团队佣金
+            $bonusLogModel = new VslOrderBonusLogModel();
+            $order_bonus_ids = $bonusLogModel->getQuery(['website_id'=>1], 'order_id');
+            $order_bonus_ids = objToArr($order_bonus_ids);
+            $b_orderIds = dealArray(array_column($order_bonus_ids, 'order_id'), false, true);
+            $order_ids = array_merge($a_orderIds, $b_orderIds);
+            $condition['order_id'] = array('in', $order_ids);
+
+            $order_service = new OrderService();
+            $list = $order_service->getCommissionOrderList($page_index, $page_size, $condition, 'order_status asc, create_time desc');
+
+            $total = 0.00;
+            $sum_complete = 0.00;
+            $sum_wait = 0.00;
+            $order_model = new VslOrderModel();
+            $order_lists = $order_model->getQuery($condition, 'order_id');
+            if($order_lists){
+                $order_ids = [];
+                foreach ($order_lists as $item){
+                    $order_ids[] = $item['order_id'];
+                }
+                $commission =  $order_commission->getSum(['website_id'=>1, 'pay_status'=> 1, 'order_id'=>array('in', $order_ids)], 'commission');
+                $team_bonus = $bonusLogModel->getSum(['website_id'=>1, 'order_id'=>array('in', $order_ids)], 'team_bonus');
+                $total = $commission + $team_bonus;
+
+                //未发放
+                $order_amount =  $order_commission->getSum(['website_id'=>1, 'pay_status'=> 1, 'cal_status' => 0, 'order_id'=> array('in', $order_ids)], 'commission');
+
+                //获取团队佣金
+                $bonusLogModel = new VslOrderBonusLogModel();
+                $bonus_amount = $bonusLogModel->getSum(['website_id'=>1, 'order_id'=> array('in', $order_ids),'team_return_status'=>0, 'team_cal_status' => 0], 'team_bonus');
+                $sum_wait = $order_amount + $bonus_amount;
+
+                $sum_complete = $total - $sum_wait;
+            }
+
+            $list['account'] = [$total, $sum_complete, $sum_wait];
+            return $list;
+
+        } else {
+            return view($this->style . "Statistics/memberBalance");
         }
     }
 }

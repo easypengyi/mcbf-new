@@ -1452,4 +1452,16 @@ class Task extends Controller
         $orderServer->sendCoupon(7);
         exit;
     }
+
+    /**
+     * 手动结算订单
+     *
+     * @throws \Exception
+     */
+    public function handSettleOrder(){
+        $order_id = request()->param('order_id', 0);
+        $order = new Order();
+        $order->orderComplete($order_id, 1);
+        echo "success";die;
+    }
 }

@@ -31,6 +31,7 @@ use data\model\VslMemberGroupModel;
 use data\model\VslMemberLevelModel;
 use data\model\VslMemberModel as VslMemberModel;
 use data\model\VslMemberRechargeModel;
+use data\model\VslMemberRefereeLogModel;
 use data\model\VslOrderModel;
 use addons\shop\model\VslShopApplyModel;
 use addons\shop\model\VslShopModel;
@@ -4050,6 +4051,23 @@ class Member extends User
             }
         }
 
+        return $list;
+    }
+
+    /**
+     * 获取推荐人修改记录
+     *
+     * @param unknown $page_index
+     * @param unknown $page_size
+     * @param unknown $condition
+     * @param string $order
+     * @param string $field
+     * @return multitype:number unknown
+     */
+    public function getRefereeLogList($page_index, $page_size, $condition, $order = '', $field = '*')
+    {
+        $member_account = new VslMemberRefereeLogModel();
+        $list = $member_account->getViewList($page_index, $page_size, $condition, 'l.update_time desc');
         return $list;
     }
 }
