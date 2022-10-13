@@ -1,6 +1,8 @@
 <?php
 namespace data\service;
+use addons\distribution\service\Distributor;
 use addons\groupshopping\model\VslGroupShoppingRecordModel;
+use data\model\VslOrderModel;
 use data\service\BaseService;
 use data\model\VslExcelsModel;
 use data\service\Order as OrderService;
@@ -23,7 +25,7 @@ class ExcelsExport extends BaseService
         }
         $excelsModel = new VslExcelsModel();
         $info = $excelsModel->getInfo(['id'=>$id],'*');
-        
+
         if($info['status'] == 1){
             return;
         }
@@ -78,6 +80,12 @@ class ExcelsExport extends BaseService
                 break;
             case '16': //电子卡密数据 15
                 $this->export_electroncardData_list($info);
+                break;
+            case '17': //导出战略经销团队详情
+                $this->export_teamDetail_list($info);
+                break;
+            case '18': //导出用户佣金明细
+                $this->export_commissionLogDetail_list($info);
                 break;
         }
     }
@@ -280,29 +288,29 @@ class ExcelsExport extends BaseService
         $condition = unserialize($info['conditions']);
         $distributor = new DistributorService();
         $list = $distributor->getDistributorList(0,1, 0, $condition,'become_distributor_time desc');
-        
+
         $data = [];
-        
+
         foreach ($list['data'] as $k => $v) {
             $data[$k]["uid"] = $v['uid'];
             $data[$k]["nick_name"] = iconv('gb2312//ignore', 'utf-8', iconv('utf-8', 'gb2312//ignore', $v['nick_name']));
-            
+
             $data[$k]["referee_id"] = $v['referee_id'];
             $data[$k]["referee_nick_name"] = iconv('gb2312//ignore', 'utf-8', iconv('utf-8', 'gb2312//ignore', $v['referee_name']));
-            
+
             $data[$k]["user_tel"] = $v['mobile']."\t";
-            
+
             $data[$k]["isdistributor"] = $v['isdistributor'] == 2 ? "已审核" : ( $v['isdistributor'] == 1 ? "待审核" : "已拒绝");
             $data[$k]["level_name"] = $v['level_name'];
             $data[$k]["commission"] = $v['commission'];
             $data[$k]["withdrawals"] = $v['withdrawals'];
-            
+
             $data[$k]["apply_distributor_time"] = $v['apply_distributor_time'] ? date('Y-m-d H:i:s',$v['apply_distributor_time']) : date('Y-m-d H:i:s',$v['become_distributor_time']);
             $data[$k]["become_distributor_time"] = date('Y-m-d H:i:s',$v['become_distributor_time']);
-            
+
             //获取各分销商信息
-            $d_info= $distributor->getDistributorInfo($v['uid']); 
-            
+            $d_info= $distributor->getDistributorInfo($v['uid']);
+
             $data[$k]["commission_total"] = $d_info['total_commission'] ? $d_info['total_commission'] : 0;
             $data[$k]["order_count"] = $d_info['extensionordercount'] ? $d_info['extensionordercount'] : 0;
             $data[$k]["order_money"] = $d_info['extensionmoney'] ? $d_info['extensionmoney'] : 0;
@@ -435,12 +443,12 @@ class ExcelsExport extends BaseService
         $xlsName = $info['exname'];
         $xlsCell = unserialize($info['ids']);
         $condition = unserialize($info['conditions']);
-        
+
         $shop = new ShopService;
         $list = $shop->getShopAccountCountListToExcel(1, 1000, $condition, '');
-        
+
         $res = dataExcel($xlsName, $xlsCell, $list['data'],$this->reset_file_path);
-        
+
         $excelsModel = new VslExcelsModel();
         if ($res['code'] > 0) { //导出成功
             $file = $res['data'];
@@ -770,7 +778,7 @@ class ExcelsExport extends BaseService
         $list = $excelsModel->getQuery(['status' => 1, 'website_id' => $website_id], 'path,id,updatetime', 'addtime asc');
         if($list){
             foreach($list as $v){
-                
+
                 $time = time()-$v['updatetime'];
                 $t = $time / 3600;
                 if($t < 12){
@@ -787,7 +795,7 @@ class ExcelsExport extends BaseService
                     if(file_exists($path)){
                         unlink($path);
                     }
-                             
+
                     //查询文件夹是否为空，是则删除文件夹
                     $dirs = './'.$arr[0].'/'.$arr[1].'/'.$arr[2].'/';
                     $check = array_diff(scandir($dirs),array('..','.'));
@@ -928,4 +936,92 @@ class ExcelsExport extends BaseService
             $excelsModel->save(['status'=>2,'updatetime'=>time(),'msg'=>$res['data']],['id'=>$info['id']]);
         }
     }
+
+    /**
+     * 导出战略经销团队详情列表
+     */
+    public function export_teamDetail_list($info){
+        set_time_limit(0);
+        ini_set('max_execution_time', '0');
+        ini_set('memory_limit', '1000M');
+        define('DOWN_EXCEL', 'excels/' . $info['website_id'] . '/'.$info['type'].'/');
+        $this->reset_file_path = DOWN_EXCEL;
+        if (!file_exists($this->reset_file_path)) {
+            $mode = intval('0777', 8);
+            mkdir($this->reset_file_path, $mode, true);
+        }
+        $xlsName = $info['exname'];
+        $xlsCell = unserialize($info['ids']);
+        $condition = unserialize($info['conditions']);
+
+
+        $order_model = new VslOrderModel();
+        $list = $order_model->getViewList4(1, 0, $condition, 'nm.order_id desc');
+        $data = [];
+        foreach ($list["data"] as $k => $v) {
+            $data[$k]['order_no'] = $v['order_no'];
+            $data[$k]["uid"] = $v["uid"];
+            $data[$k]["user_info"] = ($v['nick_name'])?$v['nick_name']:($v['user_name']?$v['user_name']:($v['user_tel']?$v['user_tel']:$v['uid']));
+            $data[$k]["sign_time"] = date('Y-m-d H:i:s', $v['sign_time']);
+            $data[$k]["order_money"] = $v['order_money'];
+        }
+        unset($v);
+        $res = dataExcel($xlsName, $xlsCell, $data,$this->reset_file_path);
+        $excelsModel = new VslExcelsModel();
+        if ($res['code'] > 0) { //导出成功
+            $file = $res['data'];
+            $excelsModel->save(['status'=>1,'updatetime'=>time(),'path'=>$file,'msg'=>'导出成功'],['id'=>$info['id']]);
+        }else{//导出失败
+            $excelsModel->save(['status'=>2,'updatetime'=>time(),'msg'=>$res['data']],['id'=>$info['id']]);
+        }
+    }
+
+    /**
+     * 导出用户佣金流水
+     *
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     * @throws \PHPExcel_Writer_Exception
+     */
+    public function export_commissionLogDetail_list($info){
+        set_time_limit(0);
+        ini_set('max_execution_time', '0');
+        ini_set('memory_limit', '1000M');
+        define('DOWN_EXCEL', 'excels/' . $info['website_id'] . '/'.$info['type'].'/');
+        $this->reset_file_path = DOWN_EXCEL;
+        if (!file_exists($this->reset_file_path)) {
+            $mode = intval('0777', 8);
+            mkdir($this->reset_file_path, $mode, true);
+        }
+        $xlsName = $info['exname'];
+        $xlsCell = unserialize($info['ids']);
+        $condition = unserialize($info['conditions']);
+
+
+        $member = new Distributor();
+        $list = $member->getMemberCommissionList(1, 0, $condition);
+        $data = [];
+
+        foreach ($list["data"] as $k => $v) {
+            $data[$k]['records_no'] = $v['records_no'];
+            $data[$k]['data_id'] = $v['data_id'];
+            $data[$k]["uid"] = $v["uid"];
+            $data[$k]["user_info"] = $v["user_info"];
+            $data[$k]["commission_type"] = $v["commission_type"];
+            $data[$k]["change_type"] = '订单完成';
+            $data[$k]["commission"] = $v["commission"];
+            $data[$k]["create_time"] = $v["create_time"];
+            $data[$k]["text"] = $v["text"];
+        }
+        unset($v);
+        $res = dataExcel($xlsName, $xlsCell, $data,$this->reset_file_path);
+        $excelsModel = new VslExcelsModel();
+        if ($res['code'] > 0) { //导出成功
+            $file = $res['data'];
+            $excelsModel->save(['status'=>1,'updatetime'=>time(),'path'=>$file,'msg'=>'导出成功'],['id'=>$info['id']]);
+        }else{//导出失败
+            $excelsModel->save(['status'=>2,'updatetime'=>time(),'msg'=>$res['data']],['id'=>$info['id']]);
+        }
+    }
+
 }

@@ -805,7 +805,7 @@ class Member extends User
                     runhook("Notify", "sendCustomMessage", ['messageType'=>'new_offline',"uid" => $uid,"add_time" => time(),'referee_id'=>$referee_id,'nickname'=>$nickname]);//成为下线通知
                     if($res){
                         $distribution = new Distributor();
-                        $distribution->addRefereeLog($uid,$referee_id,$this->website_id,$this->instance_id);
+                        $distribution->addRefereeLog($uid,$referee_id,$this->website_id,$this->instance_id, 0,0,2);
                         $distribution->updateDistributorLevelInfo($referee_id);
                         if(getAddons('globalbonus', $this->website_id)){
                             $global = new GlobalBonus();

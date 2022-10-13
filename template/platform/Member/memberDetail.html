@@ -178,7 +178,17 @@
 						</nav>
 					</div>
 					<div role="tabpanel" class="tab-pane fade " id="commissionLog">
-                        <div>佣金总额：<span id="total_commission"></span></div>
+                        <div style="margin-left: 15px;">佣金总额：<span id="total_commission"></span></div>
+						<div class="filter-item clearfix" style="margin-bottom: 15px;">
+							<div class="filter-item__field">
+								<div class="v__control-group">
+									<label class="v__control-label"></label>
+									<div class="v__controls">
+										<a class="btn btn-success ml-15 dataExcel">导出EXCEL</a>
+									</div>
+								</div>
+							</div>
+						</div>
 						<table class="table v-table table-auto-center">
 							<thead>
 							<tr>
@@ -678,6 +688,34 @@ require(['util'],function(util){
                 });
             })
         })
+
+	/**
+	 * 数据导出
+	 */
+	$('.dataExcel').on('click',function(){
+		var tip1 = document.getElementById("tip1").innerText;
+		var tip1 = parseInt(tip1)+parseInt(1);
+		var total_tips2=tip1>99?"99+":tip1;
+
+		var uid = $("#uid").val();
+
+		$.ajax({
+			type: "get",
+			url: "{:__URL('PLATFORM_MAIN/member/commissionLogDetailExcel')}",
+			async: true,
+			data: {
+				"uid": uid
+			},
+			success: function (data) {
+				if (data["code"] == 0) {
+					document.getElementById("tip1").innerText = total_tips2;
+					util.message(data["message"], 'success');
+				} else {
+					util.message(data["message"], 'danger');
+				}
+			}
+		})
+	})
 
 })
 </script>

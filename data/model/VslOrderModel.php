@@ -270,7 +270,7 @@ class VslOrderModel extends BaseModel {
         //设置查询视图
         $viewObj = $this->alias('nm')
             ->join('sys_user su','nm.buyer_id= su.uid','left')
-            ->field('nm.order_id,nm.order_no,nm.order_money,nm.order_status,nm.sign_time,su.uid,su.nick_name,su.real_name,su.user_tel');
+            ->field('nm.order_id,nm.order_no,nm.order_money,nm.order_status,nm.sign_time,su.uid,su.nick_name,su.user_name,su.real_name,su.user_tel');
 
         $list = $this->viewPageQuery($viewObj, $page_index, $page_size, $condition, $order);
         return $list;

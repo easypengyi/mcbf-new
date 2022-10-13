@@ -1,0 +1,136 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+{/block}
+{block name="main"}
+
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">会员ID</label>
+                    <div class="v__controls">
+                        <input type="text" id="uid" class="v__control_input" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="v__control-group">
+                    <label class="v__control-label">订单完成时间</label>
+                    <div class="v__controls v-date-input-control">
+                        <label for="completeTime">
+                            <input type="text" class="v__control_input pr-30" id="completeTime" placeholder="请选择时间" autocomplete="off" data-types="datetime">
+                            <i class="icon icon-calendar"></i>
+                            <input type="hidden" id="finishStartDate">
+                            <input type="hidden" id="finishEndDate">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+                <table class="table v-table table-auto-center">
+                    <thead>
+                        <tr>
+                            <th>会员ID</th>
+                            <th>用户信息</th>
+                            <th>团队总业绩</th>
+                            <th>平级业绩</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="list">
+                    </tbody>
+                </table>
+                <input type="hidden" id="page_index">
+                <nav aria-label="Page navigation" class="clearfix">
+                    <ul id="page" class="pagination pull-right"></ul>
+                </nav>
+                <!-- page end -->
+{/block}
+{block name="script"}
+<script>
+require(['util'],function(util){
+    util.initPage(LoadingInfo);
+
+    util.layDate('#completeTime',true,function(value, date, endDate){
+        var h=date.hours<10 ?"0"+date.hours : date.hours;
+        var m=date.minutes<10 ?"0"+date.minutes : date.minutes;
+        var s=date.seconds<10 ?"0"+date.seconds : date.seconds;
+        var h1=endDate.hours<10 ?"0"+endDate.hours : endDate.hours;
+        var m1=endDate.minutes<10 ?"0"+endDate.minutes : endDate.minutes;
+        var s1=endDate.seconds<10 ?"0"+endDate.seconds : endDate.seconds;
+        var date1=date.year+'-'+date.month+'-'+date.date+' '+h+":"+m+":"+s;
+        var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+h1+":"+m1+":"+s1;
+        if(value){
+            $('#finishStartDate').val(date1);
+            $('#finishEndDate').val(date2);
+        }
+        else{
+            $('#finishStartDate').val('');
+            $('#finishEndDate').val('');
+        }
+    });
+
+    function LoadingInfo(page_index) {
+        var uid = $("#uid").val();
+        var start_finish_date = $("#finishStartDate").val();
+        var end_finish_date = $("#finishEndDate").val();
+        $.ajax({
+            type: "post",
+            url: "{:__URL('PLATFORM_MAIN/statistics/zhlue')}",
+            async: true,
+            data: {
+                "page_index": page_index,
+                "uid": uid,
+                "start_finish_date": start_finish_date,
+                "end_finish_date": end_finish_date
+            },
+            success: function (data) {
+                var html = '';
+                $("#total_count_num").text(data["total_count"]);
+                $("#page_count_num").text(data["page_count"]);
+                $("#page_count").val(data["page_count"]);
+                $("#pageNumber a").remove();
+                if (data["data"].length > 0) {
+                    for (var i = 0; i < data["data"].length; i++) {
+                        html +='<tr>';
+                        html +='<td>' + data["data"][i]['uid'] + '</td>';
+                        html += '<td><a href="' + __URL('PLATFORM_MAIN/member/memberDetail?member_id=' + data["data"][i]["uid"]) + '" class="text-primary block mt-04">' + data["data"][i]["user_info"]+ '</a></td>';
+                        html +='<td>' + data["data"][i]['total_amount'] + '</td>';
+                        html +='<td>' + data["data"][i]['level_amount'] + '</td>';
+                        html += '<td>';
+                        html += '<a href="' + __URL('PLATFORM_MAIN/statistics/levelDetail?member_id=' + data["data"][i]["uid"]) + '" class="btn-operation">平级详情</a>';
+                        html += '<a href="' + __URL('PLATFORM_MAIN/statistics/teamDetail?member_id=' + data["data"][i]["uid"]) + '" class="btn-operation">团队详情</a>';
+                        html += '</td>';
+                        html +='</tr>';
+                    }
+                } else {
+                    html += '<tr><td colspan="7" class="h-200">暂无符合条件的数据记录</td></tr>';
+                }
+
+                $('#page').paginator('option', {
+                    totalCounts: data['total_count']  // 动态修改总数
+                });
+                $("#list").html(html)
+            }
+        });
+    }
+    $('.search').on('click',function(){
+        util.initPage(LoadingInfo);
+    });
+})
+</script>
+{/block}

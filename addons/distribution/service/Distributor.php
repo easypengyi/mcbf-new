@@ -263,7 +263,7 @@ class Distributor extends BaseService
             $res = $shop->save($data, [
                 'uid' => $uid
             ]);
-            $this->addRefereeLog($uid, $referee_id, $this->website_id, $this->instance_id, $user_info['referee_id'], $admin_uid);
+            $this->addRefereeLog($uid, $referee_id, $this->website_id, $this->instance_id, $user_info['referee_id'], $admin_uid, 1);
             if ($referee_id) {
                 $this->updateDistributorLevelInfo($referee_id);
             }
@@ -4957,7 +4957,7 @@ class Distributor extends BaseService
 
                 runhook("Notify", "sendCustomMessage", ['messageType' => 'new_offline', "uid" => $uid, "add_time" => time(), 'referee_id' => $distributor['default_referee_id']]); //成为下线通知
                 $member->save(['referee_id' => $distributor['default_referee_id'], 'default_referee_id' => null], ['uid' => $uid]);
-                $this->addRefereeLog($uid, $distributor['default_referee_id'], $distributor['website_id'], $distributor['shop_id']);
+                $this->addRefereeLog($uid, $distributor['default_referee_id'], $distributor['website_id'], $distributor['shop_id'], 0, 0, 3);
                 $this->updateDistributorLevelInfo($distributor['default_referee_id']);
                 if (getAddons('globalbonus', $distributor['website_id'])) {
                     $global = new GlobalBonus();
@@ -7315,7 +7315,7 @@ class Distributor extends BaseService
     /**
      * 增加绑定上下级记录
      */
-    public function addRefereeLog($uid, $referee_id, $website_id, $shop_id = 0, $org_referee_id = 0, $admin_uid = 0)
+    public function addRefereeLog($uid, $referee_id, $website_id, $shop_id = 0, $org_referee_id = 0, $admin_uid = 0, $source = 1)
     {
         $distributorRefereeLogModel = new VslDistributorRefereeLogModel();
         $check_info = $distributorRefereeLogModel->getInfo(['uid' => $uid, 'website_id' => $website_id], '*');
@@ -7365,7 +7365,8 @@ class Distributor extends BaseService
             'org_referee_id'=> $org_referee_id,
             'referee_id' => $referee_id,
             'update_time' => date('Y-m-d H:i:s'),
-            'create_uid'=> $admin_uid
+            'create_uid'=> $admin_uid,
+            'source'=> $source
         ];
         $memberRefereeLogModel->save($log);
 
@@ -8175,7 +8176,7 @@ class Distributor extends BaseService
             }
             runhook("Notify", "sendCustomMessage", ['messageType' => 'new_offline', "uid" => $uid, "add_time" => time(), 'referee_id' => $distributor['default_referee_id']]); //成为下线通知
             $member->save(['referee_id' => $distributor['default_referee_id'], 'default_referee_id' => null], ['uid' => $uid]);
-            $this->addRefereeLog($uid, $distributor['default_referee_id'], $distributor['website_id'], 0);
+            $this->addRefereeLog($uid, $distributor['default_referee_id'], $distributor['website_id'], 0,0,0,4);
             $this->updateDistributorLevelInfo($distributor['default_referee_id']);
             if (getAddons('globalbonus', $distributor['website_id'])) {
                 $global = new GlobalBonus();

@@ -3,7 +3,10 @@ namespace app\platform\controller;
 
 use addons\bonus\model\VslOrderBonusLogModel;
 use addons\distribution\model\VslOrderDistributorCommissionModel;
+use data\model\UserModel;
+use data\model\VslMemberModel;
 use data\model\VslOrderGoodsModel;
+use data\service\ExcelsExport;
 use data\service\Order;
 use data\service\Goods;
 use data\service\Member;
@@ -511,13 +514,16 @@ class Statistics extends BaseController
      *
      * @return Ambigous <multitype:number , multitype:number unknown >
      */
-    public function memberBalance() {
+    public function balance() {
         if (request()->isAjax()) {
             $page_index = request()->post('page_index', 1);
             $page_size = request()->post('page_size', PAGESIZE);
             $order_no = request()->post('order_no', '');
             $order_status = request()->post('order_status', '');
             $buyer_id = request()->post('buyer_id', '');
+
+            $start_finish_date = request()->post('start_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_finish_date'));
+            $end_finish_date = request()->post('end_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_finish_date'));
 
             if (!empty($order_no)) {
                 $condition['order_no'] = array(
@@ -534,6 +540,13 @@ class Statistics extends BaseController
                 $condition['order_status'] = $order_status;
             }else{
                 $condition['order_status'] = array('in', [3, 4]);
+            }
+
+            if ($start_finish_date) {
+                $condition['sign_time'][] = ['>=', $start_finish_date];
+            }
+            if ($end_finish_date) {
+                $condition['sign_time'][] = ['<=', $end_finish_date];
             }
 
             $order_commission = new VslOrderDistributorCommissionModel();
@@ -582,5 +595,389 @@ class Statistics extends BaseController
         } else {
             return view($this->style . "Statistics/memberBalance");
         }
+    }
+
+    /**
+     * 战略经销统计
+     *
+     * @return \data\model\unknown|mixed|\think\response\View
+     */
+    public function zhlue() {
+        if (request()->isAjax()) {
+            $page_index = request()->post('page_index', 1);
+            $page_size = request()->post('page_size', PAGESIZE);
+            $uid = request()->post('uid', '');
+            $start_finish_date = request()->post('start_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_finish_date'));
+            $end_finish_date = request()->post('end_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_finish_date'));
+
+            if (!empty($uid)) {
+                $condition['nm.uid'] = $uid;
+            }
+            $condition['nm.distributor_level_id']= 5;
+            $userModel = new VslMemberModel();
+            $list = $userModel->getViewList($page_index, $page_size, $condition, 'nm.uid asc');
+            $list = objToArr($list);
+            foreach ($list['data'] as &$v){
+                $v['user_info'] = ($v['nick_name'])?$v['nick_name']:($v['user_name']?$v['user_name']:($v['user_tel']?$v['user_tel']:$v['uid']));
+                //团队业绩
+                $v['total_amount'] = $this->getTotalAmount($v['uid'], $start_finish_date, $end_finish_date);
+                //平级业绩
+                $v['level_amount'] = $this->getLevelAmount($v['uid'], $start_finish_date, $end_finish_date);
+            }
+            return $list;
+
+        } else {
+            return view($this->style . "Statistics/zhlue");
+        }
+    }
+
+    /**
+     * 获取平级详情
+     *
+     * @return array|\data\model\unknown
+     */
+    public function levelDetail(){
+
+        if (request()->isAjax()) {
+            $uid = request()->post('member_id');
+            $page_index = request()->post('page_index', 1);
+            $page_size = request()->post('page_size', PAGESIZE);
+            $member_id = request()->post('uid', '');
+            $start_finish_date = request()->post('start_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_finish_date'));
+            $end_finish_date = request()->post('end_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_finish_date'));
+            $uids = $this->sort($uid);
+            $lists = $this->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
+            $res = $this->rec_list_level($uid, $lists);
+            $list['data'] = [];
+            if (count($res)) {
+                $condition['nm.uid'] = array('in', $res);
+                $condition['nm.distributor_level_id']= 5;
+                if (!empty($member_id) && in_array($member_id, $res)) {
+                    $condition['nm.uid'] = $member_id;
+                }
+
+                $userModel = new VslMemberModel();
+                $list = $userModel->getViewList($page_index, $page_size, $condition, 'nm.uid asc');
+                $list = objToArr($list);
+                foreach ($list['data'] as &$v){
+                    $v['user_info'] = ($v['nick_name'])?$v['nick_name']:($v['user_name']?$v['user_name']:($v['user_tel']?$v['user_tel']:$v['uid']));
+                    //团队业绩
+                    $v['total_amount'] = $this->getTotalAmount($v['uid'], $start_finish_date, $end_finish_date);
+                }
+            }
+            return $list;
+        }else{
+            $uid = request()->get('member_id');
+            $this->assign('member_id', $uid);
+            return view($this->style . 'Statistics/levelDetail');
+        }
+    }
+
+    /**
+     * 获取团队详情
+     *
+     * @return array|\data\model\unknown
+     */
+    public function teamDetail(){
+
+        if (request()->isAjax()) {
+            $uid = request()->post('member_id');
+            $page_index = request()->post('page_index', 1);
+            $page_size = request()->post('page_size', PAGESIZE);
+            $order_no = request()->post('order_no', '');
+            $buyer_id = request()->post('buyer_id', '');
+            $start_finish_date = request()->post('start_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_finish_date'));
+            $end_finish_date = request()->post('end_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_finish_date'));
+            $uids = $this->sort($uid);
+            $lists = $this->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
+            $res = $this->rec_list_member($uid, $lists);
+            $list['data'] = [];
+            if (count($res)) {
+                $ids = [];
+                foreach ($res as $i) {
+                    $ids[] = $i['uid'];
+                }
+                $condition['buyer_id'] = array('in', $ids);
+                $condition['order_status'] = array('in', [3, 4]);
+                if (!empty($order_no)) {
+                    $condition['order_no'] = array(
+                        'like',
+                        '%' . $order_no . '%'
+                    );
+                }
+
+                if (!empty($buyer_id) && in_array($buyer_id, $ids)) {
+                    $condition['buyer_id'] = $buyer_id;
+                }
+                if ($start_finish_date) {
+                    $condition['sign_time'][] = ['>=', $start_finish_date];
+                }
+                if ($end_finish_date) {
+                    $condition['sign_time'][] = ['<=', $end_finish_date];
+                }
+                $order_model = new VslOrderModel();
+                $list = $order_model->getViewList4($page_index, $page_size, $condition, 'nm.order_id desc');
+                foreach ($list['data'] as &$v){
+                    $v['sign_time'] = date('Y-m-d H:i:s', $v['sign_time']);
+                    $v['user_info'] = ($v['nick_name'])?$v['nick_name']:($v['user_name']?$v['user_name']:($v['user_tel']?$v['user_tel']:$v['uid']));
+                }
+            }
+
+            return $list;
+        }else{
+            $uid = request()->get('member_id');
+            $this->assign('member_id', $uid);
+            return view($this->style . 'Statistics/teamDetail');
+        }
+    }
+
+    /**
+     * 数据excel导出
+     */
+    public function teamDetailExcel()
+    {
+        $xlsName = "战略经销团队详情列表";
+        $xlsCell = [
+            0=>['order_no','订单号'],
+            1=>['uid','会员ID'],
+            2=>['user_info','用户信息'],
+            3=>['sign_time','收货时间'],
+            4=>['order_money','订单金额']
+
+        ];
+        $uid = request()->post('member_id');
+        $order_no = request()->post('order_no', '');
+        $buyer_id = request()->post('buyer_id', '');
+        $start_finish_date = request()->post('start_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_finish_date'));
+        $end_finish_date = request()->post('end_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_finish_date'));
+        $uids = $this->sort($uid);
+        $lists = $this->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
+        $res = $this->rec_list_member($uid, $lists);
+        $list['data'] = [];
+        $condition = [];
+        if (count($res)) {
+            $ids = [];
+            foreach ($res as $i) {
+                $ids[] = $i['uid'];
+            }
+            $condition['buyer_id'] = array('in', $ids);
+            $condition['order_status'] = array('in', [3, 4]);
+            if (!empty($order_no)) {
+                $condition['order_no'] = array(
+                    'like',
+                    '%' . $order_no . '%'
+                );
+            }
+
+            if (!empty($buyer_id) && in_array($buyer_id, $ids)) {
+                $condition['buyer_id'] = $buyer_id;
+            }
+            if ($start_finish_date) {
+                $condition['sign_time'][] = ['>=', $start_finish_date];
+            }
+            if ($end_finish_date) {
+                $condition['sign_time'][] = ['<=', $end_finish_date];
+            }
+        }
+
+        // edit for 2020/04/26 导出操作移到到计划任务统一执行
+        $insert_data = array(
+            'type' => 17,
+            'status' => 0,
+            'exname' => $xlsName,
+            'website_id' => $this->website_id,
+            'addtime' => time(),
+            'ids' => serialize($xlsCell),
+            'conditions' => serialize($condition),
+        );
+        $excels_export = new ExcelsExport();
+        $res = $excels_export->insertData($insert_data);
+        return $res;
+    }
+
+
+    /**
+     * 获取我的团队总业绩
+     *
+     * @param $uid
+     * @return int
+     */
+    public function getTotalAmount($uid, $start_finish_date = null, $end_finish_date = null){
+        $uids = $this->sort($uid);
+        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
+        $res = $this->rec_list_member($uid, $lists);
+        $amount = 0;
+        if(count($res)){
+            $ids = [];
+            foreach ($res as $i){
+                $ids[] = $i['uid'];
+            }
+            $condition['buyer_id'] = array('in', $ids);
+            $condition['order_status'] = array('in', [3, 4]);
+
+            if ($start_finish_date) {
+                $condition['finish_time'][] = ['>=', $start_finish_date];
+            }
+            if ($end_finish_date) {
+                $condition['finish_time'][] = ['<=', $end_finish_date];
+            }
+            $order_model = new VslOrderModel();
+            $amount = $order_model->getSum($condition, 'order_money');
+//            foreach ($order_lists as $value){
+//                $amount += $value['order_money'];
+//            }
+        }
+        return sprintf("%01.2f", $amount);
+    }
+
+    /**
+     *  获取我的平级业绩
+     *
+     * @param $uid
+     * @return int
+     */
+    public function getLevelAmount($uid, $start_finish_date, $end_finish_date){
+        $uids = $this->sort($uid);
+        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
+        $res = $this->rec_list_level($uid, $lists);
+        $amount = 0;
+        if(count($res)){
+            foreach ($res as $level_uid){
+                $amount += $this->getTotalAmount($level_uid, $start_finish_date, $end_finish_date);
+            }
+        }
+        return sprintf("%01.2f", $amount);
+    }
+
+    /**
+     * 获取代理下的所有用户
+     *
+     * @param $top_id
+     * @return array
+     */
+    public function sort($top_id)
+    {
+        $memberModel = new VslMemberModel();
+        $lists = $memberModel->getQuery(['referee_id'=>array('>', 0)], 'uid,referee_id,distributor_level_id');
+        $users = [];
+        foreach ($lists as $item){
+            $users[] = [
+                'uid'=> $item['uid'],
+                'referee_id'=> $item['referee_id'],
+                'distributor_level_id'=> $item['distributor_level_id']
+            ];
+        }
+        $arr = self::sort1($top_id, $users);
+        return $arr;
+    }
+
+    /**
+     *
+     *
+     * @param $id
+     * @param $data
+     * @return array
+     */
+    public static function sort1($id, $data)
+    {
+        $arr = [];
+        foreach($data as $k => $v){
+            //从小到大 排列
+            if($v['referee_id'] == $id){
+                $arr[] = $v;
+                $arr = array_merge(self::sort1($v['uid'], $data), $arr);
+            }
+        }
+        return $arr;
+    }
+
+    /**
+     * 过滤同个等级多个战略等级的情况
+     *
+     * @param $pid
+     * @param $from
+     * @return array
+     *
+     */
+    public function rec_list_member($pid, $from)
+    {
+        $arr = [];
+        foreach($from as $key=> $item) {
+            if($item['distributor_level_id'] == 5 && $item['uid'] != $pid) {
+                continue;
+            }
+            if(!isset($item['children'])){
+                $arr[] = $item;
+            }
+            if(isset($item['children'])){
+                $children = $item['children'];
+                unset($item['children']);
+                $arr[] = $item;
+                $arr = array_merge($arr, $this->rec_list_member($pid, $children));
+            }
+        }
+        return $arr;
+    }
+
+    /**
+     * 获取同个等级下多个战略
+     *
+     * @param $pid
+     * @param $from
+     * @return array
+     *
+     */
+    public function rec_list_level($pid, $from)
+    {
+        $arr = [];
+        foreach($from as $key=> $item) {
+            if($item['distributor_level_id'] == 5 && $item['uid'] != $pid) {
+                $arr[] = $item['uid'];
+                continue;
+            }
+            if(isset($item['children'])){
+                $arr = array_merge($arr, $this->rec_list_level($pid, $item['children']));
+            }
+        }
+        return $arr;
+    }
+
+    /**
+     * 生成树结构
+     *
+     * @param $data
+     * @param string $pk
+     * @param string $pid
+     * @param string $child
+     * @param int $root
+     * @return array|bool
+     */
+    public function sort_data($data, $pk = 'id', $pid = 'pid', $child = 'children', $root = 0)
+    {
+        // 创建Tree
+        $tree = [];
+        if (!is_array($data)) {
+            return false;
+        }
+
+        //创建基于主键的数组引用
+        $refer = [];
+        foreach ($data as $key => $value_data) {
+            $refer[$value_data[$pk]] = &$data[$key];
+        }
+        foreach ($data as $key => $value_data) {
+            // 判断是否存在parent
+            $parentId = $value_data[$pid];
+            if ($root == $parentId) {
+                $tree[] = &$data[$key];
+            } else {
+                if (isset($refer[$parentId])) {
+                    $parent = &$refer[$parentId];
+                    $parent[$child][] = &$data[$key];
+                }
+            }
+        }
+
+        return $tree;
     }
 }

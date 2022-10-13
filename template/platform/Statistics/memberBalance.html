@@ -75,6 +75,17 @@
                         </select>
                     </div>
                 </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">收货时间</label>
+                    <div class="v__controls v-date-input-control">
+                        <label for="completeTime">
+                            <input type="text" class="v__control_input pr-30" id="completeTime" placeholder="请选择时间" autocomplete="off" data-types="datetime">
+                            <i class="icon icon-calendar"></i>
+                            <input type="hidden" id="finishStartDate">
+                            <input type="hidden" id="finishEndDate">
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="filter-item clearfix">
@@ -134,20 +145,44 @@
 require(['util'],function(util){
     util.initPage(LoadingInfo);
 
+    util.layDate('#completeTime',true,function(value, date, endDate){
+        var h=date.hours<10 ?"0"+date.hours : date.hours;
+        var m=date.minutes<10 ?"0"+date.minutes : date.minutes;
+        var s=date.seconds<10 ?"0"+date.seconds : date.seconds;
+        var h1=endDate.hours<10 ?"0"+endDate.hours : endDate.hours;
+        var m1=endDate.minutes<10 ?"0"+endDate.minutes : endDate.minutes;
+        var s1=endDate.seconds<10 ?"0"+endDate.seconds : endDate.seconds;
+        var date1=date.year+'-'+date.month+'-'+date.date+' '+h+":"+m+":"+s;
+        var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+h1+":"+m1+":"+s1;
+        if(value){
+            $('#finishStartDate').val(date1);
+            $('#finishEndDate').val(date2);
+        }
+        else{
+            $('#finishStartDate').val('');
+            $('#finishEndDate').val('');
+        }
+    });
+
     function LoadingInfo(page_index) {
         var order_no = $("#order_no").val();
         var order_status = $("#order_status").val();
         var buyer_id = $("#buyer_id").val();
 
+        var start_finish_date = $("#finishStartDate").val();
+        var end_finish_date = $("#finishEndDate").val();
+
         $.ajax({
             type: "post",
-            url: "{:__URL('PLATFORM_MAIN/statistics/memberBalance')}",
+            url: "{:__URL('PLATFORM_MAIN/statistics/balance')}",
             async: true,
             data: {
                 "page_index": page_index,
                 "order_no": order_no,
                 "order_status": order_status,
-                "buyer_id": buyer_id
+                "buyer_id": buyer_id,
+                "start_finish_date": start_finish_date,
+                "end_finish_date": end_finish_date
             },
             success: function (data) {
                 var html = '';

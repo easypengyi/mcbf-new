@@ -120,6 +120,9 @@ class Member extends BaseController
     public function memberDetail()
     {
 //        $uid = 7569;
+//        $member = new VslMemberModel();
+//        $member->save(['default_referee_id' => null], ['uid' => $uid]);
+//        echo $uid;die;
 //        //获取下面的所有人
 //        $uids = $this->sort($uid);
 //        $ids = [];
@@ -1286,7 +1289,11 @@ class Member extends BaseController
         return $list;
     }
 
-
+    /**
+     * 佣金详情
+     *
+     * @return \addons\distribution\model\unknown
+     */
     public function commissionLogDetail(){
         $member_id = request()->get('member_id');
         $page_index = request()->get('page_index',1);
@@ -1296,5 +1303,41 @@ class Member extends BaseController
         $list = $member->getMemberCommissionList($page_index, $page_size, $condition);
         return $list;
     }
+
+
+    public function commissionLogDetailExcel(){
+        $xlsName = "用户佣金流水明细";
+        $xlsCell = [
+            0=>['records_no','流水号'],
+            1=>['data_id','订单号'],
+            2=>['uid','用户ID'],
+            3=>['user_info','下单用户'],
+            4=>['commission_type','佣金类型'],
+            5=>['change_type','变动类型'],
+            6=>['commission','变动积分'],
+            7=>['create_time','变动时间'],
+            8=>['text','备注']
+
+        ];
+
+        $member_id = request()->get('uid');
+        $condition['uid'] = $member_id;
+
+        // edit for 2020/04/26 导出操作移到到计划任务统一执行
+        $insert_data = array(
+            'type' => 18,
+            'status' => 0,
+            'exname' => $xlsName,
+            'website_id' => $this->website_id,
+            'addtime' => time(),
+            'ids' => serialize($xlsCell),
+            'conditions' => serialize($condition),
+        );
+        $excels_export = new ExcelsExport();
+        $res = $excels_export->insertData($insert_data);
+        return $res;
+    }
+
+
 
 }
