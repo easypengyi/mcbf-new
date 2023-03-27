@@ -24,6 +24,7 @@
                         <span>{$base_info.nick_name}</span><a href="{$auth_url}" class="text-primary pl-15">重新授权</a>
                         <a href="javascript:void(0);" class="text-primary pl-15" id="refresh_base">刷新基本信息</a>
                         <a href="javascript:void(0);" class="text-primary pl-15" id="refresh_domain">刷新服务器域名</a>
+                        <a href="javascript:void(0);" class="text-primary pl-15" id="set_privacy_setting">用户隐私保护指引</a>
                     </p>
                 </div>
             </div>
@@ -64,7 +65,7 @@
                 <div class="col-md-5">
                     <img src="{:__IMG($sunCodeUrl)}" width="100" height="100">
                     <a href="{$downSunCodeUrl}?auth_id={$mp_info.auth_id}" class="text-primary pl-15">下载太阳码</a>
-                    
+
                 </div>
             </div>
 
@@ -695,6 +696,21 @@
                     window.location.reload();
                 }});
         })
+
+        $("#set_privacy_setting").on("click", function () {
+            $.ajax({
+                type: 'POST',
+                dataType: 'json',
+                url:"{$postSetPrivacySettingUrl}",
+                success:function(result){
+                    if (result.code < 0) {
+                        util.message(result.message, 'danger');return;
+                    }
+                    util.message("设置成功", 'success');
+                    window.location.reload();
+                }});
+        })
+
 
         // 添加自定义键
         var new_index = 1;

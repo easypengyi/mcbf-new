@@ -15,6 +15,7 @@ use addons\receivegoodscode\server\ReceiveGoodsCode as ReceiveGoodsCodeSer;
 use addons\supplier\model\VslSupplierModel;
 use data\model\RabbitOrderRecordModel;
 use data\model\VslGoodsSkuModel;
+use data\model\VslMemberModel;
 use data\service\Config;
 use data\model\DistrictModel;
 use data\model\VslMemberRechargeModel;
@@ -1619,6 +1620,45 @@ class Order extends BaseController
             return json(AjaxReturn(SYSTEM_ERROR));
         }
     }
+
+
+    /**
+     * post 请求
+     *
+     * @param $url
+     * @param array $data
+     * @return mixed
+     */
+    public function getRequest($url){
+        $header = [
+            'Content-Type: application/json'
+        ];
+
+        $ch = curl_init ();
+        curl_setopt ( $ch, CURLOPT_URL, $url );
+        curl_setopt ( $ch, CURLOPT_POST, 0 );
+        curl_setopt ( $ch, CURLOPT_HEADER, 0 );
+        curl_setopt ( $ch, CURLOPT_RETURNTRANSFER, 1 );
+//        curl_setopt ( $ch, CURLOPT_POSTFIELDS, $data );
+        curl_setopt ($ch, CURLOPT_HTTPHEADER, $header);
+//        var_dump($ch);die;
+        $res = curl_exec ( $ch );
+        curl_close ( $ch );
+        return json_decode($res, true, 512, JSON_BIGINT_AS_STRING);
+    }
+
+    public function checkContract($mobile, $type = 6){
+        //验证是否已签约
+        $url = "https://esign.meicbf.com/ht/app/contract/getContractStatus?mobile=".$mobile.'&type='.$type;
+        $res = $this->getRequest($url);
+        if(!isset($res['code']) || $res['code'] != 0 || $res['data'] == false){
+            return false;
+        }
+
+        return true;
+    }
+
+
     /**
      * 创建订单
      */
@@ -1629,6 +1669,22 @@ class Order extends BaseController
             if (empty($post_data)) {
                 $post_data = request()->post('order_data/a');
             }
+            //是否已签约
+//            $order_model = new VslOrderModel();
+//            $condition['buyer_id'] =  $this->uid;
+//            $condition['order_status'] = array('in', [1, 2, 3, 4]);
+//            $order_count = $order_model->getCount($condition);
+////            var_dump($order_count);die;
+//            if($order_count == 0){
+            $userModel = new VslMemberModel();
+            $user_info = $userModel->getInfo(['uid'=> $this->uid], 'uid,distributor_level_id,mobile');
+            if(!$this->checkContract($user_info['mobile'], 6)){
+                return json(['code' => -6, 'message' => '请先前往会员中心签约居间服务合同-（美星)后，再兑换']);
+            }
+            if(!$this->checkContract($user_info['mobile'], 7)){
+                return json(['code' => -6, 'message' => '请先前往会员中心签约居间服务合同-（晨彩)后，再兑换']);
+            }
+
             #查看是否已经绑定上级，而且开启了强制绑定
             $distributorServer = new \addons\distribution\service\Distributor();
             $check = $distributorServer->getDistributionSite($this->website_id);
@@ -4074,13 +4130,17 @@ class Order extends BaseController
         try{
 
             $uid = request()->post('id', '');
+            $goods_id = request()->post('goods_id', '');
             $num = request()->post('num', 1);
-//            $res = $this->balance_pay('165942930077601000', $uid);
-//            return $res;
 
             $goodsModel = new VslGoodsModel();
             $goodsSkuModel = new VslGoodsSkuModel();
-            $goods = $goodsModel->getInfo(['goods_id'=> VslGoodsModel::DEFAULT_GOODS_ID], 'goods_id,goods_name');
+            $goods = $goodsModel->getInfo(['goods_id'=> $goods_id], 'goods_id,goods_name');
+            if(is_null($goods)){
+                $data['code'] = -1;
+                $data['message'] = "商品信息有误，请稍后再试。";
+                return json($data);
+            }
             $sku = $goodsSkuModel->getInfo(['goods_id'=> $goods['goods_id']], 'sku_id,price');
             $pay_money = $sku['price'] * $num;
 
@@ -4165,6 +4225,7 @@ class Order extends BaseController
             }
         }catch (\Exception $e){
             $msg = $e->getLine().' 错误：'.$e->getMessage();
+            return json(['code' => -6, 'message' => $msg]);
         }
     }
 

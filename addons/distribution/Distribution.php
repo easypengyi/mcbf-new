@@ -499,11 +499,11 @@ class Distribution extends Addo
         $this->assign('distributionRankingUrl', __URL(addons_url_platform('distribution://distribution/ranking')));//排行信息
     }
 
-    
+
     /**
      * 实现第三方钩子
      *
-     * @param array $params            
+     * @param array $params
      */
 
     /**
@@ -534,10 +534,10 @@ class Distribution extends Addo
         $this->assign('distributor_id',$_GET['distributor_id']);
         $types = request()->get('types', 1);
         $this->assign('types',$_GET['types']);
-       
+
         $this->fetch('template/platform/lowerDistributorList');
-        
-        
+
+
     }
 
     /**
@@ -559,8 +559,23 @@ class Distribution extends Addo
             $agent_info = $member->getAgentInfo();
             $this->assign('agent_info',$agent_info);
         }
-        
+
         $this->assign('distributor_level',$distributor_level);
+        $id_card = '';
+        $business_image = '';
+        if(!empty($res['custom_team'])){
+            $custom_team = json_decode(htmlspecialchars_decode($res['custom_team']),true);
+            foreach ($custom_team as $item){
+                if($item['label'] == '身份证正反面'){
+                    $id_card = $item['value'];
+                }
+                if($item['label'] == '请上传公司营业执照'){
+                    $business_image = $item['value'];
+                }
+            }
+        }
+        $res['id_card'] = $id_card;
+        $res['business_image'] = $business_image;
         $this->assign('info',$res);
         $this->fetch('template/platform/distributorInfo');
     }
@@ -619,13 +634,13 @@ class Distribution extends Addo
     {
         $config= new DistributorService();
         $list = $config->getAgreementSite($this->website_id);
-        
+
         $pc_set = getAddons('pcport',$this->website_id);
         $this->assign("pc_set", $pc_set);
         $type=isset($_GET['type'])?$_GET['type']:'0';
         $this->assign("type", $type);
         $this->assign("website", $list);
-        $this->fetch('template/platform/applicationAgreement'); 
+        $this->fetch('template/platform/applicationAgreement');
     }
 
     /**
@@ -691,7 +706,7 @@ class Distribution extends Addo
     public function install()
     {
         // TODO: Implement install() method.
-        
+
         return true;
     }
 
@@ -700,23 +715,23 @@ class Distribution extends Addo
      */
     public function uninstall()
     {
-       
+
         return true;
         // TODO: Implement uninstall() method.
     }
-    
+
 /*-------------------------------------------------------------------前端钩子开始-----------------------------------------------------------------------*/
 
      /**
      * 订单创建成功后佣金计算
      */
     public function orderCommissionCalculate($params)
-    { 
+    {
         $order= new VslOrderModel();
         $params['uid'] = $order->getInfo(['order_id'=>$params['order_id']],'buyer_id')['buyer_id'];
         $distributor = new VslMemberModel();
         $member = $distributor->getInfo(['uid'=>$params['buyer_id']],'*');
-       
+
         if($member['isdistributor']==2 || $member['referee_id']){
             $commissionCalculate = new DistributorService();
             $commissionCalculate->OrderDistributorCommission($params);
@@ -761,7 +776,7 @@ class Distribution extends Addo
      */
     public function updateOrderCommission($params)
     {
-        
+
         //重复执行两次
         $order_commission = new VslOrderDistributorCommissionModel();
         $distributor_order_ids =  $order_commission->Query(['website_id'=>$params['website_id']],'order_id');
@@ -774,14 +789,14 @@ class Distribution extends Addo
         $order_model = new VslOrderModel();
         $order_info = $order_model->getInfo(['order_id' => $params['order_id']], '*');
         $order_status = $order_info["order_status"];//当前订单状态
-        
+
         try {
             if(in_array($params['order_id'],$orderids)) {
                 if ($member_info['isdistributor'] == 2 || $member_info['referee_id']) {//判断当前用户是否是分销商或者有推荐人
                 $config = new DistributorService();
-                    
+
                     $list = $config->getDistributionSite($params['website_id']);
-                    
+
                         $data['commissionA'] = 0;
                         $data['commissionB'] = 0;
                         $data['commissionC'] = 0;
@@ -814,7 +829,7 @@ class Distribution extends Addo
                                 return;
                             }
                         }
-                         
+
                         if($order_status == 4 && !isset($params['status'])){
                             $check_cal_status = $order_commission->getInfo(['buyer_id'=>$params['uid'],'order_id'=>$params['order_id']], 'cal_status');
                             $check_cal_status = $check_cal_status['cal_status'];
@@ -822,20 +837,20 @@ class Distribution extends Addo
                                 return;
                             }
                         }
-                        
+
                         if ($order_commissionA_id['commissionA_id'] && $list['distribution_pattern'] >= 1) {
                             $data['uid'] = $order_commissionA_id['commissionA_id'];//一级佣金对应的分销商
                             // 订单交易完成
                             if ($order_status == 4 && !isset($params['status'])) {
-                                
+
                                 //订单交易完成状态
-                                $data['status'] = 1; 
+                                $data['status'] = 1;
                                 $data['order_id'] = $params['order_id'];
                                 $data['website_id'] = $order_info["website_id"];
                                 $data['commission'] = array_sum($order_commissionA);//一级佣金
                                 $data['point'] = array_sum($order_pointA);//一级积分
                                 $data['beautiful_point'] = array_sum($order_beautiful_pointA);//一级积分
-                                
+
                                 // 发放订单的一级分销佣金
                                 $distributor->addCommissionDistribution($data);
                                 // 更新当前用户的分销商等级
@@ -850,7 +865,7 @@ class Distribution extends Addo
                                 $data['commission'] = array_sum($order_commissionA);//一级佣金
                                 // 订单的一级分销佣金
                                 $r5 = $distributor->addCommissionDistribution($data);
-                                
+
                             }
                             // 订单支付成功
                             if ($params['status'] == 3) {
@@ -928,12 +943,12 @@ class Distribution extends Addo
                             }
                             // 订单支付成功
                             if ($params['status'] == 3) {
-                                
+
                                 // 得到订单用户id
                                 $data['status'] = 3;
                                 $data['order_id'] = $params['order_id'];
                                 $data['website_id'] = $order_info["website_id"];
-                                $data['commission'] = array_sum($order_commissionC);//三级佣金 
+                                $data['commission'] = array_sum($order_commissionC);//三级佣金
                                 // 订单的三级分销佣金
                                 $distributor->addCommissionDistribution($data);
                             }
@@ -949,7 +964,7 @@ class Distribution extends Addo
                         }
                         //该记录发生退款
                         if($params['order_goods_id'] && $params['status'] == 2){
-                            
+
                             $order_commission = new VslOrderDistributorCommissionModel();
                             $re_data = array(
                                 'return_status' => 1,
@@ -961,8 +976,8 @@ class Distribution extends Addo
         } catch (\Exception $e) {
             debugFile($e->getMessage(), '分销重新佣金结算createLuckySpell-0-7-1-2-3-1-1-0-0', 1111112);
         }
-       
-        
+
+
         if($order_status == 4 && $member_info['isdistributor'] == 2 && !isset($params['status'])) {
             $distributor->updateDistributorLevelInfo($params['uid']);
         }

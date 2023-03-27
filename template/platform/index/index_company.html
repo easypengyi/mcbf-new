@@ -1,0 +1,191 @@
+{extend name="platform/new_base" /}
+  {block name="resources"}
+  <style>
+	.jconfirm-buttons{
+		float: none !important;
+		text-align: center !important;
+	}
+	.v-container{
+		background-color: #f5f5f5;
+		padding:10px;
+		margin-bottom:0px;
+		padding-bottom: 0;
+	}
+    .copyrights{
+        margin-top: 0;
+    }
+</style>
+  {/block}
+
+{block name="main"}
+				<!-- page -->
+			   <div class="flex">
+
+			   </div>
+
+
+
+
+
+
+
+
+<input type="hidden" id="merchant_expire" value="{$merchant_expire}">
+<input type="hidden" id="merchant" value="{$web_info['version']}">
+{/block}
+
+{block name="script"}
+<script>
+    require(['util'],function(util){
+        if($("#merchant_expire").val()==1){
+            var merchant = $("#merchant").val();
+			var html = '';
+			html += '<h2 class="text-center" style="font-size:16px;font-weight:bold">温馨提示</h2><div style="font-size: 14px;padding-top: 20px">您使用的'+merchant+'已过期!系统部分功能可能受到限制，请及时联系我们客服进行续费，以免影响商城正常运作！点击联系<a href="http://pkt.zoosnet.net/LR/Chatpre.aspx?id=PKT84941002&lng=cn" target="_blank" rel="noopener noreferrer" class="text-primary">QQ客服</a>，电话客服：<span class="text-danger">400-889-6625</span></div>';
+			util.confirmExpire('',html,function(){
+				window.open("https://tb.53kf.com/code/client/fe6f8c99d694387455de7d72b5a4c85a9/1")
+			});
+		}
+            getTransactionStatus(1);
+            loading();
+
+    		$('#emoji').on('click',function(){
+    			util.emojiDialog(function(data){
+    			})
+    		})
+	        $('#tips').on('click',function(){
+	            util.message('删除成功','success')
+	        })
+	        $('#picture').on('click',function(){
+	            var _this = $(this);
+	            util.pictureDialog(_this,false,function(res){
+	                util.message('选择了 '+res.path[0])
+	            })
+	        })
+	        $('#icon').on('click', function () {
+	            util.iconsDialog(function(data){
+                    util.message('你选择了'+data)
+                })
+	        });
+	        $('#wap_icon').on('click', function () {
+	            util.wap_iconsDialog(function(data){
+                    util.message('你选择了'+data)
+                })
+	        });
+	        $('#confirm').on('click',function(){
+	            util.alert('内容',function(){
+	            	util.message('你点击了确定')
+	            })
+	        })
+	        $('#material').on('click',function(){
+	            util.materialDialog()
+	        })
+	        $('#link').on('click',function(){
+	        	util.linksDialog(function(data){
+	        	})
+	        });
+	        $('#goods').on('click',function(){
+	        	util.goodsDialog(function(data){
+	        	})
+	        });
+	        $('#shop').on('click',function(){
+	        	util.shopDialog(function(data){
+	        	})
+	        });
+        function getTransactionStatus(time) {
+            $.ajax({
+                type:"post",
+                url : "{:__URL('PLATFORM_MAIN/index/getTransactionStatus')}",
+                async : true,
+                data :{'times':time},
+                success : function(data) {
+                    $("#vistor").html(data['visitor_num']);
+                    $("#visitor_num").html(data['visitor_num']);
+					$("#order_num").html(data['order_num']);
+                    $("#order_money").html(data['order_money']);
+                    $("#pay_num").html(data['pay_num']);
+                    $("#pay_money").html(data['pay_money']);
+                    $("#unit_price").html(data['unit_price']);
+                    $("#order_conversion").html(data['order_conversion']);
+                    $("#orderpay_conversion").html(data['orderpay_conversion']);
+                    $("#pay_conversion").html(data['pay_conversion']);
+                }
+            });
+        }
+        function loading(){
+            $.ajax({
+                type : "post",
+                url : "{:__URL('PLATFORM_MAIN/index/getOrderMovementsChartCount')}",
+                async : true,
+                success : function(data) {
+                    var orderOption = {
+                        title: {
+                            subtext: '近七日自营订单走势',
+							left: 'center',
+							top:'20'
+                        },
+                        tooltip: {
+                            trigger: 'axis'
+                        },
+                        legend: {
+                            data:['订单量','付款订单','售后订单'],
+							left: 'center',
+                            // top: '30px',
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        // toolbox: {
+                        //     feature: {
+                        //         saveAsImage: {}
+                        //     }
+                        // },
+
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: data[0]
+                        },
+                        yAxis: {
+                            type: 'value',
+							name:'数量'
+                        },
+                        series: [
+                            {
+                                name:'订单量',
+                                type:'line',
+                                // stack: '总量',
+                                data:data[1][0]['data']
+                            },
+                            {
+                                name:'付款订单',
+                                type:'line',
+                                // stack: '总量',
+                                data:data[1][1]['data']
+                            },
+                            {
+                                name:'售后订单',
+                                type:'line',
+                                // stack: '总量',
+                                data:data[1][2]['data']
+                            }
+                        ]
+                    };
+                    util.chart('order',orderOption);
+                }
+            });
+        }
+
+		// 永久移除点击事件
+		$("#remove").on("click",function(){
+			util.alert("移除模块后，商家后台首页将不会再呈现商城助手。",function(){
+				$("#mallGuide").fadeOut();
+			})
+		})
+
+
+    })
+</script>
+{/block}

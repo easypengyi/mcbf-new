@@ -8,6 +8,7 @@ use addons\channel\model\VslChannelOrderModel;
 use addons\channel\model\VslChannelOrderPaymentModel;
 use addons\coupontype\model\VslCouponModel;
 use addons\coupontype\model\VslShareCouponRecordsModel;
+use addons\distribution\model\VslDistributorLevelModel;
 use addons\distribution\service\Distributor;
 use addons\giftvoucher\model\VslGiftVoucherRecordsModel;
 use addons\groupshopping\model\VslGroupShoppingRecordModel;
@@ -46,6 +47,7 @@ use addons\agent\model\VslAgentOrderModel;
 use data\service\Pay\GlobePay as globalpay;
 use data\service\Goods as GoodsServer;
 use addons\paygrade\server\PayGrade as PayGradeServer;
+use addons\distribution\service\Distributor as DistributorService;
 use data\service\Pay\Joinpay;
 /**
  * 会员
@@ -321,6 +323,22 @@ class Member extends BaseController
         $data['can_use_money'] = $accountSum['balance'];
         $data['freezing_balance'] = $accountSum['freezing_balance'];//冻结金额
 
+        //是否签约
+        $distributor_service = new Distributor();
+        $member_info = $this->user->getMemberInfo();
+        $mobile = $member_info['mobile'];
+        $check_mx = false;
+        if($distributor_service->checkContract($mobile, 6)){
+            $check_mx = true;
+
+        }
+        $check_cc = false;
+        if($distributor_service->checkContract($mobile, 7)){
+            $check_cc = true;
+        }
+        $data['mobile'] = $mobile;
+        $data['check_mx'] = $check_mx;
+        $data['check_cc'] = $check_cc;
 
         $result['data'] = $data;
         $result['code'] = 0;
@@ -3240,6 +3258,7 @@ class Member extends BaseController
         }
         $data['data']['team_level_name'] = $config_info['member_info']['team_level_name'];
         $data['data']['uid'] = $config_info['member_info']['uid'];
+        $data['data']['distributor_level_id'] = $config_info['member_info']['distributor_level_id'];//经销商等级
         $user = new UserModel();
         $userinfo = $user->getInfo(['uid' => $data['data']['uid']], 'user_headimg,user_name,nick_name');
         if (empty($userinfo['user_name'])) {
@@ -3251,6 +3270,14 @@ class Member extends BaseController
         //队长发货
         $data['data']['is_teamagent_delivery'] = $config_info['team_bonus']['teamagent_delivery'] == 1 ? 1 : 0;
         $data['code'] = 0;
+        //统计团队总业绩
+        if($data['data']['distributor_level_id'] == 5){
+            $distributor = new DistributorService();
+            $data['data']['total_amount'] = $distributor->getTotalAmount($data['data']['uid']);
+            $data['data']['level_amount'] = $distributor->getLevelAmount($data['data']['uid']);
+        }
+        //是否认证
+        $data['data']['is_auth_name'] = $config_info['member_info']['is_auth'] == 1 ? '已认证':'未认证';
 
         return json($data);
 
@@ -4639,4 +4666,93 @@ class Member extends BaseController
             return json(['code' => 0, 'message' => '未开启当前功能']);
         }
     }
+
+    /*
+    * 团队业绩详情
+    * */
+    public function team_detail()
+    {
+        $page_index = request()->post('page_index', 1);
+        $page_size = request()->post('page_size', PAGESIZE);
+        $uid = $this->uid;
+        $distributor = new Distributor();
+        $uids = $distributor->sort($uid);
+        $lists = $distributor->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
+        $res = $distributor->rec_list_member($uid, $lists);
+        $list['data'] = [];
+        if (count($res)) {
+            $ids = [];
+            foreach ($res as $i) {
+                $ids[] = $i['uid'];
+            }
+            $condition['buyer_id'] = array('in', $ids);
+            $condition['order_status'] = array('in', [3, 4]);
+
+            $order_model = new VslOrderModel();
+            $list = $order_model->getViewList4($page_index, $page_size, $condition, 'nm.order_id desc');
+            $distributor_levels = VslDistributorLevelModel::column('level_name', 'id');
+
+            foreach ($list['data'] as &$v){
+                $v['bonus'] = $v['order_money'];
+                $v['level_name'] = $distributor_levels[$v['distributor_level_id']];
+                $v['create_time'] = date('Y-m-d H:i:s', $v['sign_time']);
+                $v['user_info'] = ($v['real_name'])?$v['real_name']:($v['user_name']?$v['user_name']:($v['nick_name']?$v['nick_name']:$v['uid']));
+            }
+        }
+
+
+        if (!empty($list)) {
+            $list['page_index'] = $page_index;
+            $list['page_size'] = $page_size;
+            $data['code'] = 0;
+            $data['data'] = $list;
+            return json($data);
+        } else {
+            $list['code'] = '-1';
+            $list['message'] = "暂无数据";
+            return json($list);
+        }
+    }
+
+    /*
+        * 平级业绩详情
+        * */
+    public function level_detail()
+    {
+        $page_index = request()->post('page_index', 1);
+        $page_size = request()->post('page_size', PAGESIZE);
+        $uid = $this->uid;
+        $distributor = new Distributor();
+        $uids = $distributor->sort($uid);
+        $lists = $distributor->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
+        $res = $distributor->rec_list_level($uid, $lists);
+        $list['data'] = [];
+        if (count($res)) {
+            $condition['nm.uid'] = array('in', $res);
+            $condition['nm.distributor_level_id']= 5;
+
+            $userModel = new VslMemberModel();
+            $list = $userModel->getViewList($page_index, $page_size, $condition, 'nm.uid asc');
+            $list = objToArr($list);
+            foreach ($list['data'] as &$v){
+                $v['user_info'] = ($v['real_name'])?$v['real_name']:($v['user_name']?$v['user_name']:($v['nick_name']?$v['nick_name']:$v['uid']));
+                //团队业绩
+                $v['total_amount'] = $distributor->getTotalAmount($v['uid']);
+            }
+        }
+
+
+        if (!empty($list)) {
+            $list['page_index'] = $page_index;
+            $list['page_size'] = $page_size;
+            $data['code'] = 0;
+            $data['data'] = $list;
+            return json($data);
+        } else {
+            $list['code'] = '-1';
+            $list['message'] = "暂无数据";
+            return json($list);
+        }
+    }
+
 }

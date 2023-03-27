@@ -4,7 +4,10 @@ namespace app\platform\controller;
 
 \think\Loader::addNamespace('data', 'data/');
 
+use data\model\AdminUserModel;
+use data\model\AuthGroupModel as AuthGroupModel;
 use data\model\UserModel;
+use data\model\VslMemberModel;
 use data\service\AdminUser as AdminUser;
 use data\service\User as User;
 use data\service\WebSite as WebSite;
@@ -57,19 +60,28 @@ class Login extends Controller {
     public function login() {
         $user_name = request()->post('username','');
         $password = request()->post('codes','');
-
         $retval = $this->user->login($user_name, $password);
-        
+
         if ($retval < 1) {
             return AjaxReturn($retval);
         }
         $model = $this->user->getRequestModel();
         $isAdmin = Session::get($model . 'is_admin');
         if ($retval == 1) {
+            $user_model = new UserModel();
+            $model_member = new VslMemberModel();
+            $user = $user_model->getInfo(['user_name|user_tel'=> $user_name]);
+            $member = $model_member->getInfo(['uid'=>$user['uid']]);
+            $is_company = 0;
+            if($user['is_system'] == 0 && !is_null($member) && $member['distributor_level_id'] == 10){ //特约公司权限
+                $is_company = 1;
+                Session::set($model . 'is_system', 1);
+                $this->getMemberAuth($model);
+            }
+            Session::set($model . 'is_company', $is_company);
             $first_list = Session::get($model . 'module_id_array');
             $module = new ModuleModel();
             $list = $module->where(['module_id' => ['IN', $first_list], 'is_menu' => 1, 'level' => 1, 'module' => $model])->order('sort', 'asc')->find();
-
             $checkSecond = $module->where("pid='" . $list['module_id'] . "' and is_menu=1 and level=2 and module='" . $model . "'")->order('sort', 'asc')->find();
             $user = new User();
             if ($checkSecond) {
@@ -82,6 +94,7 @@ class Login extends Controller {
             } else {
                 $list = $module->where(['module_id' => ['IN', $first_list], 'is_menu' => 1, 'level' => 1, 'module' => $model])->order('sort', 'asc')->find();
             }
+
             if ($list) {
                 return AjaxReturn(1, ['url' => $list['url']]);
             } else {
@@ -90,6 +103,17 @@ class Login extends Controller {
         } else {
             return AjaxReturn(-2001);
         }
+    }
+
+    /**
+     * 获取特约权限
+     *
+     * @param $model
+     */
+    public function getMemberAuth($model){
+        $auth_group = new AuthGroupModel();
+        $auth = $auth_group->getInfo(['group_id'=>9]);
+        Session::set($model . 'module_id_array', $auth['module_id_array']);
     }
 
     /**

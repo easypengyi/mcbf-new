@@ -5,6 +5,7 @@ namespace data\service\Order;
 use addons\abroadreceivegoods\model\VslCountryListModel;
 use addons\bargain\model\VslBargainRecordModel;
 use addons\bargain\service\Bargain;
+use addons\bonus\model\VslAgentAccountRecordsModel;
 use addons\bonus\model\VslOrderBonusModel;
 use addons\channel\model\VslChannelOrderGoodsModel;
 use addons\channel\model\VslChannelOrderModel;
@@ -24,6 +25,7 @@ use data\model\AlbumPictureModel;
 use data\model\RabbitOrderRecordModel;
 use data\model\VslActivityOrderSkuRecordModel;
 use data\model\VslGoodsSkuModel;
+use data\model\VslMemberAccountModel;
 use data\model\VslOrderActionModel as VslOrderActionModel;
 use data\model\VslOrderExpressCompanyModel;
 use data\model\VslOrderGoodsExpressModel;
@@ -37,6 +39,7 @@ use addons\fullcut\model\VslPromotionMansongRuleModel;
 use data\model\UserModel as UserModel;
 use data\model\VslMemberAccountRecordsModel;
 use data\model\VslOrderRefundModel;
+use data\model\VslOrderTeamLogModel;
 use data\model\VslStoreGoodsModel;
 use data\model\VslStoreGoodsSkuModel;
 use data\service\Address;
@@ -69,7 +72,7 @@ use addons\systemform\server\Systemform as CustomFormServer;
 use data\service\AddonsConfig;
 use addons\supplier\server\Supplier as SupplierService;
 use think\Request;
-use data\service\MemberCard as MemberCardService; 
+use data\service\MemberCard as MemberCardService;
 use addons\luckyspell\server\Luckyspell as luckySpellServer;
 
 /**
@@ -231,7 +234,7 @@ class Order extends BaseService
                 $res_order_goods = $order_goods->addOrderGoodsForStore($order_id, $order_info['sku_info'], 0, $order_info['buyer_id'], $order_info['website_id'],$order_info['order_type'], $order_info['pay_money'], $order_info['order_from'], $order_info['invoice_tax'],$order_info['store_id']);
             }else{
                 if(!$order_info['order_types']){
-                    $order_info['order_types'] = ''; 
+                    $order_info['order_types'] = '';
                 }
                 $store_id = $order_info['store_id'] ?:($order_info['card_store_id'] ?: 0);
                 $res_order_goods = $order_goods->addOrderGoodsNew($order_id, $order_info['sku_info'], 0, $order_info['buyer_id'], $order_info['website_id'],$order_info['order_type'], $order_info['pay_money'], $order_info['order_from'], $store_id, $order_info['invoice_tax'], $order_info['order_types']);
@@ -246,8 +249,8 @@ class Order extends BaseService
                 //以下数据 供预约数量检验是否超出或者是否限制使用
                 $customFormServer = new CustomFormServer();
                 $res_customForm = $customFormServer->addScheduleNum($order_info['custom_order'],$order_info['check_goods_id'],$order_info['custom_id'],$order_id);
-               
-                
+
+
             }
             // 活动优惠情况
             $order_promotion_details = new VslOrderPromotionDetailsModel();
@@ -550,7 +553,7 @@ class Order extends BaseService
             return $order_id;
         } catch (\Exception $e) {
             debugFile($e->getMessage(), 'sku_record_arr-9', 1111112);
-           
+
             recordErrorLog($e);
             $this->order->rollback();
 //            return ORDER_CREATE_FAIL;
@@ -676,7 +679,7 @@ class Order extends BaseService
      * @param unknown $pay_type (10:线下支付)
      * @param unknown $status
      *            0:订单支付完成 1：订单交易完成
-     * @param string $seller_memo 
+     * @param string $seller_memo
      * @return Exception
      */
     public function OrderPay($order_pay_no, $pay_type, $status,$joinpay=0)
@@ -701,7 +704,7 @@ class Order extends BaseService
                 $order_info = $this->order->getInfo([
                     'order_id' => $order_id
                 ], '*');
-                
+
                 if ($order_info['order_type'] == 5) {
                     if (!getAddons('groupshopping', $order_info['website_id'])) {
                         $this->order->rollback();
@@ -794,7 +797,7 @@ class Order extends BaseService
                         }
                         $data['channel_money'] = $channel_money;
                     }
-                    
+
                     $order->save($data, [
                         'order_id' => $order_id
                     ]);
@@ -845,14 +848,14 @@ class Order extends BaseService
                     $change_fields['order_id'] = $order_id;//订单id
                     $bargain_record_mdl->save($change_fields, $bargain_condition);
                 }
-                
+
                 /* 以下虚拟商品立即完成的动作变更至定时执行
                 //付款成功后，判断当前订单是否是计时/次商品
                 if ($order_info['card_store_id']>0 && getAddons('store', $order_info['website_id'], $order_info['shop_id'])) {
                     //消费卡发放
                     $member_card = new MemberCard();
                     $rs = $member_card->saveData($order_id);
-                    if ($rs) { 
+                    if ($rs) {
                         // 修改订单状态
                         $order = new VslOrderModel();
                         $order->save(['order_status' => 4, 'card_ids' => $rs], ['order_id' => $order_id]);
@@ -989,7 +992,7 @@ class Order extends BaseService
                         $sku_record_arr['buy_type'] = $buy_type;//零售
                         $sku_record_arr['website_id'] = $order_info['website_id'];
                         $sku_record_arr['create_time'] = time();
-                        
+
                         $is_record = $sku_record_mdl->where(['order_no' => $og['order_no']])->find();
                         if (!$is_record || $buy_type == 2) {
                             $id = $sku_record_mdl->save($sku_record_arr);
@@ -1182,23 +1185,23 @@ class Order extends BaseService
     public function createOrderNo($shop_id)
     {
         $billno = date('YmdHis') . mt_rand(100000, 999999);
-        
+
         while (1) {
             $order_model = new VslOrderModel();
             if (!getAddons('channel', $this->website_id)) {
                 break;
             }
-            
+
             $channel_order_model = new VslChannelOrderModel();
             $count = $order_model->getCount(['order_no' => $billno]);
             $count1 = $channel_order_model->getCount(['order_no' => $billno]);
-            
+
             if ($count <= 0 && $count1 <= 0) {
                 break;
             }
             $billno = date('YmdHis') . mt_rand(100000, 999999);
         }
-        
+
         return $billno;
     }
 
@@ -1357,7 +1360,7 @@ class Order extends BaseService
                 'order_id' => $orderid
             ]);
             //加入订单自动完成的延时队列
-            $order_info = $order_model->getInfo(['order_id' => $orderid], 'website_id');
+            $order_info = $order_model->getInfo(['order_id' => $orderid], 'website_id,order_no');
             $website_id = $order_info['website_id'];
             $ror_mdl = new RabbitOrderRecordModel();
             $ror_info = $ror_mdl->getInfo(['order_id' => $orderid]);
@@ -1381,6 +1384,9 @@ class Order extends BaseService
             $this->addOrderAction($orderid, $this->uid, '订单收货');
             // 判断是否需要在本阶段赠送积分
             $this->giveGoodsOrderPoint($orderid, 2);
+            //发货直接结算极差佣金
+            $this->addOrderTeamLog($orderid, $order_info['order_no']);
+
             $this->order->commit();
             return 1;
         } catch (\Exception $e) {
@@ -1756,8 +1762,8 @@ class Order extends BaseService
                 $couponServer = new CouponServer();
                 $couponServer->UserReturnCoupon($order_info['coupon_id']);
             }
-            
-            
+
+
             // 退回库存
             $order_goods = new VslOrderGoodsModel();
             $order_goods_list = $order_goods->getQuery([
@@ -1909,7 +1915,7 @@ class Order extends BaseService
                                     ], [
                                         'stock' => $count
                                     ], $goods_sku_info['goods_id']);
-   
+
                                     $goods_key = 'goods_'.$goods_sku_info['goods_id'].'_'.$goods_sku_info['sku_id'];
                                     //将库存塞回去队列
                                     for($i=0; $i<$v['num']; $i++){
@@ -1975,9 +1981,9 @@ class Order extends BaseService
                 $orderCal = new VslOrderCalculateModel();
                 $orderCal->delData(['order_id' => $orderid]);
             }
-            
+
             $this->addOrderAction($orderid, $order_info['buyer_id'], '交易关闭');
-    
+
             // 修改发票状态
             if (getAddons('invoice', $order_info['website_id'], $order_info['shop_id'])) {
                 $invoice = new InvoiceServer();
@@ -2002,7 +2008,7 @@ class Order extends BaseService
             $this->order->commit();
             return 1;
         } catch (\Exception $e) {
-            
+
             recordErrorLog($e);
             $this->order->rollback();
             return $e->getMessage();
@@ -2172,7 +2178,7 @@ class Order extends BaseService
     public function orderGoodsRefundFinish($order_id,$order_goods_id='')
     {
         $order_model = new VslOrderModel();
-        
+
         $orderInfo = $order_model::get($order_id);
         $order_model->startTrans();
         try {
@@ -2190,7 +2196,7 @@ class Order extends BaseService
             } elseif (($refunding_count + $refunded_count) == $total_count) {
                 // 全部订单商品参与过售后，订单状态才是售后
                 $orderInfo->order_status = OrderStatus::getOrderCommonStatus()[-1]['status_id']; // 售后中
-                
+
 
             } elseif ($shipping_status == OrderStatus::getShippingStatus()[0]['shipping_status']) {
                 $orderInfo->order_status = OrderStatus::getOrderCommonStatus()[1]['status_id']; // 待发货
@@ -2312,7 +2318,7 @@ class Order extends BaseService
         $order_detail["shipping_company_name"] = $express_company_name;
         // 查询订单项表
         $order_detail['order_goods'] = $this->getOrderGoods($order_id, $channel_status);
-        
+
         //处理订单商品状态
         $status_of_2 = array_column(objToArr($order_detail['order_goods']),'order_status');//已发货
         //供应商端过滤非供应商商品信息
@@ -2960,7 +2966,7 @@ class Order extends BaseService
                 }
                 $real_money = ($real_money > 0) ? $real_money : 0;
                 $sku_lists[$sku_id]['real_money'] = $real_money;
-                
+
                 if ($sku_info['point_deduction_max'] > 0 || $sku_info['point_deduction_max'] == '') {
                     $price = 0;
                     if ($info['point_deduction_calculation'] == 1) {//订单金额
@@ -2980,7 +2986,7 @@ class Order extends BaseService
                     } else {
                         $deduction_money = $price * $info['point_deduction_max'] / 100;
                     }
-                    
+
                     $sku_lists[$sku_id]['deduction_money'] = $info['convert_rate'] ? round(floor($deduction_money * $info['convert_rate']) / $info['convert_rate'], 2) : $deduction_money;
                     $sku_lists[$sku_id]['deduction_point'] = floor($deduction_money * $info['convert_rate']);
                     //运费抵扣的积分
@@ -2991,7 +2997,7 @@ class Order extends BaseService
                         }
                     }
                 }
-                
+
                 $total_price += $real_money;
                 $total_deduction_money += $sku_lists[$sku_id]['deduction_money'];
                 $total_deduction_point += $sku_lists[$sku_id]['deduction_point'];
@@ -3000,7 +3006,7 @@ class Order extends BaseService
                 $sku_lists[$sku_id]['is_deduction'] = 1;
             }
             unset($sku_info);
-            
+
             if ($total_deduction_point > $member_account['point']) {//当用户积分不足
                 $data['total_deduction_money'] = $info['convert_rate'] ? round($member_account['point'] / $info['convert_rate'], 2) : $member_account['point'];
                 $data['total_deduction_point'] = $member_account['point'];
@@ -3035,7 +3041,7 @@ class Order extends BaseService
                 }
                 unset($sku_info);
             } else if ($total_deduction_money > $total_price) {//大于实付重新计算
-                
+
                 $total_deduction_money = 0;
                 $total_deduction_point = 0;
                 foreach ($sku_lists as $sku_id => $sku_info) {
@@ -3060,7 +3066,7 @@ class Order extends BaseService
                     }
                     $total_deduction_money += $sku_lists[$sku_id]['deduction_money'];
                     $total_deduction_point += $sku_lists[$sku_id]['deduction_point'];
-            
+
                     # 规格实际价格 - 积分抵扣价格
                     $sku_lists[$sku_id]['real_money'] -= $sku_lists[$sku_id]['deduction_money'];
                 }
@@ -3068,18 +3074,18 @@ class Order extends BaseService
                 $data['total_deduction_money'] = $total_deduction_money;
                 $data['total_deduction_point'] = $total_deduction_point;
             } else {
-                
+
                 foreach ($sku_lists as $sku_id => $sku_info) {
                     $sku_lists[$sku_id]['real_money'] -= $sku_lists[$sku_id]['deduction_money'];
-                   
+
                 }
                 $data['total_deduction_money'] = $total_deduction_money;
                 $data['total_deduction_point'] = $total_deduction_point;
             }
-    
+
             $data['sku_info'] = $sku_lists;
         }else{/*展示当前积分抵扣多少*/
-            
+
             $temp_sku_lists = $sku_lists;//表示不勾选所以不处理sku数据，处理后只前端展示 TODO...为什么这里要这样用
             foreach ($sku_lists as $sku_id => $sku_info) {
                 $sku_lists[$sku_id]['deduction_money'] = 0;
@@ -3109,7 +3115,7 @@ class Order extends BaseService
                 if ($shipping_type == 1) {
                     $real_money = $sku_lists[$sku_id]['actual_real_money'] = $sku_lists[$sku_id]['actual_real_money'] + $sku_info['shipping_fee'];
                 }
-    
+
                 if ($sku_info['point_deduction_max'] > 0 || $sku_info['point_deduction_max'] == '') {
                     $price = 0;
                     if ($info['point_deduction_calculation'] == 1) {//订单金额
@@ -3142,7 +3148,7 @@ class Order extends BaseService
                 $total_price += $real_money;
                 $total_deduction_money += $sku_lists[$sku_id]['deduction_money'];
                 $total_deduction_point += $sku_lists[$sku_id]['deduction_point'];
-    
+
                 # 规格实际价格 - 积分抵扣价格
                 //                $sku_lists[$sku_id]['real_money'] -= $sku_lists[$sku_id]['deduction_money']; //by sgw 未勾选不real_money不处理
             }
@@ -3205,7 +3211,7 @@ class Order extends BaseService
                     }
                     $total_deduction_money += $sku_lists[$sku_id]['deduction_money'];
                     $total_deduction_point += $sku_lists[$sku_id]['deduction_point'];
-            
+
                     # 规格实际价格 - 积分抵扣价格
                 //                    $sku_lists[$sku_id]['real_money'] -= $sku_lists[$sku_id]['deduction_money'];//by sgw 未勾选不real_money不处理
                 }
@@ -3220,11 +3226,11 @@ class Order extends BaseService
             $data['sku_info'] = $sku_lists;
         }
         //处理real_money
-        
+
         foreach ($data['sku_info'] as $k => $sku_info) {
-           
+
             //处理前 先记录一下这个总的real_money
-            // 销售价 -> 会员折扣 -> 限时抢购 -> 满减送 -> 优惠券 -> 积分抵扣 ->领货码-> 运费->发票 
+            // 销售价 -> 会员折扣 -> 限时抢购 -> 满减送 -> 优惠券 -> 积分抵扣 ->领货码-> 运费->发票
             //支付多少就多少 不额外包含运费等 最新调整 2020、12、31 技术服务费拿该值做对比-- 商品实付金额，折扣单价*数目-折扣+邮费
             if ($is_deduction){
                 $all_real_money = round($sku_info['real_money']-$sku_info['shipping_fee'],2);
@@ -3233,7 +3239,7 @@ class Order extends BaseService
             }else{
                 $act_real_money = $real_money = round($sku_info['real_money']/$sku_info['num'],2);
                 $all_real_money = $sku_info['real_money'];
-            } 
+            }
             #原sku_info['real_money']+了运费
             if($act_real_money * $sku_info['num'] != $sku_info['real_money']){
                 $remainder = bcsub($sku_info['real_money'],$act_real_money * $sku_info['num'],2);
@@ -3244,11 +3250,11 @@ class Order extends BaseService
                 }
             }
             if(!isset($data['sku_info'][$k]['remainder'])){
-                $data['sku_info'][$k]['remainder'] = 0; 
+                $data['sku_info'][$k]['remainder'] = 0;
             }
-            // 250 同一个商品 3件 平均 250/3 有余数   加一个没有除数量的值 
+            // 250 同一个商品 3件 平均 250/3 有余数   加一个没有除数量的值
             // $real_money  = bcdiv($sku_info['real_money'],$sku_info['num'],2);
-            //质数 最后+0.01 
+            //质数 最后+0.01
             if ($sku_info['presell_id']){
                 $data['sku_info'][$k]['real_money'] = $real_money - $sku_info['shipping_fee'];
                 if(!isset($data['sku_info'][$k]['all_real_money'])){
@@ -3259,13 +3265,13 @@ class Order extends BaseService
                 if(!isset($data['sku_info'][$k]['all_real_money'])){
                     $data['sku_info'][$k]['all_real_money'] = $all_real_money;
                 }
-                
+
             }
         }
-        
+
         return $data;
     }
-    
+
     /**
      * 订单积分返还计算
      *
@@ -3295,7 +3301,7 @@ class Order extends BaseService
                     $real_money -= $sku_info['full_cut_sku_percent'] * $sku_info['full_cut_sku_amount'];
                 }
                 }
-                
+
                 //                if ($shipping_type == 1) {
                 //                    $real_money = $real_money + $sku_info['shipping_fee'];
                 //                }
@@ -3341,12 +3347,12 @@ class Order extends BaseService
             unset($sku_info);
             $data['total_return_point'] = $total_return_point;
         }
-    
+
         //处理real_money
         $data['sku_info'] = $sku_lists;
         return $data;
     }
-    
+
     /**
      * 供应商端订单详情过滤非供应商商品
      * @param $datas
@@ -3381,7 +3387,7 @@ class Order extends BaseService
         //付款成功后，判断当前订单是否是计时/次商品
         if ($order_info['card_store_id']>0 && getAddons('store', $order_info['website_id'], $order_info['shop_id'])) {
             //消费卡发放
-            
+
             $member_card = new MemberCardService();
             $rs = $member_card->saveData($order_id,$order_info['shop_id']);
             debugLog($rs,'autoOrderComplete-3');
@@ -3464,7 +3470,7 @@ class Order extends BaseService
                             $order_service->orderGoodsDelivery($order_id, $order_goods_info[0]['order_goods_id'],0, $order_info['website_id']);
                             $order_service->OrderTakeDelivery($order_id);
                         } elseif ($delivery_type == 3) {
-                            
+
                             //自动发货并订单完成
                             $order_service->orderGoodsDelivery($order_id, $order_goods_info[0]['order_goods_id'],0, $order_info['website_id']);
                             $order_service->OrderTakeDelivery($order_id,$order_info['website_id']);
@@ -3475,7 +3481,7 @@ class Order extends BaseService
             }
         }
     }
-    
+
     /**
      * 积分抵扣抵扣处理（预售商品）
      * @param $payment_info
@@ -3507,11 +3513,82 @@ class Order extends BaseService
                     $payment_info['total_amount'] = bcsub($payment_info['total_amount'],$payment_info['presell_info']['firstmoney'],2);
                 }
             }
-            
+
 //            p($presell_deduct_money,'$presell_deduct_money');die;
 //            $payment_info['total_amount'] = bcsub($payment_info['total_amount'], $presell_deduct_money,2);
             $payment_info['presell_info']['firstmoney'] = roundLengthNumber($payment_info['presell_info']['firstmoney']/$payment_info['presell_info']['goods_num'],2);
         }
         return $payment_info;
+    }
+
+    /**
+     * 发放团队分红
+     *
+     * @param $orderId
+     * @param $order_no
+     * @return int|string
+     */
+    public function addOrderTeamLog($orderId, $order_no){
+        $model = new VslOrderTeamLogModel();
+        $where = [
+            'order_id' => $orderId,
+            'team_cal_status' => 0
+        ];
+        $log = $model->getInfo($where);
+        if(!is_null($log)){
+            $agentAccountRecordsModel = new VslAgentAccountRecordsModel();
+            $memberAccountRecordsModel = new VslMemberAccountRecordsModel();
+            $member_model = new VslMemberAccountModel();
+            $lists = json_decode($log['team_bonus_details'], true);
+            $time = time();
+            $insertData = [];
+            $insertRecordData = [];
+            $member_model->startTrans();
+            try{
+                foreach ($lists as $key=>$item){
+                    $member = $member_model->getInfo(['uid'=> $item['uid']]);
+                    $balance = $member['balance'] + $item['commission'];
+                    $records_no = 'TBS' . $time . rand(111, 999);
+                    //添加团队分红日志
+                    $data_records = array(
+                        'uid' => $item['uid'],
+                        'data_id' => $order_no,
+                        'website_id' => $log['website_id'],
+                        'records_no' => $records_no,
+                        'bonus' => abs($item['commission']),
+                        'text' => '订单完成,极差分红发放到账户余额',
+                        'create_time' => $time,
+                        'bonus_type' => 3, //团队分红
+                        'from_type' => 4, //订单支付成功
+                    );
+                    array_push($insertData, $data_records);
+                    $member_model->save(['balance'=> $balance], ['uid'=> $item['uid']]);
+                    $data_account_log = array(
+                        'uid'=> $item['uid'],
+                        'shop_id'=> 0,
+                        'account_type'=> 2,
+                        'sign'=> 0,
+                        'number'=> abs($item['commission']),
+                        'from_type'=> 13,
+                        'data_id'=> $order_no,
+                        'text'=> '团队分红成功发放到余额',
+                        'create_time'=> $time,
+                        'website_id'=> $log['website_id'],
+                        'records_no'=> date('YmdHis') . rand(111, 999),
+                        'balance'=> $balance
+                    );
+                    array_push($insertRecordData, $data_account_log);
+                }
+
+                $agentAccountRecordsModel->saveAll($insertData);
+                $memberAccountRecordsModel->saveAll($insertRecordData);
+                $model->save(['team_cal_status'=> 1], $where); //更新记录
+                $member_model->commit();
+                return 1;
+            }catch (\Exception $e) {
+                $member_model->rollback();
+                return $e->getMessage();
+            }
+        }
     }
 }

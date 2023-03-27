@@ -15,6 +15,7 @@ class mip extends Controller
     {
 
         $encryptMsg = file_get_contents('php://input');
+
         $xml_tree = new \DOMDocument();
         $xml_tree->loadXML($encryptMsg);
         $array_e = $xml_tree->getElementsByTagName('Encrypt');

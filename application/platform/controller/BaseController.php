@@ -20,9 +20,9 @@ class BaseController extends Controller
     protected $uid;
 
     protected $instance_id;
-    
+
     protected $website_id;
-    
+
     protected $supplier_id;
 
     protected $instance_name;
@@ -42,35 +42,35 @@ class BaseController extends Controller
     protected $moduleid = null;
 
     protected $shopStatus;
-    
+
     protected $integralStatus;
 
     protected $merchant_status;
-    
+
     protected $merchant_expire;
-    
+
     protected $globalStatus = 0;
-    
+
     protected $areaStatus = 0;
-    
+
     protected $teamStatus = 0;
-    
+
     protected $distributionStatus = 0;
-    
+
     protected $groupStatus = 0;
-    
+
     protected $storeStatus = 0;
-    
+
     protected $pcportStatus = 0;
-    
+
     protected $miniprogramStatus = 0;
 
     protected $microshopStatus = 0;
-    
+
     protected $goodhelperStatus = 0;
-    
+
     protected $http = '';
-    
+
     protected $website_info;
     /**
      * 当前版本的路径
@@ -98,9 +98,9 @@ class BaseController extends Controller
         $this->assign('website_id', $this->website_id);
 
     }
-    
 
-    
+
+
     /**
      * 功能说明：action基类 调用 加载头部数据的方法
      */
@@ -155,7 +155,7 @@ class BaseController extends Controller
             $this->action= request()->param('addons');
         }
         $this->module_info = $this->website->getModuleIdByModule($this->controller, $this->action);
-        
+
         // 过滤控制权限 为0
         if (empty($this->module_info)) {
             $this->moduleid = 0;
@@ -176,8 +176,8 @@ class BaseController extends Controller
                 $check_auth = 0;
             }
         }
-        
-        
+
+
         if ($check_auth) {
             $this->style = 'platform/';
             if (! request()->isAjax()) {
@@ -203,7 +203,7 @@ class BaseController extends Controller
                 }else{
                     $three_menu_list = '';
                 }
-                
+
                 $this->assign('web_info',$web_info);
                 $this->assign('uid',$this->uid);
                 $this->assign('three_menu_list', $three_menu_list);
@@ -266,7 +266,7 @@ class BaseController extends Controller
                 }
                 $redirect = __URL(__URL__ . '/' . PLATFORM_MODULE . "/".$jump['url']);
                 $this->redirect($redirect);
-            } 
+            }
         }
     }
 
@@ -336,6 +336,23 @@ class BaseController extends Controller
             }
         }
         $addons_sign_module = Session::get('addons_sign_module')?:[];
+        $model = $this->user->getRequestModel();
+        $is_company = Session::get($model . 'is_company');
+        if($is_company == 1){
+            foreach ($list as $key=>$item){
+                if($item['data']['module_id'] == 17327){
+                    unset($list[$key]);
+                }
+            }
+        }else{
+            foreach ($list as $key=>$item){
+                foreach ($item['sub_menu'] as $k=>$val){
+                    if($val['module_id'] == 17379 || $val['module_id'] == 17380){
+                        unset($list[$key]['sub_menu'][$k]);
+                    }
+                }
+            }
+        }
         $this->assign("nav_list", $list);
         $this->assign("addons_sign_module",  $addons_sign_module );
     }
@@ -359,7 +376,7 @@ class BaseController extends Controller
             $param = request()->param();
             if (strpos(strtolower(request()->pathinfo()), strtolower($v['url']))) {
                 $active = 1;
-            } else 
+            } else
                 if (! empty($param['addonslist']) && strpos(strtolower($v['url']), strtolower($param['addonslist'])) !== false) {
                     $active = 1;
                 }
@@ -371,7 +388,7 @@ class BaseController extends Controller
         }
         $this->assign('child_menu_list', $child_menu_list);
     }
-    
+
     private function setShFile(){
         $is_ssl = \think\Request::instance()->isSsl();
         $http = "http://";

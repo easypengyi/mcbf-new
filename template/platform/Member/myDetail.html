@@ -14,21 +14,13 @@
 							    <img src="{if $list[0]['user_headimg']}{:__IMG($list[0]['user_headimg'])}{else}/public/static/images/headimg.png{/if}" width="160px" height="160px" >
 							  </div>
 							  <div class="media-body">
-							    <p class="p">ID：{$list[0]['uid']}{if $list[0]['user_status']!=1} <a href="javascript:void(0);" class="text-primary ml-15 delBlackList" data-id ="{$list[0]['uid']}">移除黑名单</a>{else}<a href="javascript:void(0);" class="text-primary ml-15 joinBlackList" data-id ="{$list[0]['uid']}">加入黑名单</a>{/if}</p>
+							    <p class="p">ID：{$list[0]['uid']}</p>
 							    <p class="p">昵称：{if $list[0]['user_name']}{$list[0]['user_name']}{elseif $list[0]['nick_name']}{$list[0]['nick_name']}{else/}未设置昵称{/if}</p>
 								<p class="p">真实姓名：{$list[0]['real_name']}</p>
 							  	<p class="p">手机号码：{$list[0]['user_tel']}</p>
-								  <p class="p">会员等级:
-									  <select id="level" class="form-control select-form-control inline-block">
-										  {foreach name="level_list['data']" item="value"}
-										  <option value="{$value['level_id']}" {if $value['level_id']==$list[0]['member_level']}selected{/if}>{$value.level_name}</option>
-										  {/foreach}
-									  </select></p>
-								  <p class="p">对接人:
-									  <select id="is_pu" class="form-control select-form-control inline-block">
-										  <option value="0" {if $list[0]['is_pu'] == 0}selected{/if}>否</option>
-										  <option value="1" {if $list[0]['is_pu'] == 1}selected{/if}>是</option>
-									  </select></p>
+								  <p class="p">会员等级: {$list[0]['member_level_name']}</p>
+
+
 							  </div>
 							</div>
                         </div>
@@ -36,12 +28,10 @@
                     <div class="col-md-6">
                         <div class="item">
                             <div class="media-body">
-								<p class="p flex flex-pack-justify">余额：<span class="default_balance">{$list[0]['balance']}</span>元 <a href="javascript:void(0);" class="text-primary ml-15 adjustBalance" data-id ="{$list[0]['uid']}">调整余额</a> <a href="javascript:void(0);" class="text-primary ml-15 adjustCreateOrder" data-id ="{$list[0]['uid']}">兑换商品</a></p>
-								<p class="p flex flex-pack-justify">积分：<span class="default_point">{$list[0]['point']}</span> <a href="javascript:void(0);" class="text-primary ml-15 adjustPoint" data-id ="{$list[0]['uid']}">调整积分</a></p>
-								<p class="p flex flex-pack-justify">美丽分：<span class="default_beautiful_point">{$list[0]['beautiful_point']}</span> <a href="javascript:void(0);" class="text-primary ml-15 adjustBeautifulPoint" data-id ="{$list[0]['uid']}">调整美丽分</a></p>
+								<p class="p flex flex-pack-justify">余额：<span class="default_balance">{$list[0]['balance']}</span>积分 <a href="javascript:void(0);" class="text-primary ml-15 adjustBalance" data-id ="{$list[0]['uid']}" data-balance ="{$list[0]['parent_balance']}">转积分</a></p>
 								<p class="p">成长值：{$list[0]['growth_num']}</p>
 								<p class="p">订单数：{$list[0]['order_num']}</p>
-							    <p class="p">消费金额：{$list[0]['order_money']}元</p>
+							    <p class="p">消费金额：{$list[0]['order_money']}积分</p>
 							    <p class="p">注册时间：{$list[0]['reg_time']}</p>
 							</div>
                         </div>
@@ -93,10 +83,7 @@
                 </div>
                 <ul class="nav nav-tabs v-nav-tabs" role="tablist">
                     <li role="presentation" class="active"><a href="#balanceLog" aria-controls="balanceLog" role="tab" data-toggle="tab" class="flex-auto-center">余额明细</a></li>
-                    <li role="presentation"><a href="#pointLog" aria-controls="pointLog" role="tab" data-toggle="tab" class="flex-auto-center">积分明细</a></li>
-                    <li role="presentation"><a href="#beautifulPointLog" aria-controls="beautifulPointLog" role="tab" data-toggle="tab" class="flex-auto-center">美丽分明细</a></li>
                     <li role="presentation"><a href="{:__URL('PLATFORM_MAIN/Order/selfOrderList')}&member_id={$list[0]['uid']}" class="flex-auto-center">成交订单</a></li>
-					<li role="presentation"><a href="#refereeLog" aria-controls="refereeLog" role="tab" data-toggle="tab" class="flex-auto-center">详情</a></li>
 					<li role="presentation"><a href="#commissionLog" aria-controls="commissionLog" role="tab" data-toggle="tab" class="flex-auto-center">佣金流水</a></li>
                 </ul>
                 <div class="tab-content">
@@ -226,16 +213,12 @@
 		 <div class="form-group">
 			 <label class="col-md-3 control-label">商品</label>
 			 <div class="col-md-8">
-				 <select id="goods_id" class="form-control select-form-control inline-block">
-					 {foreach name="goods" item="value"}
-					 <option value="{$value['goods_id']}" >{$value.goods_name}</option>
-					 {/foreach}
-				 </select>
+				 <p class="help-block" style="color: black">{$goods.goods_name}</p>
 			 </div>
 		 </div>
 		 <div class="form-group">
 			 <label class="col-md-3 control-label">数量</label>
-			 <div class="col-md-8" style="margin-top: 5px;">
+			 <div class="col-md-8">
 				 <input type="number" id="adjustNum" value="1" min="1" class="form-control" onkeydown="if(event.keyCode==13){event.keyCode=0;event.returnValue=false;}" />
 				 <p class="help-block">输入你需要兑换的数量</p>
 			 </div>
@@ -441,30 +424,33 @@ require(['util'],function(util){
     // 调整余额
 	$('.adjustBalance').on('click',function(){
             var id = $(this).data('id');
+			var balance = $(this).attr('data-balance');
             var html = '<form class="form-horizontal padding-15" id="">';
-            html += '<div class="form-group"><label class="col-md-3 control-label">余额</label><div class="col-md-8"><input type="number" id="adjustBalance" class="form-control" onkeydown="if(event.keyCode==13){event.keyCode=0;event.returnValue=false;}" /><p class="help-block">输入负值时代表减少余额</p></div></div>';
+			html += "<div class='form-group'> 剩余积分：" + balance ;
+			html +="</div>";
+            html += '<div class="form-group"><label class="col-md-3 control-label">积分</label><div class="col-md-8"><input type="number" id="adjustBalance" class="form-control" onkeydown="if(event.keyCode==13){event.keyCode=0;event.returnValue=false;}" /></div></div>';
             html += "<div class='form-group'>" ;
             html +="<label class='col-md-3 control-label'>备注</label>";
             html +="<div class='col-md-8'>";
             html +="<textarea class='form-control' id='adjustBalance_memo' rows='4' placeholder='输入备注的内容'></textarea>";
             html +="</div>";
             html += '</form>';
-            util.confirm('调整余额',html,function(){
+            util.confirm('转积分',html,function(){
                 var default_balance = $(".default_balance").html();
                 var num = this.$content.find('#adjustBalance').val();
                 if(num==''){
-                    util.message('调整余额不能为空','danger');
+                    util.message('积分不能为空','danger');
                     return false;
                 }
                 var text = this.$content.find('#adjustBalance_memo').val();
                 var money = parseFloat(default_balance)+parseFloat(num);
                 if(money<0){
-                    util.message('余额不能为负数','danger');
+                    util.message('积分不能为负数','danger');
                     return false;
                 }
                 $.ajax({
                     type : "post",
-                    url : "{:__URL('PLATFORM_MAIN/member/addMemberAccount')}",
+                    url : "{:__URL('PLATFORM_MAIN/member/transformMemberAccount')}",
                     data : {
                         "id" : id,
                         "type" : 2,
@@ -501,11 +487,6 @@ require(['util'],function(util){
 				util.message('购买的数量必须大于0','danger');
 				return false;
 			}
-			var goods_id = this.$content.find('#goods_id').val();
-			if(goods_id <= 0){
-				util.message('请先选择要兑换的商品','danger');
-				return false;
-			}
 
 			$.ajax({
 				type : "post",
@@ -513,8 +494,7 @@ require(['util'],function(util){
 				data : {
 					"id" : id,
 					"num" : num,
-					"sys_model": 1,
-					"goods_id" : goods_id
+					"sys_model": 1
 				},
 				success : function(data) {
 					if (data["code"] === 0) {

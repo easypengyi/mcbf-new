@@ -142,7 +142,7 @@
                             <div class="field-item field-item-remove J-extend-category " data-cid="{$vo['extend_category_id']}">{$vo['extend_category_name']}<span><i class="fa fa-remove icon-danger icon"></i></span></div>
                             {/foreach}
                         {/if}
-                        
+
                     </div>
                 </div>
             </div>
@@ -241,7 +241,7 @@
                         <input type="hidden" id="select_brand_hidden" name="select_brand_hidden" value="{$goods_info.brand_id}">
                         <select class="form-control" name="brandId" id="brand_id">
                             <option value="0">请选择商品品牌</option>
-                            
+
                         </select>
                         <div class="help-block mb-0">商品品牌需要先关联商品品类，请先把商品品类与商品分类进行关联，即可选择相关联的品牌。</div>
                     </div>
@@ -472,7 +472,7 @@
                 <div class="form-group is_shipping_fee_id_num hidden">
                     <label class="col-md-2 control-label"></label>
                     <div class="col-md-8">
-                        <div class="input-group w-200"> 
+                        <div class="input-group w-200">
                             <div class="input-group-addon">商品数量</div>
                             <input type="number" class="form-control" name="goods_count" id="goods_count" min="0" step="1" value="{$goods_info.goods_count}">
                             <div class="input-group-addon">件</div>
@@ -637,7 +637,7 @@
                 <span class="text">分销</span>
             </div>
             <div class="form-group">
-                <label class="col-md-2 control-label">是否参与分销</label> 
+                <label class="col-md-2 control-label">是否参与分销</label>
                 <div class="col-md-8" >
                     <label class="radio-inline">
                         <input type="radio" name="is_distribution" class="is_distribution"  value="1" {if $goods_info.is_distribution} {if $goods_info.is_distribution==1}checked{/if}{else}checked{/if}> 参与
@@ -882,7 +882,7 @@
                             </label>
                         </div>
                     </div>
-                    
+
                     <div class="form-group {if ($goods_info.buyagain==1 && $goods_info.buyagain_distribution_val && $goods_info.buyagain_recommend_type && $goods_info.buyagain_recommend_type==1 && $goods_info.buyagain_level_rule && $goods_info.buyagain_level_rule==2)||($goods_info.buyagain==1 && $goods_info.buyagain_distribution_val=='' && $goods_info.buyagain_recommend_type && $goods_info.buyagain_recommend_type==1 && $goods_info.buyagain_level_rule && $goods_info.buyagain_level_rule==2)}{else}hide{/if}" id="buyagain_distribution_input">
                         <label class="col-md-2"></label>
                         <div class="col-md-5">
@@ -1120,7 +1120,7 @@
                         </div>
                         {/foreach}
                     {/if}
-                    
+
                 </div>
                 <div class="form-group {if $goods_info.is_bonus_global==1 && $goods_info.global_bonus_val}{if $goods_info.global_bonus_val['global_bonus_rules']==1 && $goods_info.global_bonus_val['global_bonus_recommend_type']==2}{else}hide{/if}{else}hide{/if}" id="global_bonus_input1">
                     {if $global_level_list}
@@ -1230,7 +1230,7 @@
                         </div>
                         {/foreach}
                     {/if}
-                    
+
                 </div>
                 <div class="form-group {if $goods_info.is_bonus_area==1 && $goods_info.area_bonus_val}{if $goods_info.area_bonus_val['area_bonus_rules']==1 && $goods_info.area_bonus_val['area_bonus_recommend_type']==2}{else}hide{/if}{else}hide{/if}" id="area_bonus_input1">
                     {if $area_level_list}
@@ -1251,7 +1251,7 @@
                             </div>
                         </div>
                         {/foreach}
-                    {/if} 
+                    {/if}
                 </div>
                 <div class="form-group {if $areaStatus==0 }hide{/if}" >
                     <label class="col-md-2 control-label">独立计算节点</label>
@@ -1324,6 +1324,9 @@
                         </label>
                         <label class="radio-inline">
                             <input type="radio" name="bonus_type" class="bonus_type" value="2" {if $goods_info.teambonus_rule_val.bonus_type==2}checked{/if}> 固定分红
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="bonus_type" class="bonus_type" value="3" {if $goods_info.teambonus_rule_val.bonus_type==3}checked{/if}> 价格极差分红
                         </label>
                     </div>
                 </div>
@@ -2074,7 +2077,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!--核销门店-->
         <div class="tab-pane fade tab-5" id="cancel_store">
             <div class="screen-title2" data-id="t3">
@@ -2516,7 +2519,7 @@
 <!--<div class="list-group side-catalog"></div>-->
 <!-- page end  -->
 </div>
-</div> 
+</div>
 {/block}
 
 {block name="script"}
@@ -2545,7 +2548,7 @@
         var obj = {$goods_info2};
         platformAddgood.goodsSkuCreate(obj);
         util.layDate("#expiration_time");
-        
+
         //点击分辨率，切换宽高 360*640
         $('input[name=pxselect]').change(function(){
             if($(this).val() == '1'){
@@ -2583,7 +2586,7 @@
         window['temp_coupon_type_id_array_num'] = []
         window['temp_gift_voucher_id_array_num'] = []
         window['package_voucher_id_array_num'] = []
-        
+
         var t1 = {$coupon_type_id_array};
         var t2 = {$gift_voucher_id_array};
         var t3 = {$package_voucher_id_array};
@@ -2597,16 +2600,16 @@
         temp_coupon_type_id_array_num = t4
         temp_gift_voucher_id_array_num = t5
         package_voucher_id_array_num = t6
-       
+
         window['coupon_type_id_array_list'] = {$coupon_type_id_array_list};
         window['gift_type_id_array_list'] = {$gift_type_id_array_list};
         window['package_type_id_array_list'] = {$package_type_id_array_list};
-       
+
         $("#coupon_type").html(tpl('tpl_selected_list', {data: coupon_type_id_array_list}))
         $("#gift_voucher").html(tpl('tpl_selected_list', {data: gift_type_id_array_list}))
         $("#package_voucher").html(tpl('tpl_selected_list', {data: package_type_id_array_list}))
 
-        $(".J-select").on('click', function () { 
+        $(".J-select").on('click', function () {
             var type = $(this).data('type');
             var title = $(this).data('title');
             util.confirm(title, 'url:{:__URL("ADDONS_MAINselectModal")}&type=' + type, function () {

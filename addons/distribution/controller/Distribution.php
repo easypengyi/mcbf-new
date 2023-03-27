@@ -301,6 +301,7 @@ class Distribution extends baseDistribution
         $team_agent = request()->post("team_agent", '');
         $status = request()->post("status", '');
         $is_pu = request()->post("is_pu", false);
+        $is_auth = request()->post("is_auth", false);
         $real_name = request()->post("real_name", '');
         $area_agent = request()->post("area_agent", '');
         $global_agent = request()->post("global_agent", '');
@@ -347,6 +348,10 @@ class Distribution extends baseDistribution
         }
         if ($distributor_level_id) {
             $data['distributor_level_id'] = $distributor_level_id;
+            if($distributor_level_id == 10){
+                $user_model = new UserModel();
+                $user_model->save(['port'=> 'platform'], ['uid'=> $uid]);
+            }
         }
         if ($status) {
             $data['isdistributor'] = $status;
@@ -363,6 +368,10 @@ class Distribution extends baseDistribution
         if ($is_pu !== false) {
             $data['is_pu'] = $is_pu;
         }
+        if ($is_auth !== false) {
+            $data['is_auth'] = $is_auth;
+        }
+
         $res = $member->updateDistributorInfo($data, $uid);
         if ($res) {
             $this->addUserLog('修改分销商详情', $res);

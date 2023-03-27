@@ -7,6 +7,8 @@ use addons\distribution\service\Distributor;
 use addons\merchants\server\Merchants;
 use data\model\UserModel;
 use data\model\VslGoodsModel;
+use data\model\VslMemberAccountModel;
+use data\model\VslMemberAccountRecordsModel;
 use data\model\VslMemberBalanceWithdrawModel;
 use data\model\VslMemberGroupModel;
 use data\model\VslMemberLevelModel;
@@ -19,6 +21,7 @@ use data\service\Config;
 use data\model\VslExcelsModel;
 use data\service\AddonsConfig as AddonsConfigSer;
 use addons\customform\server\Custom as CustomSer;
+use data\service\ShopAccount;
 
 /**
  * 会员管理
@@ -181,7 +184,7 @@ class Member extends BaseController
         }
         //套餐
         $goodsModel = new VslGoodsModel();
-        $goods =  $goodsModel->getInfo(['goods_id'=>VslGoodsModel::DEFAULT_GOODS_ID],'goods_id,goods_name');
+        $goods =  $goodsModel->getQuery(['goods_id'=>array('in', VslGoodsModel::getExchangeGoods())],'goods_id,goods_name');
         $this->assign('goods', $goods);
 
         return view($this->style . 'Member/memberDetail');
@@ -1336,6 +1339,220 @@ class Member extends BaseController
         $excels_export = new ExcelsExport();
         $res = $excels_export->insertData($insert_data);
         return $res;
+    }
+
+    /**
+     * 会员列表主页
+     */
+    public function myList()
+    {
+
+        $member = new MemberService();
+        $distributor = new Distributor();
+        $uids = $distributor->sort($this->uid);
+
+        $ids = [];
+        foreach ($uids as $i){
+            $ids[] = $i['uid'];
+        }
+        if (request()->isAjax()) {
+            $page_index = request()->post('page_index',1);
+            $page_size = request()->post('page_size',PAGESIZE);
+            $member_id = request()->post('member_id', '');
+            $user_group = request()->post('user_group', '');
+            $member_status = request()->post('member_status', '');
+            $search_text = request()->post('search_text', '');
+            $start_create_date = request()->post('start_create_date') == "" ? '2018-1-1' : request()->post('start_create_date');
+            $end_create_date = request()->post('end_create_date') == "" ? '2038-1-1' : request()->post('end_create_date');
+            $level_id = request()->post('member_level', '');
+            if($member_id){
+                $condition['su.uid'] = $member_id;
+            }
+            if($user_group){
+                $condition['CONCAT(",",nm.group_id,",")'] = [['=', $user_group], ['like', '%,'.$user_group.',%'], 'or'];
+            }
+            if($member_status!='' && $member_status!='undefined'){
+                $condition['su.user_status'] = $member_status;
+            }
+            $condition["su.reg_time"] = [
+                [
+                    ">",
+                    strtotime($start_create_date)
+                ],
+                [
+                    "<",
+                    strtotime($end_create_date)
+                ]
+            ];
+            $condition['su.is_member'] = 1;
+            if($search_text){
+                $condition['su.nick_name|su.user_tel|su.user_name'] = [
+                    'like',
+                    '%' . $search_text . '%'
+                ];
+            }
+            if ($level_id) {
+                $condition['nml.level_id'] = $level_id;
+            }
+            $condition['su.website_id'] = $this->website_id;
+
+            if(count($ids)){
+                $condition['nm.uid'] = array('in', $ids);
+            }else{
+                $condition['nm.uid'] = array('in', [-1]);
+            }
+            $list = $member->getMemberList($page_index, $page_size, $condition, 'su.reg_time desc');
+            return $list;
+        } else {
+            //是否开启积分
+            $web_config = new Config();
+            //是否开启购物返积分
+            $isPoint = $web_config->getConfig(0,'IS_POINT',$this->website_id, 1);
+            $this->assign("isPoint", $isPoint);
+            $group_id = request()->get('group_id', '');
+            $condition['website_id'] = $this->website_id;
+            $user_count_num = $user_balance_num = $user_point_num = $user_black_num = 0;
+            if(count($ids)){
+                $condition['uid'] = array('in', $ids);
+                //会员总数
+                $user_count_num = $member->getMemberCount($condition);
+                //会员总余额
+                $user_balance_num = $member->getMemberBalanceCount($condition);
+                //会员总积分
+                $user_point_num = $member->getMemberPointCount($condition);
+                //会员黑名单
+                $user_black_num = $member->getUserCount(["website_id" => $this->website_id,'is_member'=>1,'user_status'=>0, 'uid'=> array('in', $ids)]);
+            }
+
+            $this->assign('member_group_id', $group_id);
+            $this->assign('user_count_num', $user_count_num);
+            $this->assign('user_black_num', $user_black_num);
+            $this->assign('user_point_num', $user_point_num);
+            $this->assign('user_balance_num', $user_balance_num);
+            $this->assign('merchants_status', getAddons('merchants',$this->website_id));
+
+            return view($this->style . 'Member/myList');
+        }
+    }
+
+    /**
+     * 会员详情
+     */
+    public function myDetail()
+    {
+
+        $member = new MemberService();
+        $member_id = request()->get('member_id');
+        $condition['su.uid'] = $member_id;
+        $condition['su.website_id'] = $this->website_id;
+        $list = $member->getMemberList(1, 0, $condition, '');
+
+        // 查询会员等级
+        $list1 = $member->getMemberLevelList(1, 0,['website_id'=>$this->website_id]);
+        $member_level_name = '普通会员';
+        foreach ($list1 as $item){
+            if($item['level_id'] == $list['data'][0]['member_level']){
+                $member_level_name = $item['level_name'];
+            }
+        }
+        $list['data'][0]['member_level_name'] = $member_level_name;
+
+        $member_model = new VslMemberAccountModel();
+        $parent_member = $member_model->getInfo(['uid'=> $this->uid]);
+        $list['data'][0]['parent_balance'] = $parent_member['balance'];
+        $this->assign('list', $list['data']);
+        $this->assign('level_list', $list1);
+        //系统表单
+        if (getAddons('customform', $this->website_id)) {
+            $addConSer = new AddonsConfigSer();
+            $addinfo = $addConSer->getAddonsConfig('customform',$this->website_id);
+            if ($addinfo['value']){
+                $customSer = new CustomSer();
+                $info = $customSer->getCustomData(1,10,2,'',['uid'=>$member_id]);
+                $this->assign('info',$info);
+            }
+        }
+
+        //套餐
+        $goodsModel = new VslGoodsModel();
+        $goods =  $goodsModel->getInfo(['goods_id'=>array('in', VslGoodsModel::getExchangeGoods())],'goods_id,goods_name');
+        $this->assign('goods', $goods);
+
+        return view($this->style . 'Member/myDetail');
+    }
+
+    /**
+     * 积分、余额调整
+     */
+    public function transformMemberAccount()
+    {
+        $uid = isset($_POST["id"]) ? $_POST["id"] : '';
+        $number = isset($_POST["num"]) ? $_POST["num"] : '';
+        $text = ($_POST["text"]);
+        if(empty($text)){
+            $text = '获得特约积分';
+        }
+        $member_account = new VslMemberAccountModel();
+        $all_info = $member_account->getInfo(['uid' => $uid, 'website_id' => $this->website_id], '*');
+        $parent_info = $member_account->getInfo(['uid' => $this->uid, 'website_id' => $this->website_id], '*');//特约公司账号
+        //余额是否充值
+        if($parent_info['balance'] < $number){
+            return AjaxReturn(-1, [], '账户积分不足');
+        }
+        $real_balance = $all_info['balance'] + $number;
+        if($real_balance<0){
+            $real_balance = 0;
+        }
+        //会员账户改变
+        $data_member = array(
+            'balance' => $real_balance
+        );
+        $member_account_record = new VslMemberAccountRecordsModel();
+        $parent_balance = $parent_info['balance'] - $number;
+        $insertData = [];
+        //添加流水
+        $data_records = array(
+            'records_no' => 'Bc' . getSerialNo(),
+            'account_type' => 2,
+            'uid' => $this->uid,
+            'sign' => 0,
+            'number' => -$number,
+            'from_type' => 10,
+            'data_id' => 0,
+            'balance'=> $parent_balance,
+            'text' => '特约转积分',
+            'create_time' => time(),
+            'website_id' => $this->website_id
+        );
+        array_push($insertData, $data_records);
+        $data_records = array(
+            'records_no' => 'Bc' . getSerialNo(),
+            'account_type' => 2,
+            'uid' => $uid,
+            'sign' => 0,
+            'number' => $number,
+            'from_type' => 10,
+            'data_id' => 0,
+            'balance'=> $real_balance,
+            'point'=>$all_info['point'],
+            'text' => $text,
+            'create_time' => time(),
+            'website_id' => $this->website_id
+        );
+        array_push($insertData, $data_records);
+        $member_account_record->startTrans();
+        try {
+            //更新特约余额
+            $member_account->save(['balance'=> $parent_balance], ['uid' => $this->uid, 'website_id' => $this->website_id]);
+            $member_account->save($data_member, ['uid' => $uid, 'website_id' => $this->website_id]);
+            //添加会员账户流水
+            $res = $member_account_record->saveAll($insertData);
+            $member_account_record->commit();
+            return AjaxReturn($res);
+        } catch (\Exception $e) {
+            $member_account_record->rollback();
+            return AjaxReturn(-1, [], $e->getMessage());
+        }
     }
 
 

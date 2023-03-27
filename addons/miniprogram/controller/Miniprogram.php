@@ -146,7 +146,7 @@ class Miniprogram extends BaseMiniProgram
             Db::table('sys_log')->insert($log);
         }
     }
-    
+
     /**
      * [wap|addons]
      * 获取太阳码（无限个，带场景值）
@@ -180,7 +180,7 @@ class Miniprogram extends BaseMiniProgram
         $md5_scene          = md5($this->website_id.$this->instance_id.$curr_scene);//key
         $sql_secen_id       = $this->mini_program_service->saveMysqlChangeScene($md5_scene, $curr_scene);
         $params['scene']    = $sql_secen_id;
-        
+
         $mp_info = $this->weixin_auth_model->getInfo(['website_id' => $website_id],'authorizer_access_token');
         if (empty($mp_info)) {
             return AjaxWXReturn(FAIL);
@@ -266,7 +266,7 @@ class Miniprogram extends BaseMiniProgram
             if (!$html_ids) {
                 return AjaxReturn(-1);
             }
-    
+
             $condition = [
                 'sys_mp_template_relation.website_id' => $this->website_id,
                 'sys_mp_template_relation.shop_id' => $this->instance_id,
@@ -375,7 +375,7 @@ class Miniprogram extends BaseMiniProgram
             return ['code' => -1, 'message' => $e->getMessage()];
         }
     }
-    
+
     /**
      * MD5的太阳码场景值换取原始值
      * @return string
@@ -393,7 +393,7 @@ class Miniprogram extends BaseMiniProgram
             return AjaxReturn(FAIL,[],'该码信息已失效，请重新生成');
         }
     }
-    
+
     /**
      * 临时判断小程序包是否是3.0.0+
      * @return array|bool
@@ -405,13 +405,13 @@ class Miniprogram extends BaseMiniProgram
         }
         $this->wchat_open = new WchatOpen($this->website_id);
         $result = $this->wchat_open->templateList();
-        
+
         if ($result->errcode){
             return AjaxWXReturn($result->errcode,[], $result->errmsg);
         }
         $resultArr = objToArr($result);
         $templateList = arrSortByValue($resultArr['template_list'], 'create_time');
-        
+
         // 该小程序最新发布template_id
         $nowMpTemplateId = $this->mini_program_service->getNewestMpTemplateId();
         $user_version = 0;
@@ -428,7 +428,7 @@ class Miniprogram extends BaseMiniProgram
             }
         }
         Session::set($this->packageV3, false, 3600*2);
-        
+
         return false;
     }
     /******************************************* wap use end   **************************************************************************/
@@ -438,7 +438,7 @@ class Miniprogram extends BaseMiniProgram
      */
     public function miniProgramSetting()
     {
-        
+
         try {
             $post_data = request()->post();
             $is_mini_program = $post_data['is_mini_program'];
@@ -497,7 +497,7 @@ class Miniprogram extends BaseMiniProgram
         if ($weixin_auth && $weixin_auth['qr_code_url']) {
             return $weixin_auth['qr_code_url'];
         }
-    
+
         $this->wchat_open = new WchatOpen($this->website_id);
         $result = $this->wchat_open->getQrCode();
         if (stripos($result,'errcode')) {
@@ -591,11 +591,13 @@ class Miniprogram extends BaseMiniProgram
             //只添加体验，不发布
             return AjaxWXReturn($result->errcode, $result->errmsg);
         }
-        
+
         if ($result->errcode) {
             return AjaxWXReturn($result->errcode, [], $result->errmsg);
         }
-        
+
+        sleep(10);
+
         // 类目获取
 //        $category_result = $this->wchat_open->getMpCategory($this->authorizer_access_token);
         $category_result = $this->weixin_auth_model->getInfo(['website_id' => $this->website_id, 'shop_id' => $this->instance_id], 'category');
@@ -660,7 +662,7 @@ class Miniprogram extends BaseMiniProgram
         $draft_list = array_slice($draft_list,$start,$page_size);
         return ['code'=>0,'total_count' => $total_count,'data' => $draft_list];
     }
-    
+
     /**
      * 添加草稿到模板库
      */
@@ -700,7 +702,7 @@ class Miniprogram extends BaseMiniProgram
         $template_list = array_slice($template_list,$start,$page_size);
         return ['code'=>0,'total_count' => $total_count,'data' => $template_list];
     }
-    
+
     /**
      * 删除模板(模板库)
      */
@@ -714,7 +716,7 @@ class Miniprogram extends BaseMiniProgram
         }
         return AjaxReturn(SUCCESS);
     }
-    
+
     /**
      * 获取最新模板
      */
@@ -1049,6 +1051,42 @@ class Miniprogram extends BaseMiniProgram
         return json(['code' => 1, 'message' => '更新基本信息成功！', 'data' => $auth_data]);
     }
 
+    /**
+     * 设置小程序用户隐私保护指引
+     */
+    public function postSetPrivacySetting()
+    {
+//        $this->tempToRelease();
+//        die;
+
+        $this->wchat_open = new WchatOpen($this->website_id);
+        $this->wchat_open->deleteRedis();
+
+        $setting_list = [
+            ["privacy_key"=> "UserInfo", "privacy_text"=> "获取用户信息（微信昵称、头像）"],
+            ["privacy_key"=> "Location", "privacy_text"=> "获取位置信息"],
+            ["privacy_key"=> "Address", "privacy_text"=> "获取地址"],
+            ["privacy_key"=> "Record", "privacy_text"=> "打开麦克风"],
+            ["privacy_key"=> "Album", "privacy_text"=> "获取选中的照片或视频信息"],
+            ["privacy_key"=> "Camera", "privacy_text"=> "打开摄像头"],
+            ["privacy_key"=> "PhoneNumber", "privacy_text"=> "获取手机号码"],
+            ["privacy_key"=> "AlbumWriteOnly", "privacy_text"=> "获取相册（仅写入）权限"]
+        ];
+
+        $params = [
+            "privacy_ver" => 2,
+            "setting_list"=> $setting_list,
+            "owner_setting"=> [
+                "contact_email"=> "meixing2021@sina.com",
+                "notice_method"=>"通过弹窗",
+                "store_expire_timestamp"=> "30天",
+            ]
+        ];
+        $res = $this->wchat_open->setPrivacySetting($this->authorizer_access_token, $params, 1);
+
+        return json(['code' => 1, 'message' => '设置小程序用户隐私保护指引！']);
+    }
+
     /***
      * 是否开启小程序商城，类目是否添加
      * @return  code
@@ -1198,7 +1236,7 @@ class Miniprogram extends BaseMiniProgram
             return AjaxReturn($retval);
         }
     }
-    
+
     /**
      * 通联支付配置
      */
@@ -1280,7 +1318,7 @@ class Miniprogram extends BaseMiniProgram
             'review_message' => '撤回发布！撤回时间：'.date("Y-m-d H:i:s" ,time())
         ];
         $this->mini_program_service->saveSubmit($new_data, ['id' => $new_submit_record['id']]);
-        
+
         return AjaxWXReturn(SUCCESS);
     }
 
@@ -1330,7 +1368,7 @@ class Miniprogram extends BaseMiniProgram
             if ($mp_info['AliossUrl']) {
                 array_push($domain_data, $mp_info['AliossUrl']);
             }
-                
+
         }
         //客服域名
         if (getAddons('qlkefu', $this->website_id)) {
@@ -1364,7 +1402,7 @@ class Miniprogram extends BaseMiniProgram
         $template_id = $template_data['template_id'];
         $state = $template_data['state'];
         $template_no = $template_data['template_no'];
-            
+
         $key_list = [];
         $index = 1;
         foreach($template_data['key'] as $val) {
@@ -1458,7 +1496,7 @@ class Miniprogram extends BaseMiniProgram
                     $submit_data['status'] = 0;
                     $submit_data['review_message'] = '审核成功';
                     $this->mini_program_service->saveSubmit($submit_data, $condition);
-                    
+
                     // 发布小程序
                     $release_result = $this->wchat_open->release();
                     if ($release_result->errcode == 0 || $release_result->errcode == 85052) {
@@ -1575,7 +1613,7 @@ class Miniprogram extends BaseMiniProgram
         $ext_data['ext']['website_id'] = $this->website_id;
         $ext_data['ext']['project_name'] = Config::get('project');
         $ext_data['ext']['auth_key'] = API_KEY;
-    
+
         if (getAddons('mplive',$this->website_id)){
             $configSer = new AddonsConfigService();
             $config_info = $configSer->getAddonsConfig('mplive',$this->website_id,0);
@@ -1590,7 +1628,7 @@ class Miniprogram extends BaseMiniProgram
         }
         return $ext_data;
     }
-    
+
     /**
      * 打包下载miniprogram.zip
      * 需要对比文件
@@ -1679,7 +1717,7 @@ class Miniprogram extends BaseMiniProgram
         @VslDelDir($dstPath, true);
         @VslDelDir($zipPath, true);
     }
-   
+
     /*
      * 替换旧的装修链接
      */
@@ -1696,13 +1734,13 @@ class Miniprogram extends BaseMiniProgram
             'pages/order/list/index'            => 'pages/order/list',
             'pages/shop/home/index?shopId=0'    => 'packages/shop/home',
         ];
-    
+
         if (in_array($old_link, array_keys($link_arr))) {
             return $link_arr[$old_link];
         }
         return $old_link;
     }
-    
+
     public function comToken ()
     {
         $res = cache('component_access_token');

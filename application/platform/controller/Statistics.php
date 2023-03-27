@@ -3,6 +3,7 @@ namespace app\platform\controller;
 
 use addons\bonus\model\VslOrderBonusLogModel;
 use addons\distribution\model\VslOrderDistributorCommissionModel;
+use addons\distribution\service\Distributor as DistributorService;
 use data\model\UserModel;
 use data\model\VslMemberModel;
 use data\model\VslOrderGoodsModel;
@@ -617,12 +618,13 @@ class Statistics extends BaseController
             $userModel = new VslMemberModel();
             $list = $userModel->getViewList($page_index, $page_size, $condition, 'nm.uid asc');
             $list = objToArr($list);
+            $distributor = new DistributorService();
             foreach ($list['data'] as &$v){
                 $v['user_info'] = ($v['nick_name'])?$v['nick_name']:($v['user_name']?$v['user_name']:($v['user_tel']?$v['user_tel']:$v['uid']));
                 //团队业绩
-                $v['total_amount'] = $this->getTotalAmount($v['uid'], $start_finish_date, $end_finish_date);
+                $v['total_amount'] = $distributor->getTotalAmount($v['uid'], $start_finish_date, $end_finish_date);
                 //平级业绩
-                $v['level_amount'] = $this->getLevelAmount($v['uid'], $start_finish_date, $end_finish_date);
+                $v['level_amount'] = $distributor->getLevelAmount($v['uid'], $start_finish_date, $end_finish_date);
             }
             return $list;
 
@@ -645,9 +647,10 @@ class Statistics extends BaseController
             $member_id = request()->post('uid', '');
             $start_finish_date = request()->post('start_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_finish_date'));
             $end_finish_date = request()->post('end_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_finish_date'));
-            $uids = $this->sort($uid);
-            $lists = $this->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
-            $res = $this->rec_list_level($uid, $lists);
+            $distributor = new DistributorService();
+            $uids = $distributor->sort($uid);
+            $lists = $distributor->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
+            $res = $distributor->rec_list_level($uid, $lists);
             $list['data'] = [];
             if (count($res)) {
                 $condition['nm.uid'] = array('in', $res);
@@ -662,7 +665,7 @@ class Statistics extends BaseController
                 foreach ($list['data'] as &$v){
                     $v['user_info'] = ($v['nick_name'])?$v['nick_name']:($v['user_name']?$v['user_name']:($v['user_tel']?$v['user_tel']:$v['uid']));
                     //团队业绩
-                    $v['total_amount'] = $this->getTotalAmount($v['uid'], $start_finish_date, $end_finish_date);
+                    $v['total_amount'] = $distributor->getTotalAmount($v['uid'], $start_finish_date, $end_finish_date);
                 }
             }
             return $list;
@@ -688,9 +691,10 @@ class Statistics extends BaseController
             $buyer_id = request()->post('buyer_id', '');
             $start_finish_date = request()->post('start_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_finish_date'));
             $end_finish_date = request()->post('end_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_finish_date'));
-            $uids = $this->sort($uid);
-            $lists = $this->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
-            $res = $this->rec_list_member($uid, $lists);
+            $distributor = new DistributorService();
+            $uids = $distributor->sort($uid);
+            $lists = $distributor->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
+            $res = $distributor->rec_list_member($uid, $lists);
             $list['data'] = [];
             if (count($res)) {
                 $ids = [];
@@ -750,9 +754,10 @@ class Statistics extends BaseController
         $buyer_id = request()->post('buyer_id', '');
         $start_finish_date = request()->post('start_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_finish_date'));
         $end_finish_date = request()->post('end_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_finish_date'));
-        $uids = $this->sort($uid);
-        $lists = $this->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
-        $res = $this->rec_list_member($uid, $lists);
+        $distributor = new DistributorService();
+        $uids = $distributor->sort($uid);
+        $lists = $distributor->sort_data($uids, 'uid', 'referee_id', 'children', $uid);
+        $res = $distributor->rec_list_member($uid, $lists);
         $list['data'] = [];
         $condition = [];
         if (count($res)) {
@@ -796,188 +801,188 @@ class Statistics extends BaseController
     }
 
 
-    /**
-     * 获取我的团队总业绩
-     *
-     * @param $uid
-     * @return int
-     */
-    public function getTotalAmount($uid, $start_finish_date = null, $end_finish_date = null){
-        $uids = $this->sort($uid);
-        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
-        $res = $this->rec_list_member($uid, $lists);
-        $amount = 0;
-        if(count($res)){
-            $ids = [];
-            foreach ($res as $i){
-                $ids[] = $i['uid'];
-            }
-            $condition['buyer_id'] = array('in', $ids);
-            $condition['order_status'] = array('in', [3, 4]);
-
-            if ($start_finish_date) {
-                $condition['finish_time'][] = ['>=', $start_finish_date];
-            }
-            if ($end_finish_date) {
-                $condition['finish_time'][] = ['<=', $end_finish_date];
-            }
-            $order_model = new VslOrderModel();
-            $amount = $order_model->getSum($condition, 'order_money');
-//            foreach ($order_lists as $value){
-//                $amount += $value['order_money'];
+//    /**
+//     * 获取我的团队总业绩
+//     *
+//     * @param $uid
+//     * @return int
+//     */
+//    public function getTotalAmount($uid, $start_finish_date = null, $end_finish_date = null){
+//        $uids = $this->sort($uid);
+//        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
+//        $res = $this->rec_list_member($uid, $lists);
+//        $amount = 0;
+//        if(count($res)){
+//            $ids = [];
+//            foreach ($res as $i){
+//                $ids[] = $i['uid'];
 //            }
-        }
-        return sprintf("%01.2f", $amount);
-    }
-
-    /**
-     *  获取我的平级业绩
-     *
-     * @param $uid
-     * @return int
-     */
-    public function getLevelAmount($uid, $start_finish_date, $end_finish_date){
-        $uids = $this->sort($uid);
-        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
-        $res = $this->rec_list_level($uid, $lists);
-        $amount = 0;
-        if(count($res)){
-            foreach ($res as $level_uid){
-                $amount += $this->getTotalAmount($level_uid, $start_finish_date, $end_finish_date);
-            }
-        }
-        return sprintf("%01.2f", $amount);
-    }
-
-    /**
-     * 获取代理下的所有用户
-     *
-     * @param $top_id
-     * @return array
-     */
-    public function sort($top_id)
-    {
-        $memberModel = new VslMemberModel();
-        $lists = $memberModel->getQuery(['referee_id'=>array('>', 0)], 'uid,referee_id,distributor_level_id');
-        $users = [];
-        foreach ($lists as $item){
-            $users[] = [
-                'uid'=> $item['uid'],
-                'referee_id'=> $item['referee_id'],
-                'distributor_level_id'=> $item['distributor_level_id']
-            ];
-        }
-        $arr = self::sort1($top_id, $users);
-        return $arr;
-    }
-
-    /**
-     *
-     *
-     * @param $id
-     * @param $data
-     * @return array
-     */
-    public static function sort1($id, $data)
-    {
-        $arr = [];
-        foreach($data as $k => $v){
-            //从小到大 排列
-            if($v['referee_id'] == $id){
-                $arr[] = $v;
-                $arr = array_merge(self::sort1($v['uid'], $data), $arr);
-            }
-        }
-        return $arr;
-    }
-
-    /**
-     * 过滤同个等级多个战略等级的情况
-     *
-     * @param $pid
-     * @param $from
-     * @return array
-     *
-     */
-    public function rec_list_member($pid, $from)
-    {
-        $arr = [];
-        foreach($from as $key=> $item) {
-            if($item['distributor_level_id'] == 5 && $item['uid'] != $pid) {
-                continue;
-            }
-            if(!isset($item['children'])){
-                $arr[] = $item;
-            }
-            if(isset($item['children'])){
-                $children = $item['children'];
-                unset($item['children']);
-                $arr[] = $item;
-                $arr = array_merge($arr, $this->rec_list_member($pid, $children));
-            }
-        }
-        return $arr;
-    }
-
-    /**
-     * 获取同个等级下多个战略
-     *
-     * @param $pid
-     * @param $from
-     * @return array
-     *
-     */
-    public function rec_list_level($pid, $from)
-    {
-        $arr = [];
-        foreach($from as $key=> $item) {
-            if($item['distributor_level_id'] == 5 && $item['uid'] != $pid) {
-                $arr[] = $item['uid'];
-                continue;
-            }
-            if(isset($item['children'])){
-                $arr = array_merge($arr, $this->rec_list_level($pid, $item['children']));
-            }
-        }
-        return $arr;
-    }
-
-    /**
-     * 生成树结构
-     *
-     * @param $data
-     * @param string $pk
-     * @param string $pid
-     * @param string $child
-     * @param int $root
-     * @return array|bool
-     */
-    public function sort_data($data, $pk = 'id', $pid = 'pid', $child = 'children', $root = 0)
-    {
-        // 创建Tree
-        $tree = [];
-        if (!is_array($data)) {
-            return false;
-        }
-
-        //创建基于主键的数组引用
-        $refer = [];
-        foreach ($data as $key => $value_data) {
-            $refer[$value_data[$pk]] = &$data[$key];
-        }
-        foreach ($data as $key => $value_data) {
-            // 判断是否存在parent
-            $parentId = $value_data[$pid];
-            if ($root == $parentId) {
-                $tree[] = &$data[$key];
-            } else {
-                if (isset($refer[$parentId])) {
-                    $parent = &$refer[$parentId];
-                    $parent[$child][] = &$data[$key];
-                }
-            }
-        }
-
-        return $tree;
-    }
+//            $condition['buyer_id'] = array('in', $ids);
+//            $condition['order_status'] = array('in', [3, 4]);
+//
+//            if ($start_finish_date) {
+//                $condition['finish_time'][] = ['>=', $start_finish_date];
+//            }
+//            if ($end_finish_date) {
+//                $condition['finish_time'][] = ['<=', $end_finish_date];
+//            }
+//            $order_model = new VslOrderModel();
+//            $amount = $order_model->getSum($condition, 'order_money');
+////            foreach ($order_lists as $value){
+////                $amount += $value['order_money'];
+////            }
+//        }
+//        return sprintf("%01.2f", $amount);
+//    }
+//
+//    /**
+//     *  获取我的平级业绩
+//     *
+//     * @param $uid
+//     * @return int
+//     */
+//    public function getLevelAmount($uid, $start_finish_date, $end_finish_date){
+//        $uids = $this->sort($uid);
+//        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
+//        $res = $this->rec_list_level($uid, $lists);
+//        $amount = 0;
+//        if(count($res)){
+//            foreach ($res as $level_uid){
+//                $amount += $this->getTotalAmount($level_uid, $start_finish_date, $end_finish_date);
+//            }
+//        }
+//        return sprintf("%01.2f", $amount);
+//    }
+//
+//    /**
+//     * 获取代理下的所有用户
+//     *
+//     * @param $top_id
+//     * @return array
+//     */
+//    public function sort($top_id)
+//    {
+//        $memberModel = new VslMemberModel();
+//        $lists = $memberModel->getQuery(['referee_id'=>array('>', 0)], 'uid,referee_id,distributor_level_id');
+//        $users = [];
+//        foreach ($lists as $item){
+//            $users[] = [
+//                'uid'=> $item['uid'],
+//                'referee_id'=> $item['referee_id'],
+//                'distributor_level_id'=> $item['distributor_level_id']
+//            ];
+//        }
+//        $arr = self::sort1($top_id, $users);
+//        return $arr;
+//    }
+//
+//    /**
+//     *
+//     *
+//     * @param $id
+//     * @param $data
+//     * @return array
+//     */
+//    public static function sort1($id, $data)
+//    {
+//        $arr = [];
+//        foreach($data as $k => $v){
+//            //从小到大 排列
+//            if($v['referee_id'] == $id){
+//                $arr[] = $v;
+//                $arr = array_merge(self::sort1($v['uid'], $data), $arr);
+//            }
+//        }
+//        return $arr;
+//    }
+//
+//    /**
+//     * 过滤同个等级多个战略等级的情况
+//     *
+//     * @param $pid
+//     * @param $from
+//     * @return array
+//     *
+//     */
+//    public function rec_list_member($pid, $from)
+//    {
+//        $arr = [];
+//        foreach($from as $key=> $item) {
+//            if($item['distributor_level_id'] == 5 && $item['uid'] != $pid) {
+//                continue;
+//            }
+//            if(!isset($item['children'])){
+//                $arr[] = $item;
+//            }
+//            if(isset($item['children'])){
+//                $children = $item['children'];
+//                unset($item['children']);
+//                $arr[] = $item;
+//                $arr = array_merge($arr, $this->rec_list_member($pid, $children));
+//            }
+//        }
+//        return $arr;
+//    }
+//
+//    /**
+//     * 获取同个等级下多个战略
+//     *
+//     * @param $pid
+//     * @param $from
+//     * @return array
+//     *
+//     */
+//    public function rec_list_level($pid, $from)
+//    {
+//        $arr = [];
+//        foreach($from as $key=> $item) {
+//            if($item['distributor_level_id'] == 5 && $item['uid'] != $pid) {
+//                $arr[] = $item['uid'];
+//                continue;
+//            }
+//            if(isset($item['children'])){
+//                $arr = array_merge($arr, $this->rec_list_level($pid, $item['children']));
+//            }
+//        }
+//        return $arr;
+//    }
+//
+//    /**
+//     * 生成树结构
+//     *
+//     * @param $data
+//     * @param string $pk
+//     * @param string $pid
+//     * @param string $child
+//     * @param int $root
+//     * @return array|bool
+//     */
+//    public function sort_data($data, $pk = 'id', $pid = 'pid', $child = 'children', $root = 0)
+//    {
+//        // 创建Tree
+//        $tree = [];
+//        if (!is_array($data)) {
+//            return false;
+//        }
+//
+//        //创建基于主键的数组引用
+//        $refer = [];
+//        foreach ($data as $key => $value_data) {
+//            $refer[$value_data[$pk]] = &$data[$key];
+//        }
+//        foreach ($data as $key => $value_data) {
+//            // 判断是否存在parent
+//            $parentId = $value_data[$pid];
+//            if ($root == $parentId) {
+//                $tree[] = &$data[$key];
+//            } else {
+//                if (isset($refer[$parentId])) {
+//                    $parent = &$refer[$parentId];
+//                    $parent[$child][] = &$data[$key];
+//                }
+//            }
+//        }
+//
+//        return $tree;
+//    }
 }

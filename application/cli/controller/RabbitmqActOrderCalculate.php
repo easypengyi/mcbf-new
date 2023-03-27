@@ -1,6 +1,9 @@
 <?php
 namespace app\cli\controller;
 
+use addons\bonus\model\VslAgentAccountRecordsModel;
+use addons\teambonus\service\TeamBonus as teamBonusService;
+use data\model\VslOrderTeamLogModel;
 use data\service\Events;
 use think\console\Command;
 use think\console\Input;
@@ -18,6 +21,11 @@ class RabbitmqActOrderCalculate extends Command {
      * @return \lib\crontab\IssServer
      */
     public function execute(Input $input,Output $output){
+
+//        $params = ['website_id'=> 1, 'buyer_id'=> '7253', 'order_id'=> '4343', 'order_goods_id'=>4667];
+//        $bonusCalculate = new teamBonusService();
+//        $bonusCalculate->orderAgentBonus($params);
+//        exit();
 //        $host = config('rabbitmq.host');
 //        $port = config('rabbitmq.port');
 //        $user = config('rabbitmq.user');

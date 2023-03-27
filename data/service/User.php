@@ -361,7 +361,7 @@ class User extends BaseService
         if ($is_member == 1) {
             $condition['is_member'] = 1;
         }
-
+//        var_dump($condition);die;
         if($port){
             unset($condition['website_id']);
             $user_info = $this->user->getQuery($condition, 'uid,user_tel,user_status,user_name,user_headimg,is_system,instance_id,is_member,current_login_ip, current_login_time, current_login_type,website_id,supplier_id,port, login_num');

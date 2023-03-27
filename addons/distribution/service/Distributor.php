@@ -1495,6 +1495,43 @@ class Distributor extends BaseService
 
         return $result;
     }
+
+    /**
+     * post 请求
+     *
+     * @param $url
+     * @param array $data
+     * @return mixed
+     */
+    public function getRequest($url){
+        $header = [
+            'Content-Type: application/json'
+        ];
+
+        $ch = curl_init ();
+        curl_setopt ( $ch, CURLOPT_URL, $url );
+        curl_setopt ( $ch, CURLOPT_POST, 0 );
+        curl_setopt ( $ch, CURLOPT_HEADER, 0 );
+        curl_setopt ( $ch, CURLOPT_RETURNTRANSFER, 1 );
+//        curl_setopt ( $ch, CURLOPT_POSTFIELDS, $data );
+        curl_setopt ($ch, CURLOPT_HTTPHEADER, $header);
+//        var_dump($ch);die;
+        $res = curl_exec ( $ch );
+        curl_close ( $ch );
+        return json_decode($res, true, 512, JSON_BIGINT_AS_STRING);
+    }
+
+    public function checkContract($mobile, $type = 6){
+        //验证是否已签约
+        $url = "https://esign.meicbf.com/ht/app/contract/getContractStatus?mobile=".$mobile.'&type='.$type;
+        $res = $this->getRequest($url);
+
+        if(!isset($res['code']) || $res['code'] != 0 || $res['data'] == false){
+            return false;
+        }
+        return true;
+    }
+
     /**
      * 分销商详情(订单已完成)
      */
@@ -1514,6 +1551,18 @@ class Distributor extends BaseService
         $commission = new VslDistributorAccountModel();
         $commission_info = $commission->getInfo(['uid' => $uid], '*');
         $result['commission'] = $commission_info['commission'];
+
+        $check_mx = false;
+        if($this->checkContract($result['mobile'], 6)){
+            $check_mx = true;
+        }
+
+        $check_cc = false;
+        if($this->checkContract($result['mobile'], 7)){
+            $check_cc = true;
+        }
+        $result['check_mx'] = $check_mx;
+        $result['check_cc'] = $check_cc;
         //是否是对接人
         if($result['is_pu'] == 1){
             $result['com_commission'] = $this->comCommission($uid, $website_id);
@@ -1779,13 +1828,14 @@ class Distributor extends BaseService
     public function sort($top_id)
     {
         $memberModel = new VslMemberModel();
-        $lists = $memberModel->getQuery(['referee_id'=>array('>', 0)], 'uid,referee_id,is_pu');
+        $lists = $memberModel->getQuery(['referee_id'=>array('>', 0)], 'uid,referee_id,is_pu,distributor_level_id');
         $users = [];
         foreach ($lists as $item){
             $users[] = [
                 'uid'=> $item['uid'],
                 'referee_id'=> $item['referee_id'],
-                'is_pu'=> $item['is_pu']
+                'is_pu'=> $item['is_pu'],
+                'distributor_level_id'=> $item['distributor_level_id']
             ];
         }
         $arr = self::sort1($top_id, $users);
@@ -8215,5 +8265,109 @@ class Distributor extends BaseService
         $event = new Events();
         $res = $event->checkOrdersComplete($website_id, $ids);
         return $res;
+    }
+
+    /**
+     * 获取我的团队总业绩
+     *
+     * @param $uid
+     * @return int
+     */
+    public function getTotalAmount($uid, $start_finish_date = null, $end_finish_date = null){
+        $uids = $this->sort($uid);
+        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
+        $res = $this->rec_list_member($uid, $lists);
+        $amount = 0;
+        if(count($res)){
+            $ids = [];
+            foreach ($res as $i){
+                $ids[] = $i['uid'];
+            }
+            $condition['buyer_id'] = array('in', $ids);
+            $condition['order_status'] = array('in', [3, 4]);
+
+            if ($start_finish_date) {
+                $condition['finish_time'][] = ['>=', $start_finish_date];
+            }
+            if ($end_finish_date) {
+                $condition['finish_time'][] = ['<=', $end_finish_date];
+            }
+            $order_model = new VslOrderModel();
+            $amount = $order_model->getSum($condition, 'order_money');
+//            foreach ($order_lists as $value){
+//                $amount += $value['order_money'];
+//            }
+        }
+        return sprintf("%01.2f", $amount);
+    }
+
+    /**
+     *  获取我的平级业绩
+     *
+     * @param $uid
+     * @return int
+     */
+    public function getLevelAmount($uid, $start_finish_date = null, $end_finish_date= null){
+        $uids = $this->sort($uid);
+        $lists = $this->sort_data($uids,'uid', 'referee_id', 'children', $uid);
+        $res = $this->rec_list_level($uid, $lists);
+        $amount = 0;
+        if(count($res)){
+            foreach ($res as $level_uid){
+                $amount += $this->getTotalAmount($level_uid, $start_finish_date, $end_finish_date);
+            }
+        }
+        return sprintf("%01.2f", $amount);
+    }
+
+    /**
+     * 过滤同个等级多个战略等级的情况
+     *
+     * @param $pid
+     * @param $from
+     * @return array
+     *
+     */
+    public function rec_list_member($pid, $from)
+    {
+        $arr = [];
+        foreach($from as $key=> $item) {
+            if($item['distributor_level_id'] == 5 && $item['uid'] != $pid) {
+                continue;
+            }
+            if(!isset($item['children'])){
+                $arr[] = $item;
+            }
+            if(isset($item['children'])){
+                $children = $item['children'];
+                unset($item['children']);
+                $arr[] = $item;
+                $arr = array_merge($arr, $this->rec_list_member($pid, $children));
+            }
+        }
+        return $arr;
+    }
+
+    /**
+     * 获取同个等级下多个战略
+     *
+     * @param $pid
+     * @param $from
+     * @return array
+     *
+     */
+    public function rec_list_level($pid, $from)
+    {
+        $arr = [];
+        foreach($from as $key=> $item) {
+            if($item['distributor_level_id'] == 5 && $item['uid'] != $pid) {
+                $arr[] = $item['uid'];
+                continue;
+            }
+            if(isset($item['children'])){
+                $arr = array_merge($arr, $this->rec_list_level($pid, $item['children']));
+            }
+        }
+        return $arr;
     }
 }

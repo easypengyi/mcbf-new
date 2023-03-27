@@ -38,6 +38,14 @@
 							<option value="1" {if $info['is_pu'] == 1}selected{/if}>是</option>
 						</select>
 					</div>
+					<div class="p">
+						<span class="text-label">认证：</span>
+						<select name="is_auth" id="is_auth" class="form-control select-form-control inline-block">
+							<option value="0" {if $info['is_auth'] == 0}selected{/if}>否</option>
+							<option value="1" {if $info['is_auth'] == 1}selected{/if}>是</option>
+						</select>
+						<a href="javascript:void(0);" class="text-primary ml-15 selectInfo" data-card ="{$info['id_card']}" data-image ="{$info['business_image']}">查看认证信息</a>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -404,11 +412,12 @@
             var selProvinces = $("#selProvinces").val();
             var selCities = $("#selCities").val();
             var selDistricts = $("#selDistricts").val();
+			var is_auth = $("#is_auth").val();
             $.ajax({
                 type: "post",
                 url : "{$updateDistributorInfoUrl}",
                 data : {
-                    "uid":uid,"status":status,"is_pu":is_pu,"real_name":real_name,"level":level, "team_agent" : team_agent, "area_agent" : area_agent,"global_agent":global_agent,"area_id":area_type,"province_id":selProvinces,"city_id":selCities,"district_id":selDistricts
+                    "uid":uid,"status":status,"is_pu":is_pu,"is_auth":is_auth,"real_name":real_name,"level":level, "team_agent" : team_agent, "area_agent" : area_agent,"global_agent":global_agent,"area_id":area_type,"province_id":selProvinces,"city_id":selCities,"district_id":selDistricts
                 },
                 async: true,
                 success: function (data) {
@@ -421,6 +430,25 @@
             });
 
         })
+
+		// 查看资料
+		$('.selectInfo').on('click',function(){
+			var id = $(this).attr('data-card');
+			var image = $(this).attr('data-image');
+			var html = '<form class="form-horizontal padding-15" id="">';
+
+			html += '<div class="form-group"><label class="col-md-3 control-label">身份证：</label><div class="col-md-8">'+id+'</div></div>';
+			html += "<div class='form-group'>" ;
+			html +="<label class='col-md-3 control-label'>营业执照：</label>";
+			html +="<div class='col-md-8'>";
+			html +="<a href='"+image+"'><img class='form-control' src='"+image+"'/></a>";
+			html +="</div>";
+			html += '</form>';
+			util.confirm('查看认证信息', html,function(){
+
+
+			})
+		});
     })
 </script>
 {/block}

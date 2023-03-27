@@ -40,6 +40,12 @@ class Index extends BaseController
     {
         $debug = config('app_debug') == true ? '开发者模式' : '部署模式';
         $this->assign('debug', $debug);
+        $model = $this->user->getRequestModel();
+        $is_company = Session::get($model . 'is_company');
+        if($is_company == 1){
+            return view($this->style . 'index/index_company');
+        }
+
         //获取公告
         $cms = new VslCmsTopicModel();
         $cms_info = $cms->getQuery([], 'content,title,create_time,topic_id', 'create_time desc');
@@ -69,7 +75,7 @@ class Index extends BaseController
         if ($basic_set && $basic_set['mall_name']) {
             $this->assign("basic_set", 1);
         }
-    
+
         $config  = new WebConfig();
         $list['wx_set'] = $config->getConfig(0, 'WPAY', $this->website_id)['is_use'];
         $list['ali_set'] = $config->getConfig(0, 'ALIPAY', $this->website_id)['is_use'];
@@ -77,7 +83,7 @@ class Index extends BaseController
         if ($list['wx_set'] || $list['ali_set'] || $list['b_set']) {
             $this->assign("pay_set", 1);
         }
-    
+
         $list['mobile_message'] = $config->getConfig(0,'MOBILEMESSAGE', $this->website_id);
         if ($list['mobile_message'] && $list['mobile_message']['is_use']) {
             $this->assign("mobile_set", 1);
@@ -95,7 +101,7 @@ class Index extends BaseController
         if ($list['withdraw_set']) {
             $this->assign("withdraw_set", 1);
         }
-    
+
         $express_company_shop_relation_model = new VslExpressCompanyShopRelationModel();
         $list['express_company_set'] = $express_company_shop_relation_model->getInfo(['website_id' => $this->website_id]);
         if ($list['express_company_set']) {
@@ -111,13 +117,13 @@ class Index extends BaseController
         if ($list['goods_set']) {
             $this->assign("goods_set", 1);
         }
-    
+
         $category = new VslGoodsCategoryModel();
         $list['category_set'] = $category->getInfo(['website_id' => $this->website_id,'create_time' => ['exp','<> update_time']]);
         if ($list['category_set']) {
             $this->assign("category_set", 1);
         }
-    
+
         $customSer = new \data\service\Customtemplate();
         $template_info = $customSer->getCustomTemplateInfos(['website_id' => $this->website_id, 'shop_id' => $this->instance_id, 'type' => ['IN', '1,2,4'],'in_use' => 1, 'is_system_default' => ['neq', 1]],'type');
         $type_arr = array_column(objToArr($template_info),'type');

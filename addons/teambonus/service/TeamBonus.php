@@ -9,6 +9,7 @@ use addons\distribution\model\VslDistributorLevelModel;
 use addons\distribution\model\VslOrderDistributorCommissionModel;
 use addons\distribution\service\Distributor as DistributorService;
 use data\model\VslAccountModel;
+use data\model\VslGoodsDiscountModel as GoodsDiscount;
 use data\model\VslMemberAccountRecordsModel;
 use data\model\VslMemberModel;
 use data\model\VslMemberViewModel;
@@ -16,6 +17,7 @@ use data\model\VslOrderGoodsModel;
 use data\model\VslOrderModel;
 use data\model\VslOrderGoodsExpressModel;
 use data\model\AlbumPictureModel;
+use data\model\VslOrderTeamLogModel;
 use data\service\AddonsConfig as AddonsConfigSer;
 use data\service\Address;
 use data\service\BaseService as BaseService;
@@ -718,7 +720,7 @@ class TeamBonus extends BaseService
         $set_info = $this->getSettlementSite($params['website_id']);
         $order_goods = new VslOrderGoodsModel();
         $order = new VslOrderModel();
-        $order_info = $order->getInfo(['order_id'=>$params['order_id']],'bargain_id,group_id,presell_id,shop_id,shop_order_money,luckyspell_id');
+        $order_info = $order->getInfo(['order_id'=>$params['order_id']],'order_no,bargain_id,group_id,presell_id,shop_id,shop_order_money,luckyspell_id');
         $order_goods_info = $order_goods->getInfo(['order_goods_id'=>$params['order_goods_id'],'order_id'=>$params['order_id']]);
         $cost_price = $order_goods_info['cost_price']*$order_goods_info['num'];//商品成本价
         $price = $order_goods_info['real_money'];//商品实际支付金额
@@ -1014,405 +1016,505 @@ class TeamBonus extends BaseService
                     unset($v);
                 }
                 if ($base_info['is_use'] == 1 && $base_info['gradation_status'] == 1) {//是否开启团队分红并且开启级差
-                    //开启级差 并且未开启内购 并且本人是队长 需要去除队长本人
-                    if(count($agent_data['level_info']) > 1 && $base_info['purchase_type'] == 2 && $buyer_info['is_team_agent'] == 2){
+                    //新增价格极差分红逻辑
+                    if($teambonus_rule_val['bonus_type'] == 3){
+                        //开启级差 并且未开启内购 并且本人是队长 需要去除队长本人
+                        if(count($agent_data['level_info']) > 1 && $base_info['purchase_type'] == 2 && $buyer_info['is_team_agent'] == 2){
+                            array_shift($agent_data['level_info']);
+                            array_shift($agent_data['level_id']);
+                            array_shift($agent_data['weight']);
+                        }
 
-                        array_shift($agent_data['level_info']);
-                        array_shift($agent_data['level_id']);
-                        array_shift($agent_data['weight']);
-                    }
-                    $bonus_calculation = $set_info['bonus_calculation'];//计算节点（商品价格）
-                    $arr = [];
-                    foreach ($agent_data['level_id'] as $k1 => $v1){
-                        $arr[] = $v1;
-                    }
-                    $arr = array_unique($arr); //去重
-                    $arr1 = array_values($arr);
-                    $key = array_keys($arr);
-                    $top = 1;
-                    $arr2 = array(); //平级奖数组
-                    $new_array = array();
-                    $checks_weight = 9999;
-                    $next_level_id = '';
-                    foreach ($agent_data['level_info'] as $k => $v) {
-                        if(in_array($k,$key)){
-                            $real_uid = $v['uid'];
+                        // 查询商品折扣
+                        $goodDiscount = new GoodsDiscount();
+                        $d_condition = [
+                            'goods_id' => $order_goods_info['goods_id'],
+                            'type' => 1,
+                            'website_id' => $params['website_id'],
+                        ];
+                        $discountRes = $goodDiscount->getInfo($d_condition);
+                        $good_discount = json_decode($discountRes['value'], true);
+                        $member_level_price = $good_discount['distributor_obj']['d_level_data'];
 
-                            if ($v['uid'] == $params['buyer_id']) {
-                                if ($base_info['purchase_type'] == 2) {//未开启内购
-                                    continue;
+                        //商品价格
+                        $team_bonus_list = [];
+                        $insertData = [];
+                        $amount = $price;
+                        $all_bonus = 0;
+                        foreach ($agent_data['level_info'] as $member){
+                            $distributor_amount = $member_level_price[$member['distributor_level_id']]['val'];
+                            $commission =  $amount - $distributor_amount;
+                            if($commission > 0){
+                                $team_bonus_list[] = [
+                                    'uid'=> $member['uid'],
+                                    'amount'=> $amount,
+                                    'distributor_amount'=> $member_level_price[$member['distributor_level_id']]['val'],
+                                    'distributor_level_id'=> $member['distributor_level_id'],
+                                    'distributor_level_name'=> $member_level_price[$member['distributor_level_id']]['name'],
+                                    'commission'=> $amount - $distributor_amount
+                                ];
+                                $amount = $distributor_amount;
+                                $all_bonus += $commission;
+
+                                $records_no = 'TBS' . time() . rand(111, 999);
+                                //添加团队分红日志
+                                $data_records = array(
+                                    'uid' => $member['uid'],
+                                    'data_id' => $order_info['order_no'],
+                                    'website_id' => $params['website_id'],
+                                    'records_no' => $records_no,
+                                    'bonus' => abs($commission),
+                                    'text' => '订单支付,冻结极差分红增加',
+                                    'create_time' => time(),
+                                    'bonus_type' => 3, //团队分红
+                                    'from_type' => 3, //订单支付成功
+                                );
+                                array_push($insertData, $data_records);
+                            }
+                        }
+
+                        //创建对应数据
+                        if(count($team_bonus_list) > 0){
+                            $time = time();
+                            $bonus = new VslOrderTeamLogModel();
+                            $agentAccountRecordsModel = new VslAgentAccountRecordsModel();
+                            $bonus->startTrans();
+                            try{
+                                //添加检验已写入则不能重复写入 已uid，uid，from_type，order_id，order_goods_id，bonus
+                                $where['order_goods_id'] = $params['order_goods_id'];
+                                $where['website_id'] = $params['website_id'];
+                                $checkBonus = $bonus->getInfo($where);
+                                if($checkBonus && $checkBonus['team_bonus_details']){
+                                    $bonus->commit();
+                                    return 1; //有重复数据 跳出本次循环
                                 }
-                            }
-                            $level_info = $level->getInfo(['id' => $v['team_agent_level_id'], 'from_type' => 3], '*');
-                            $ratio = $level_info['ratio'];//当前比例
-                            $weight = $level_info['weight'];//当前比例权重
 
-                            if($team_bonus!=''){
-                                $ratio = $team_bonus;//分红比例
+                                if(!$checkBonus){
+                                    //添加执行记录
+                                    $insert_log = [
+                                        'order_id'=> $params['order_id'],
+                                        'order_goods_id'=> $params['order_goods_id'],
+                                        'buyer_id'=> $params['buyer_id'],
+                                        'website_id'=> $params['website_id'],
+                                        'team_bonus'=> $all_bonus,
+                                        'team_bonus_details'=> json_encode($team_bonus_list,true),
+                                        'team_pay_status'=> 1,
+                                        'team_cal_status'=> 0,
+                                        'create_time'=> $time
+                                    ];
+                                    $bonus->save($insert_log);
+                                    $agentAccountRecordsModel->saveAll($insertData);
+                                }else{
+                                    $bonus->save(['team_bonus' => $all_bonus,'team_bonus_details' => json_encode($team_bonus_list,true), 'update_time' => time()],['id' => $checkBonus['id']]);
+                                }
+                                $bonus->commit();
+                                return 1;
+                            }catch (\Exception $e) {
+                                $bonus->rollback();
+                                return $e->getMessage();
                             }
-                            $now_key = array_search($arr[$k],$arr1);
-                            $prev = 0;
-                            if($now_key>=1){
-                                //下级id应变更为上一次获取级差分红的用户 edit for 2020/05/28
-                                $prev = $next_level_id ? $next_level_id :  $arr1[$now_key-1];
-                                // $prev = $arr1[$now_key-1];
-                            }
-                            $bonus_type1 = '';
-                            $bonus_type2 = '';
-                            $bonus_money = 0;
-                            $bonus_type = 0;
-                            if($prev){
-                                $lower_ratio = '';
-                                $lower_ratio = $level->getInfo(['id'=>$prev]);//下级比例
-                                $lower_weight = $lower_ratio['weight'];//当前下级比例权重
-                                if($weight>$lower_weight){
-                                    $checks_weight = $weight;
+                        }
+                    }else{
+                        //开启级差 并且未开启内购 并且本人是队长 需要去除队长本人
+                        if(count($agent_data['level_info']) > 1 && $base_info['purchase_type'] == 2 && $buyer_info['is_team_agent'] == 2){
+
+                            array_shift($agent_data['level_info']);
+                            array_shift($agent_data['level_id']);
+                            array_shift($agent_data['weight']);
+                        }
+                        $bonus_calculation = $set_info['bonus_calculation'];//计算节点（商品价格）
+                        $arr = [];
+                        foreach ($agent_data['level_id'] as $k1 => $v1){
+                            $arr[] = $v1;
+                        }
+                        $arr = array_unique($arr); //去重
+                        $arr1 = array_values($arr);
+                        $key = array_keys($arr);
+                        $top = 1;
+                        $arr2 = array(); //平级奖数组
+                        $new_array = array();
+                        $checks_weight = 9999;
+                        $next_level_id = '';
+                        foreach ($agent_data['level_info'] as $k => $v) {
+                            if(in_array($k,$key)){
+                                $real_uid = $v['uid'];
+
+                                if ($v['uid'] == $params['buyer_id']) {
+                                    if ($base_info['purchase_type'] == 2) {//未开启内购
+                                        continue;
+                                    }
+                                }
+                                $level_info = $level->getInfo(['id' => $v['team_agent_level_id'], 'from_type' => 3], '*');
+                                $ratio = $level_info['ratio'];//当前比例
+                                $weight = $level_info['weight'];//当前比例权重
+
+                                if($team_bonus!=''){
+                                    $ratio = $team_bonus;//分红比例
+                                }
+                                $now_key = array_search($arr[$k],$arr1);
+                                $prev = 0;
+                                if($now_key>=1){
+                                    //下级id应变更为上一次获取级差分红的用户 edit for 2020/05/28
+                                    $prev = $next_level_id ? $next_level_id :  $arr1[$now_key-1];
+                                    // $prev = $arr1[$now_key-1];
+                                }
+                                $bonus_type1 = '';
+                                $bonus_type2 = '';
+                                $bonus_money = 0;
+                                $bonus_type = 0;
+                                if($prev){
+                                    $lower_ratio = '';
+                                    $lower_ratio = $level->getInfo(['id'=>$prev]);//下级比例
+                                    $lower_weight = $lower_ratio['weight'];//当前下级比例权重
+                                    if($weight>$lower_weight){
+                                        $checks_weight = $weight;
+                                        //判断是否有商品独立分红方式
+                                        if($goods_info['is_bonus_team']==1 && !empty($goods_info['teambonus_rule_val'])){//该商品参与团队分红
+                                            if($teambonus_rule_val['teambonus_rule'] == 1){//开启了商品团队独立分红
+                                                $prev_level_id = $prev;
+                                                $level_id = $level_info['id'];
+                                                $goods_teambonus_money1 = 0;
+                                                $goods_teambonus_money2 = 0;
+                                                $goods_teambonus_ratio1 = 0;
+                                                $goods_teambonus_ratio2 = 0;
+                                                if($teambonus_rule_val['bonus_type'] == 2){
+                                                    $bonus_type1 = 2;
+                                                    $bonus_type2 = 2;
+                                                    $goods_teambonus_money1 = (float)$teambonus_rule_arr[$level_id];
+                                                    $goods_teambonus_money2 = (float)$teambonus_rule_arr[$prev_level_id];
+                                                }else{
+                                                    $goods_teambonus_ratio1 = (float)$teambonus_rule_arr[$level_id];
+                                                    $goods_teambonus_ratio2 = (float)$teambonus_rule_arr[$prev_level_id];
+                                                }
+                                            }
+                                        }else{
+                                            //判断等级分红方式
+                                            $bonus_type1 = $level_info['bonus_type'];
+                                            $bonus_type2 = $lower_ratio['bonus_type'];
+                                        }
+                                        //判断是否
+                                        if($bonus_type1 == 2 || $bonus_type2 == 2){//只要有一个比例是固定金额方式，固定金额 - 百分比转换的金额
+                                            $bonus_type = 2;
+                                            if($bonus_type1 == 2){
+                                                if($goods_teambonus_money1 != '' || $goods_teambonus_money1 === (float)0){
+                                                    $money1 = $goods_teambonus_money1;
+                                                }else{
+                                                    $money1 = $level_info['money'];
+                                                }
+                                            }else{
+                                                if($goods_teambonus_ratio1 != '' || $goods_teambonus_ratio1 === (float)0){
+                                                    $grade_ratio = $goods_teambonus_ratio1 / 100;
+                                                }else{
+                                                    $grade_ratio = $level_info['ratio'] / 100;
+                                                }
+                                                if ($bonus_calculation == 1) {//实际付款金额
+                                                    if($presell_goods_info){
+                                                        $price = $promotion_price;
+                                                    }
+                                                    $money1 = twoDecimal($price * $grade_ratio * $poundage);
+                                                }
+                                                if ($bonus_calculation == 2) {//商品原价
+                                                    $money1 = twoDecimal($original_price * $grade_ratio * $poundage);
+                                                }
+                                                if ($bonus_calculation == 3) {//商品销售价
+                                                    $money1 = twoDecimal($promotion_price * $grade_ratio * $poundage);
+                                                }
+                                                if ($bonus_calculation == 4) {//商品成本价
+                                                    $money1 = twoDecimal($cost_price * $grade_ratio * $poundage);
+                                                }
+                                                if ($bonus_calculation == 5) {//商品利润价
+                                                    $money1 = twoDecimal($profit_price * $grade_ratio * $poundage);
+                                                }
+                                            }
+
+                                            if($bonus_type2 == 2){
+                                                if($goods_teambonus_money2 != '' || $goods_teambonus_money2 === (float)0){
+                                                    $money2 = $goods_teambonus_money2;
+                                                }else{
+                                                    $money2 = $lower_ratio['money'];
+                                                }
+                                            }else{
+                                                if($goods_teambonus_ratio2 != '' || $goods_teambonus_ratio2 === (float)0){
+                                                    $grade_ratio = $goods_teambonus_ratio2 / 100;
+                                                }else{
+                                                    $grade_ratio = $lower_ratio['ratio'] / 100;
+                                                }
+                                                if ($bonus_calculation == 1) {//实际付款金额
+                                                    if($presell_goods_info){
+                                                        $price = $promotion_price;
+                                                    }
+                                                    $money2 = twoDecimal($price * $grade_ratio * $poundage);
+                                                }
+                                                if ($bonus_calculation == 2) {//商品原价
+                                                    $money2 = twoDecimal($original_price * $grade_ratio * $poundage);
+                                                }
+                                                if ($bonus_calculation == 3) {//商品销售价
+                                                    $money2 = twoDecimal($promotion_price * $grade_ratio * $poundage);
+                                                }
+                                                if ($bonus_calculation == 4) {//商品成本价
+                                                    $money2 = twoDecimal($cost_price * $grade_ratio * $poundage);
+                                                }
+                                                if ($bonus_calculation == 5) {//商品利润价
+                                                    $money2 = twoDecimal($profit_price * $grade_ratio * $poundage);
+                                                }
+                                            }
+                                            if($money1 > $money2){
+                                                $bonus_money = $money1 - $money2;
+                                            }else{
+                                                $bonus_money = 0;
+                                            }
+                                        }else{
+                                            if($goods_teambonus_ratio2 != '' || $goods_teambonus_ratio2 === (float)0){
+                                                $ratio = $goods_teambonus_ratio1;
+                                            }
+                                            if($goods_teambonus_ratio1 != '' || $goods_teambonus_ratio1 === (float)0){
+                                                $lower_ratio['ratio'] = $goods_teambonus_ratio2;
+                                            }
+                                            if($ratio> $lower_ratio['ratio']){//只要上级比下级小 就不拿
+                                                $real_ratio = ($ratio-$lower_ratio['ratio'])/100;//当前比例减去下级比例
+                                            }else{
+                                                $real_ratio = 0;
+                                            }
+                                            if($team_bonus!=''){
+                                                $real_ratio = 0;//存在独立分红比例
+                                            }
+                                        }
+                                    }else{
+                                        continue;
+                                    }
+                                }else{
+                                    $checks_weight = $weight; //当本人是团队分红的时候
                                     //判断是否有商品独立分红方式
                                     if($goods_info['is_bonus_team']==1 && !empty($goods_info['teambonus_rule_val'])){//该商品参与团队分红
                                         if($teambonus_rule_val['teambonus_rule'] == 1){//开启了商品团队独立分红
-                                            $prev_level_id = $prev;
                                             $level_id = $level_info['id'];
                                             $goods_teambonus_money1 = 0;
-                                            $goods_teambonus_money2 = 0;
                                             $goods_teambonus_ratio1 = 0;
-                                            $goods_teambonus_ratio2 = 0;
                                             if($teambonus_rule_val['bonus_type'] == 2){
                                                 $bonus_type1 = 2;
-                                                $bonus_type2 = 2;
-                                                $goods_teambonus_money1 = (float)$teambonus_rule_arr[$level_id];
-                                                $goods_teambonus_money2 = (float)$teambonus_rule_arr[$prev_level_id];
+                                                $goods_teambonus_money2 = (float)$teambonus_rule_arr[$level_id];
                                             }else{
-                                                $goods_teambonus_ratio1 = (float)$teambonus_rule_arr[$level_id];
-                                                $goods_teambonus_ratio2 = (float)$teambonus_rule_arr[$prev_level_id];
+                                                $goods_teambonus_ratio2 = (float)$teambonus_rule_arr[$level_id];
                                             }
                                         }
                                     }else{
                                         //判断等级分红方式
                                         $bonus_type1 = $level_info['bonus_type'];
-                                        $bonus_type2 = $lower_ratio['bonus_type'];
                                     }
-                                    //判断是否
-                                    if($bonus_type1 == 2 || $bonus_type2 == 2){//只要有一个比例是固定金额方式，固定金额 - 百分比转换的金额
+                                    $bonus_type = '';
+                                    if($bonus_type1 == 2){
                                         $bonus_type = 2;
-                                        if($bonus_type1 == 2){
-                                            if($goods_teambonus_money1 != '' || $goods_teambonus_money1 === (float)0){
-                                                $money1 = $goods_teambonus_money1;
-                                            }else{
-                                                $money1 = $level_info['money'];
-                                            }
+                                        if($goods_teambonus_money2 != '' || $goods_teambonus_money2 === (float)0){
+                                            $bonus_money = $goods_teambonus_money2 > 0 ? $goods_teambonus_money2 : 0;
                                         }else{
-                                            if($goods_teambonus_ratio1 != '' || $goods_teambonus_ratio1 === (float)0){
-                                                $grade_ratio = $goods_teambonus_ratio1 / 100;
-                                            }else{
-                                                $grade_ratio = $level_info['ratio'] / 100;
-                                            }
-                                            if ($bonus_calculation == 1) {//实际付款金额
-                                                if($presell_goods_info){
-                                                    $price = $promotion_price;
-                                                }
-                                                $money1 = twoDecimal($price * $grade_ratio * $poundage);
-                                            }
-                                            if ($bonus_calculation == 2) {//商品原价
-                                                $money1 = twoDecimal($original_price * $grade_ratio * $poundage);
-                                            }
-                                            if ($bonus_calculation == 3) {//商品销售价
-                                                $money1 = twoDecimal($promotion_price * $grade_ratio * $poundage);
-                                            }
-                                            if ($bonus_calculation == 4) {//商品成本价
-                                                $money1 = twoDecimal($cost_price * $grade_ratio * $poundage);
-                                            }
-                                            if ($bonus_calculation == 5) {//商品利润价
-                                                $money1 = twoDecimal($profit_price * $grade_ratio * $poundage);
-                                            }
-                                        }
-
-                                        if($bonus_type2 == 2){
-                                            if($goods_teambonus_money2 != '' || $goods_teambonus_money2 === (float)0){
-                                                $money2 = $goods_teambonus_money2;
-                                            }else{
-                                                $money2 = $lower_ratio['money'];
-                                            }
-                                        }else{
-                                            if($goods_teambonus_ratio2 != '' || $goods_teambonus_ratio2 === (float)0){
-                                                $grade_ratio = $goods_teambonus_ratio2 / 100;
-                                            }else{
-                                                $grade_ratio = $lower_ratio['ratio'] / 100;
-                                            }
-                                            if ($bonus_calculation == 1) {//实际付款金额
-                                                if($presell_goods_info){
-                                                    $price = $promotion_price;
-                                                }
-                                                $money2 = twoDecimal($price * $grade_ratio * $poundage);
-                                            }
-                                            if ($bonus_calculation == 2) {//商品原价
-                                                $money2 = twoDecimal($original_price * $grade_ratio * $poundage);
-                                            }
-                                            if ($bonus_calculation == 3) {//商品销售价
-                                                $money2 = twoDecimal($promotion_price * $grade_ratio * $poundage);
-                                            }
-                                            if ($bonus_calculation == 4) {//商品成本价
-                                                $money2 = twoDecimal($cost_price * $grade_ratio * $poundage);
-                                            }
-                                            if ($bonus_calculation == 5) {//商品利润价
-                                                $money2 = twoDecimal($profit_price * $grade_ratio * $poundage);
-                                            }
-                                        }
-                                        if($money1 > $money2){
-                                            $bonus_money = $money1 - $money2;
-                                        }else{
-                                            $bonus_money = 0;
+                                            $bonus_money = $level_info['money'] > 0 ? $level_info['money'] : 0;
                                         }
                                     }else{
                                         if($goods_teambonus_ratio2 != '' || $goods_teambonus_ratio2 === (float)0){
-                                            $ratio = $goods_teambonus_ratio1;
-                                        }
-                                        if($goods_teambonus_ratio1 != '' || $goods_teambonus_ratio1 === (float)0){
-                                            $lower_ratio['ratio'] = $goods_teambonus_ratio2;
-                                        }
-                                        if($ratio> $lower_ratio['ratio']){//只要上级比下级小 就不拿
-                                            $real_ratio = ($ratio-$lower_ratio['ratio'])/100;//当前比例减去下级比例
+                                            $real_ratio = $goods_teambonus_ratio2/100;//下级比例不存在
                                         }else{
-                                            $real_ratio = 0;
-                                        }
-                                        if($team_bonus!=''){
-                                            $real_ratio = 0;//存在独立分红比例
+                                            $real_ratio = $ratio/100;//下级比例不存在
                                         }
                                     }
+                                    if(max($agent_data['weight'])==$weight){
+                                        //最后一级权重 获取剩余会员
+                                        if($k != end($agent_data['level_info'])) {
+                                            // 不是最后一项
+                                            //拆分数组
+                                            $new_array = array_chunk($agent_data['level_info'], $k+1);
+
+                                        }
+                                        $top = 2;
+                                    }
+                                }
+                                $next_level_id = $v['team_agent_level_id'];
+                                if($bonus_type == 2){
+                                    $data['bonus'] = $bonus_money;
                                 }else{
-                                    continue;
+                                    if ($bonus_calculation == 1) {//实际付款金额
+                                        if($presell_goods_info){
+                                            $price = $promotion_price;
+                                        }
+                                        $data['bonus'] = twoDecimal($price * $real_ratio * $poundage);
+                                    }
+                                    if ($bonus_calculation == 2) {//商品原价
+                                        $data['bonus'] = twoDecimal($original_price * $real_ratio * $poundage);
+                                    }
+                                    if ($bonus_calculation == 3) {//商品销售价
+                                        $data['bonus'] = twoDecimal($promotion_price * $real_ratio * $poundage);
+                                    }
+                                    if ($bonus_calculation == 4) {//商品成本价
+                                        $data['bonus'] = twoDecimal($cost_price * $real_ratio * $poundage);
+                                    }
+                                    if ($bonus_calculation == 5) {//商品利润价
+                                        $data['bonus'] = twoDecimal($profit_price * $real_ratio * $poundage);
+                                    }
+                                }
+                                $team_bonus_arr[$real_uid]['bonus'] = !$team_bonus_arr[$real_uid] ? $data['bonus'] : $team_bonus_arr[$real_uid]['bonus'] + $data['bonus'];
+                                $team_bonus_arr[$real_uid]['level_award'] = 0;
+                                $team_bonus_arr[$real_uid]['tips'] = '_'.$real_uid.'_';//加个标记方便后面查询用户分红
+                                $all_bonus += $data['bonus'];
+    //                            $data1 = [
+    //                                'order_id' => $params['order_id'],
+    //                                'order_goods_id' => $params['order_goods_id'],
+    //                                'buyer_id' => $order_goods_info['buyer_id'],
+    //                                'website_id' => $params['website_id'],
+    //                                'bonus' => $data['bonus'],
+    //                                'from_type' => 3,
+    //                                'uid' => $real_uid,
+    //                                'shop_id' => $shop_id
+    //                            ];
+    //                            array_push($insert_data,$data1);
+                                // $bonus->save($data1);
+                                // $bonus->commit();
+                                if($top == 2){
+                                   break;
                                 }
                             }else{
-                                $checks_weight = $weight; //当本人是团队分红的时候
-                                //判断是否有商品独立分红方式
-                                if($goods_info['is_bonus_team']==1 && !empty($goods_info['teambonus_rule_val'])){//该商品参与团队分红
-                                    if($teambonus_rule_val['teambonus_rule'] == 1){//开启了商品团队独立分红
-                                        $level_id = $level_info['id'];
-                                        $goods_teambonus_money1 = 0;
-                                        $goods_teambonus_ratio1 = 0;
-                                        if($teambonus_rule_val['bonus_type'] == 2){
-                                            $bonus_type1 = 2;
-                                            $goods_teambonus_money2 = (float)$teambonus_rule_arr[$level_id];
-                                        }else{
-                                            $goods_teambonus_ratio2 = (float)$teambonus_rule_arr[$level_id];
-                                        }
-                                    }
-                                }else{
-                                    //判断等级分红方式
-                                    $bonus_type1 = $level_info['bonus_type'];
-                                }
-                                $bonus_type = '';
-                                if($bonus_type1 == 2){
-                                    $bonus_type = 2;
-                                    if($goods_teambonus_money2 != '' || $goods_teambonus_money2 === (float)0){
-                                        $bonus_money = $goods_teambonus_money2 > 0 ? $goods_teambonus_money2 : 0;
-                                    }else{
-                                        $bonus_money = $level_info['money'] > 0 ? $level_info['money'] : 0;
-                                    }
-                                }else{
-                                    if($goods_teambonus_ratio2 != '' || $goods_teambonus_ratio2 === (float)0){
-                                        $real_ratio = $goods_teambonus_ratio2/100;//下级比例不存在
-                                    }else{
-                                        $real_ratio = $ratio/100;//下级比例不存在
+                                //开启内购 而且本人是队长 上级跟本人同级 需先去除该上级
+                                $check_uid = 0;
+                                //获取购买者本人信息
+                                $buyer_info2 = $member->getInfo(['uid'=>$params['buyer_id']],'referee_id,team_agent_level_id');
+
+                                $weight1 = -1;
+                                $weight2 = -1;
+                                if($buyer_info2['referee_id'] && $buyer_info2['team_agent_level_id']){
+                                    //获取本人级别
+                                    $check_info1 = $level->getInfo(['id' => $buyer_info2['team_agent_level_id'], 'from_type' => 3], 'weight');
+                                    $weight1 = $check_info1['weight'];
+                                    $check_user_info2 = $member->getInfo(['uid'=>$buyer_info2['referee_id']],'team_agent_level_id');
+                                    if($check_user_info2 && $check_user_info2['team_agent_level_id']){
+                                        $check_info2 = $level->getInfo(['id' => $check_user_info2['team_agent_level_id'], 'from_type' => 3], 'weight');
+                                        $weight2 = $check_info2['weight'];
                                     }
                                 }
-                                if(max($agent_data['weight'])==$weight){
-                                    //最后一级权重 获取剩余会员
-                                    if($k != end($agent_data['level_info'])) {
-                                        // 不是最后一项
-                                        //拆分数组
-                                        $new_array = array_chunk($agent_data['level_info'], $k+1);
-
-                                    }
-                                    $top = 2;
+                                if($weight1 >= 0 && $weight2 >= 0 && $weight1 == $weight2 && $base_info['purchase_type'] == 2){
+                                    $check_uid = $buyer_info2['referee_id'];
                                 }
-                            }
-                            $next_level_id = $v['team_agent_level_id'];
-                            if($bonus_type == 2){
-                                $data['bonus'] = $bonus_money;
-                            }else{
-                                if ($bonus_calculation == 1) {//实际付款金额
-                                    if($presell_goods_info){
-                                        $price = $promotion_price;
-                                    }
-                                    $data['bonus'] = twoDecimal($price * $real_ratio * $poundage);
-                                }
-                                if ($bonus_calculation == 2) {//商品原价
-                                    $data['bonus'] = twoDecimal($original_price * $real_ratio * $poundage);
-                                }
-                                if ($bonus_calculation == 3) {//商品销售价
-                                    $data['bonus'] = twoDecimal($promotion_price * $real_ratio * $poundage);
-                                }
-                                if ($bonus_calculation == 4) {//商品成本价
-                                    $data['bonus'] = twoDecimal($cost_price * $real_ratio * $poundage);
-                                }
-                                if ($bonus_calculation == 5) {//商品利润价
-                                    $data['bonus'] = twoDecimal($profit_price * $real_ratio * $poundage);
-                                }
-                            }
-                            $team_bonus_arr[$real_uid]['bonus'] = !$team_bonus_arr[$real_uid] ? $data['bonus'] : $team_bonus_arr[$real_uid]['bonus'] + $data['bonus'];
-                            $team_bonus_arr[$real_uid]['level_award'] = 0;
-                            $team_bonus_arr[$real_uid]['tips'] = '_'.$real_uid.'_';//加个标记方便后面查询用户分红
-                            $all_bonus += $data['bonus'];
-//                            $data1 = [
-//                                'order_id' => $params['order_id'],
-//                                'order_goods_id' => $params['order_goods_id'],
-//                                'buyer_id' => $order_goods_info['buyer_id'],
-//                                'website_id' => $params['website_id'],
-//                                'bonus' => $data['bonus'],
-//                                'from_type' => 3,
-//                                'uid' => $real_uid,
-//                                'shop_id' => $shop_id
-//                            ];
-//                            array_push($insert_data,$data1);
-                            // $bonus->save($data1);
-                            // $bonus->commit();
-                            if($top == 2){
-                               break;
-                            }
-                        }else{
-                            //开启内购 而且本人是队长 上级跟本人同级 需先去除该上级
-                            $check_uid = 0;
-                            //获取购买者本人信息
-                            $buyer_info2 = $member->getInfo(['uid'=>$params['buyer_id']],'referee_id,team_agent_level_id');
-
-                            $weight1 = -1;
-                            $weight2 = -1;
-                            if($buyer_info2['referee_id'] && $buyer_info2['team_agent_level_id']){
-                                //获取本人级别
-                                $check_info1 = $level->getInfo(['id' => $buyer_info2['team_agent_level_id'], 'from_type' => 3], 'weight');
-                                $weight1 = $check_info1['weight'];
-                                $check_user_info2 = $member->getInfo(['uid'=>$buyer_info2['referee_id']],'team_agent_level_id');
-                                if($check_user_info2 && $check_user_info2['team_agent_level_id']){
-                                    $check_info2 = $level->getInfo(['id' => $check_user_info2['team_agent_level_id'], 'from_type' => 3], 'weight');
-                                    $weight2 = $check_info2['weight'];
-                                }
-                            }
-                            if($weight1 >= 0 && $weight2 >= 0 && $weight1 == $weight2 && $base_info['purchase_type'] == 2){
-                                $check_uid = $buyer_info2['referee_id'];
-                            }
 
 
 
-                            //组装平级奖待发放人员
-                            $arr_data = array(
-                                'uid'=>$v['uid'],
-                                'weight'=>$agent_data['weight'][$k],
-                                'level_id'=>$agent_data['level_id'][$k],
-                            );
-                            //edit for 2020/04/26 连续跟上级等级一致才写入，否则不写入
-
-                            if($check_uid != $v['uid'] && $agent_data['weight'][$k] >= $checks_weight){
-                                array_push($arr2,$arr_data);
-                            }
-                            //级差团队外 开始统计3级平级奖 -- 仅限3级内 --  团队id? 权重？
-                            continue;
-                        }
-                    }
-                    unset($v);
-
-                    if($new_array && count($new_array) > 1){
-
-                        foreach ($new_array as $key_f => $value_f) {
-                            if($key_f == 0){
-                                continue;
-                            }
-                            foreach ($value_f as $keys => $values) {
-                                //获取对应等级信息
-                                $check_user_info1 = $level->getInfo(['id' => $values['team_agent_level_id'], 'from_type' => 3], 'weight');
+                                //组装平级奖待发放人员
                                 $arr_data = array(
-                                    'uid'=>$values['uid'],
-                                    'weight'=>$check_user_info1['weight'],
-                                    'level_id'=>$values['team_agent_level_id'],
+                                    'uid'=>$v['uid'],
+                                    'weight'=>$agent_data['weight'][$k],
+                                    'level_id'=>$agent_data['level_id'][$k],
                                 );
+                                //edit for 2020/04/26 连续跟上级等级一致才写入，否则不写入
 
-                                if($check_user_info1['weight'] >= $weight){
+                                if($check_uid != $v['uid'] && $agent_data['weight'][$k] >= $checks_weight){
                                     array_push($arr2,$arr_data);
                                 }
+                                //级差团队外 开始统计3级平级奖 -- 仅限3级内 --  团队id? 权重？
+                                continue;
                             }
                         }
+                        unset($v);
 
-                    }
+                        if($new_array && count($new_array) > 1){
 
-                    if($arr2 && count($arr2) > 0 && $base_info['level_award']){ //开始处理平级奖
-                        //获取当前价格
-                        if ($bonus_calculation == 1) {//实际付款金额
-                            if($presell_goods_info){
-                                $price = $promotion_price;
-                            }
-                            $price = $price;
-                        }
-                        if ($bonus_calculation == 2) {//商品原价
-                            $price = $original_price;
-                        }
-                        if ($bonus_calculation == 3) {//商品销售价
-                            $price = $promotion_price;
-                        }
-                        if ($bonus_calculation == 4) {//商品成本价
-                            $price = $cost_price;
-                        }
-                        if ($bonus_calculation == 5) {//商品利润价
-                            $price = $profit_price;
-                        }
-                        //重新组装数组,每个等级保留前3个
-                        $res = array();
-                        foreach($arr2 as $v) {
-                                $res[$v['level_id']][] = $v;
-                        }
-                        $send_array = array();
-
-                        foreach ($res as $key => $value) {
-                            $save_array = array_chunk($value, 3);
-                            array_push($send_array,$save_array[0]);
-                        }
-
-                        foreach ($send_array as $key_s => $value_s) {
-                            foreach ($value_s as $key_i => $value_i) {
-                                $this_level_info = $level->getInfo(['id' => $value_i['level_id'], 'from_type' => 3], 'level_award1,level_award2,level_award3,level_money1,level_money2,level_money3,bonus_type');
-
-
-                                if($this_level_info['bonus_type'] == 1){//第一种方式比例方式
-                                    $level_award_ratio = $key_i == 0 ? $this_level_info['level_award1'] : ( $key_i == 1 ? $this_level_info['level_award2'] : $this_level_info['level_award3'] );
-                                    $peer_bonus = twoDecimal($price * $level_award_ratio / 100); //平级奖奖励
-                                }else{
-                                    $peer_bonus = $key_i == 0 ? ($this_level_info['level_money1'] > 0 ? $this_level_info['level_money1'] : 0) : ( $key_i == 1 ? ($this_level_info['level_money2'] > 0 ? $this_level_info['level_money2'] : 0) : ($this_level_info['level_money3'] > 0 ? $this_level_info['level_money3'] : 0) ); //平级奖奖励
-                                }
-                                $check_level_award = $key_i + 1;
-                                if($base_info['level_award'] < $check_level_award){
+                            foreach ($new_array as $key_f => $value_f) {
+                                if($key_f == 0){
                                     continue;
                                 }
-                                if($peer_bonus > 0){
-                                    $all_bonus += $peer_bonus;
-                                }
-                                // $team_bonus_arr[$value_i['uid']]['bonus'] = !$team_bonus_arr[$value_i['uid']] ? $data['bonus'] : $team_bonus_arr[$value_i['uid']]['bonus'] + $data['bonus'];
-                                //edit for 拉登 这个peer_bonus为平级奖金额
-                                $team_bonus_arr[$value_i['uid']]['bonus'] = $peer_bonus;
-                                $team_bonus_arr[$value_i['uid']]['level_award'] = $key_i + 1;
-                                $team_bonus_arr[$value_i['uid']]['tips'] = '_'.$value_i['uid'].'_';//加个标记方便后面查询用户分红
-                                //加多一个标识，标识是否平级奖
-                                //                                $data4 = [
-                                //                                    'order_id' => $params['order_id'],
-                                //                                    'order_goods_id' => $params['order_goods_id'],
-                                //                                    'buyer_id' => $order_goods_info['buyer_id'],
-                                //                                    'website_id' => $params['website_id'],
-                                //                                    'bonus' => $peer_bonus,
-                                //                                    'from_type' => 3,
-                                //                                    'uid' => $value_i['uid'],
-                                //                                    'level_award' => $key_i + 1,
-                                //                                    'shop_id' => $shop_id
-                                //                                ];
-                                //                                array_push($insert_data,$data4);
-                            }
-                            unset($value_i);
-                        }
-                        unset($value_s);
+                                foreach ($value_f as $keys => $values) {
+                                    //获取对应等级信息
+                                    $check_user_info1 = $level->getInfo(['id' => $values['team_agent_level_id'], 'from_type' => 3], 'weight');
+                                    $arr_data = array(
+                                        'uid'=>$values['uid'],
+                                        'weight'=>$check_user_info1['weight'],
+                                        'level_id'=>$values['team_agent_level_id'],
+                                    );
 
+                                    if($check_user_info1['weight'] >= $weight){
+                                        array_push($arr2,$arr_data);
+                                    }
+                                }
+                            }
+
+                        }
+
+                        if($arr2 && count($arr2) > 0 && $base_info['level_award']){ //开始处理平级奖
+                            //获取当前价格
+                            if ($bonus_calculation == 1) {//实际付款金额
+                                if($presell_goods_info){
+                                    $price = $promotion_price;
+                                }
+                                $price = $price;
+                            }
+                            if ($bonus_calculation == 2) {//商品原价
+                                $price = $original_price;
+                            }
+                            if ($bonus_calculation == 3) {//商品销售价
+                                $price = $promotion_price;
+                            }
+                            if ($bonus_calculation == 4) {//商品成本价
+                                $price = $cost_price;
+                            }
+                            if ($bonus_calculation == 5) {//商品利润价
+                                $price = $profit_price;
+                            }
+                            //重新组装数组,每个等级保留前3个
+                            $res = array();
+                            foreach($arr2 as $v) {
+                                    $res[$v['level_id']][] = $v;
+                            }
+                            $send_array = array();
+
+                            foreach ($res as $key => $value) {
+                                $save_array = array_chunk($value, 3);
+                                array_push($send_array,$save_array[0]);
+                            }
+
+                            foreach ($send_array as $key_s => $value_s) {
+                                foreach ($value_s as $key_i => $value_i) {
+                                    $this_level_info = $level->getInfo(['id' => $value_i['level_id'], 'from_type' => 3], 'level_award1,level_award2,level_award3,level_money1,level_money2,level_money3,bonus_type');
+
+
+                                    if($this_level_info['bonus_type'] == 1){//第一种方式比例方式
+                                        $level_award_ratio = $key_i == 0 ? $this_level_info['level_award1'] : ( $key_i == 1 ? $this_level_info['level_award2'] : $this_level_info['level_award3'] );
+                                        $peer_bonus = twoDecimal($price * $level_award_ratio / 100); //平级奖奖励
+                                    }else{
+                                        $peer_bonus = $key_i == 0 ? ($this_level_info['level_money1'] > 0 ? $this_level_info['level_money1'] : 0) : ( $key_i == 1 ? ($this_level_info['level_money2'] > 0 ? $this_level_info['level_money2'] : 0) : ($this_level_info['level_money3'] > 0 ? $this_level_info['level_money3'] : 0) ); //平级奖奖励
+                                    }
+                                    $check_level_award = $key_i + 1;
+                                    if($base_info['level_award'] < $check_level_award){
+                                        continue;
+                                    }
+                                    if($peer_bonus > 0){
+                                        $all_bonus += $peer_bonus;
+                                    }
+                                    // $team_bonus_arr[$value_i['uid']]['bonus'] = !$team_bonus_arr[$value_i['uid']] ? $data['bonus'] : $team_bonus_arr[$value_i['uid']]['bonus'] + $data['bonus'];
+                                    //edit for 拉登 这个peer_bonus为平级奖金额
+                                    $team_bonus_arr[$value_i['uid']]['bonus'] = $peer_bonus;
+                                    $team_bonus_arr[$value_i['uid']]['level_award'] = $key_i + 1;
+                                    $team_bonus_arr[$value_i['uid']]['tips'] = '_'.$value_i['uid'].'_';//加个标记方便后面查询用户分红
+                                    //加多一个标识，标识是否平级奖
+                                    //                                $data4 = [
+                                    //                                    'order_id' => $params['order_id'],
+                                    //                                    'order_goods_id' => $params['order_goods_id'],
+                                    //                                    'buyer_id' => $order_goods_info['buyer_id'],
+                                    //                                    'website_id' => $params['website_id'],
+                                    //                                    'bonus' => $peer_bonus,
+                                    //                                    'from_type' => 3,
+                                    //                                    'uid' => $value_i['uid'],
+                                    //                                    'level_award' => $key_i + 1,
+                                    //                                    'shop_id' => $shop_id
+                                    //                                ];
+                                    //                                array_push($insert_data,$data4);
+                                }
+                                unset($value_i);
+                            }
+                            unset($value_s);
+
+                        }
                     }
                 }
             }
         }
 
-        //开始批处理
-        if($team_bonus_arr){
+        //开始批处理 ---  旧逻辑分红
+        if($team_bonus_arr && $teambonus_rule_val['bonus_type'] < 3){
             $bonus = new VslOrderBonusLogModel();
             $bonus->startTrans();
             try{
@@ -1463,6 +1565,10 @@ class TeamBonus extends BaseService
                 return $e->getMessage();
             }
         }
+
+
+
+
     }
 
     public function get_parent_id($arr,$cid,$type=0,$tops = []){

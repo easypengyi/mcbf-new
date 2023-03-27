@@ -24,6 +24,10 @@ class VslGoodsModel extends BaseModel {
 
     const DEFAULT_GOODS_ID = 55;
 
+    public static function getExchangeGoods(){
+        return [55, 65, 66, 67];
+    }
+
     protected $autoWriteTimestamp = true;
 
     public function album_picture()

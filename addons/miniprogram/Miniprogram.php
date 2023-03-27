@@ -36,7 +36,7 @@ class MiniProgram extends Addons
         'logo_small' => 'https://pic.vslai.com.cn/upload/common/1563782173.png',
         'logo_often' => 'https://pic.vslai.com.cn/upload/common/1563782293.png',
     ];//设置文件单独的钩子
-    
+
     public $menu_info = [
         //platform
         [
@@ -187,14 +187,14 @@ class MiniProgram extends Addons
 
     public function miniProgramManage()
     {
-        
+
         //$auth_id = request()->get('auth_id');
         // 目前一个website_id对象只有一个小程序
         $condition['shop_id'] = $this->instance_id;
         $condition['website_id'] = $this->website_id;
         $mini_program_info = $this->mini_program_service->miniProgramInfo($condition);
         $this->assign('mplive', isExistAddons('mplive', $this->website_id));
-        
+
         if($this->module=='platform' || $this->module == 'admin'){
         if (empty($mini_program_info)) {
             // 绑定新的小程序
@@ -281,6 +281,7 @@ class MiniProgram extends Addons
             $this->assign('getMpSettingUrl', __URL(call_user_func('addons_url_' . $this->module, 'miniprogram://Miniprogram/getMpSetting')));
             $this->assign('getNewMpBaseInfoUrl', __URL(call_user_func('addons_url_' . $this->module, 'miniprogram://Miniprogram/getNewMpBaseInfo')));
             $this->assign('postDomainToMpUrl', __URL(call_user_func('addons_url_' . $this->module, 'miniprogram://Miniprogram/postDomainToMp')));
+            $this->assign('postSetPrivacySettingUrl', __URL(call_user_func('addons_url_' . $this->module, 'miniprogram://Miniprogram/postSetPrivacySetting')));
 
             $template_data = $this->mini_program_service->mpTemplateList(['shop_id' => 0, 'website_id' => 0]);
             $this->assign('template_list', $template_data);
@@ -293,7 +294,7 @@ class MiniProgram extends Addons
             $this->assign('payBConfigMirUrl', __URL(call_user_func('addons_url_' . $this->module,'miniprogram://Miniprogram/payBConfigMir')));
             $this->assign('payDConfigMirUrl', __URL(call_user_func('addons_url_' . $this->module,'miniprogram://Miniprogram/payDConfigMir')));
 			$this->assign('payGpConfigMirUrl', __URL(call_user_func('addons_url_' . $this->module,'miniprogram://Miniprogram/payGpConfigMir')));
-            $this->fetch('template/' . $this->module . '/miniProgramSetting');			
+            $this->fetch('template/' . $this->module . '/miniProgramSetting');
         }
 
     }
@@ -349,7 +350,7 @@ class MiniProgram extends Addons
             }
             //重置authorize_access_token redis
             $this->wchat_open->setMpAuthorizerAccessToken($auth_data['authorizer_access_token']);
-    
+
             //获取太阳码
             $sun_code_url = $this->mini_program_service->getLimitMpCode();
             if (!isset($sun_code_url['code'])){
@@ -359,10 +360,10 @@ class MiniProgram extends Addons
                     'new_auth_state' => 0,
                 ],['website_id' => $this->website_id]);
             }
-            
+
 //            // 添加域名到小程序
 //            $mini_program_controller->postDomainToMp();
-            
+
             // 开启小程序商城
             $this->mini_program_service->openMpShop();
             setAddons('miniprogram', $this->website_id, $this->instance_id);
@@ -433,7 +434,7 @@ class MiniProgram extends Addons
         $this->assign('category_list', objToArr($category_list));
         return $this->fetch('/template/' . $this->module . '/' . 'submitModal');
     }
-    
+
     /**
      * 代码库
      */

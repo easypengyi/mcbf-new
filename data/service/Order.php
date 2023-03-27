@@ -61,6 +61,7 @@ use data\model\VslOrderPaymentModel;
 use data\model\VslOrderShopReturnModel;
 use addons\presell\model\VslPresellModel;
 use addons\discount\model\VslPromotionDiscountModel;
+use data\model\VslOrderTeamLogModel;
 use data\model\VslPromotionMansongRuleModel;
 use data\model\VslGoodsTicketModel;
 use addons\shop\model\VslShopModel;
@@ -169,6 +170,10 @@ class Order extends BaseService
                 $detail['area_bonus'] = $order_bonus->getSum(['order_id' => $order_id, 'area_return_status' => 0], 'area_bonus');
                 $detail['team_bonus'] = $order_bonus->getSum(['order_id' => $order_id, 'team_return_status' => 0], 'team_bonus');
             }
+
+            $order_team_bonus = new VslOrderTeamLogModel();
+            $sum_team_bonus = $order_team_bonus->getSum(['order_id' => $order_id], 'team_bonus');
+            $detail['team_bonus'] += $sum_team_bonus;
         }
         // debugLog($this->website_id, '==>店铺佣金账户订单website_id<==');
         //查询订单佣金
@@ -8932,11 +8937,34 @@ class Order extends BaseService
             $bonus = $orderBonusLogModel->where(['website_id' => $this->website_id, 'order_id' => ['in', $orderIds], 'area_return_status' => 0])->field('sum(area_bonus) as sum_area,sum(team_bonus) as sum_team,sum(global_bonus) as sum_global, order_id')->group('order_id')->select();
         }
 
+        //团队极差
+        $orderBonusLogModel = new VslOrderTeamLogModel();
+        $lists = $orderBonusLogModel->where(['website_id' => $this->website_id, 'order_id' => ['in', $orderIds]])->field('sum(team_bonus) as sum_team, order_id')->group('order_id')->select();
+        $team_list = [];
+        if($lists){
+            $team_list = objToArr($lists);
+        }
 
         if (!$bonus) {
+            if($lists){
+                return array_column($team_list, null, 'order_id');
+            }
             return [];
         }
-        return array_column(objToArr($bonus), null, 'order_id');
+
+        $bonus_list = array_merge(objToArr($bonus), $team_list);
+
+
+//        foreach ($bonus_list as $key=>&$item){
+//            if(isset($team_list[$item['order_id']])){
+//                $item['sum_team'] = $team_list[$item['order_id']]['sum_team'];
+//            }
+//        }
+
+//        var_dump($team_list, $bonus_list);die;
+
+
+        return array_column($bonus_list, null, 'order_id');;
     }
 
     /**

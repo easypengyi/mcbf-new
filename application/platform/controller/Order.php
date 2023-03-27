@@ -5,12 +5,14 @@ namespace app\platform\controller;
 use addons\blockchain\model\VslBlockChainRecordsModel;
 use addons\bonus\model\VslAgentLevelModel;
 use addons\channel\server\Channel as ChannelServer;
+use addons\distribution\service\Distributor;
 use addons\invoice\server\Invoice as InvoiceService;
 use data\model\UserModel;
 use data\model\VslMemberModel;
 use data\model\VslOrderGoodsExpressModel;
 use data\model\VslOrderGoodsModel;
 use data\model\VslOrderModel;
+use data\model\VslOrderTeamLogModel;
 use data\service\Address as AddressService;
 use data\service\ExcelsExport;
 use data\service\Express;
@@ -24,6 +26,7 @@ use data\service\Excel;
 use addons\distribution\model\VslOrderDistributorCommissionModel;
 use addons\bonus\model\VslOrderBonusLogModel;
 use data\model\VslExcelsModel;
+use think\Session;
 
 /**
  * 订单控制器
@@ -377,6 +380,7 @@ class Order extends BaseController
             if (request()->post('order_memo')){
                 $condition['order_memo'] = true;
             }
+
             $list = $order_service->getOrderList($page_index, $page_size, $condition, 'create_time desc');
             return $list;
         } else {
@@ -1500,29 +1504,89 @@ class Order extends BaseController
         $order = new OrderService();
         $order_count_array = array();
         $buyer_id = request()->post('buyer_id', '');
-        if ($buyer_id) {
-            $order_count_array['daifukuan'] = $order->getOrderCount(['order_status' => ['IN',[0,7]], 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //代付款
-            $order_count_array['daifahuo'] = $order->getOrderCount(['order_status' => 1, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //代发货
-            $order_count_array['yifahuo'] = $order->getOrderCount(['order_status' => 2, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已发货
-            $order_count_array['yishouhuo'] = $order->getOrderCount(['order_status' => 3, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已收货
-            $order_count_array['yiwancheng'] = $order->getOrderCount(['order_status' => 4, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已完成
-            $order_count_array['yiguanbi'] = $order->getOrderCount(['order_status' => 5, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已关闭
-            $order_count_array['tuikuanzhong'] = $order->getOrderCount(['order_status' => -1, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //退款中
-            $order_count_array['yituikuan'] = $order->getOrderCount(['order_status' => -2, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已退款
-            $order_count_array['all'] = $order->getOrderCount(['website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //全部
-            $order_count_array['chuli'] = $order->getOrderCount(['order_status' => 6, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //链上处理中
-        } else {
-            $order_count_array['daifukuan'] = $order->getOrderCount(['order_status' => 0, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //代付款
-            $order_count_array['uncheck'] = $order->getOrderCount(['order_status' => 7, 'website_id' => $this->website_id, 'is_deleted' => 0]); //代付款
-            $order_count_array['daifahuo'] = $order->getOrderCount(['website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0,'shipping_status' => 0, 'pay_status' => 2,'order_status' =>[['neq',4],['neq',5],['neq',-1]]]); //代发货
-            $order_count_array['yifahuo'] = $order->getOrderCount(['order_status' => 2, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //已发货
-            $order_count_array['yishouhuo'] = $order->getOrderCount(['order_status' => 3, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //已收货
-            $order_count_array['yiwancheng'] = $order->getOrderCount(['order_status' => 4, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //已完成
-            $order_count_array['yiguanbi'] = $order->getOrderCount(['order_status' => 5, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //已关闭
-            $order_count_array['tuikuanzhong'] = $order->getOrderCount(['order_status' => -1, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //退款中
-            $order_count_array['yituikuan'] = $order->getOrderCount(['order_status' => -2, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //已退款
-            $order_count_array['all'] = $order->getOrderCount(['website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //全部
-            $order_count_array['chuli'] = $order->getOrderCount(['order_status' => 6, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //链上处理中
+        $model = $this->user->getRequestModel();
+        $is_company = Session::get($model . 'is_company');
+        if($is_company == 1){
+            $distributor = new Distributor();
+            $uids = $distributor->sort($this->uid);
+            $order_count_array['daifukuan'] = 0;
+            $order_count_array['daifahuo'] = 0; //代发货
+            $order_count_array['yifahuo'] = 0; //已发货
+            $order_count_array['yishouhuo'] = 0; //已收货
+            $order_count_array['yiwancheng'] = 0; //已完成
+            $order_count_array['yiguanbi'] = 0; //已关闭
+            $order_count_array['tuikuanzhong'] = 0; //退款中
+            $order_count_array['yituikuan'] = 0; //已退款
+            $order_count_array['all'] = 0; //全部
+            $order_count_array['chuli'] = 0;
+            if(count($uids) > 0){
+                $ids = [];
+                foreach ($uids as $i){
+                    $ids[] = $i['uid'];
+                }
+                if ($buyer_id) {
+                    if(in_array($buyer_id, $ids)){
+                        $order_count_array['daifukuan'] = $order->getOrderCount(['order_status' => ['IN',[0,7]], 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //代付款
+                        $order_count_array['daifahuo'] = $order->getOrderCount(['order_status' => 1, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //代发货
+                        $order_count_array['yifahuo'] = $order->getOrderCount(['order_status' => 2, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已发货
+                        $order_count_array['yishouhuo'] = $order->getOrderCount(['order_status' => 3, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已收货
+                        $order_count_array['yiwancheng'] = $order->getOrderCount(['order_status' => 4, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已完成
+                        $order_count_array['yiguanbi'] = $order->getOrderCount(['order_status' => 5, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已关闭
+                        $order_count_array['tuikuanzhong'] = $order->getOrderCount(['order_status' => -1, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //退款中
+                        $order_count_array['yituikuan'] = $order->getOrderCount(['order_status' => -2, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已退款
+                        $order_count_array['all'] = $order->getOrderCount(['website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //全部
+                        $order_count_array['chuli'] = $order->getOrderCount(['order_status' => 6, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //链上处理中
+                    }else{
+                        $order_count_array['daifukuan'] = 0;
+                        $order_count_array['daifahuo'] = 0; //代发货
+                        $order_count_array['yifahuo'] = 0; //已发货
+                        $order_count_array['yishouhuo'] = 0; //已收货
+                        $order_count_array['yiwancheng'] = 0; //已完成
+                        $order_count_array['yiguanbi'] = 0; //已关闭
+                        $order_count_array['tuikuanzhong'] = 0; //退款中
+                        $order_count_array['yituikuan'] = 0; //已退款
+                        $order_count_array['all'] = 0; //全部
+                        $order_count_array['chuli'] = 0;
+                    }
+                } else {
+                    $order_count_array['daifukuan'] = $order->getOrderCount(['order_status' => 0, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0, 'buyer_id' => array('in', $ids)]); //代付款
+                    $order_count_array['uncheck'] = $order->getOrderCount(['order_status' => 7, 'website_id' => $this->website_id, 'is_deleted' => 0, 'buyer_id' => array('in', $ids)]); //代付款
+                    $order_count_array['daifahuo'] = $order->getOrderCount(['website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0,'shipping_status' => 0, 'buyer_id' => array('in', $ids), 'pay_status' => 2,'order_status' =>[['neq',4],['neq',5],['neq',-1]]]); //代发货
+                    $order_count_array['yifahuo'] = $order->getOrderCount(['order_status' => 2, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0, 'buyer_id' => array('in', $ids)]); //已发货
+                    $order_count_array['yishouhuo'] = $order->getOrderCount(['order_status' => 3, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0, 'buyer_id' => array('in', $ids)]); //已收货
+                    $order_count_array['yiwancheng'] = $order->getOrderCount(['order_status' => 4, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0, 'buyer_id' => array('in', $ids)]); //已完成
+                    $order_count_array['yiguanbi'] = $order->getOrderCount(['order_status' => 5, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0, 'buyer_id' => array('in', $ids)]); //已关闭
+                    $order_count_array['tuikuanzhong'] = $order->getOrderCount(['order_status' => -1, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0, 'buyer_id' => array('in', $ids)]); //退款中
+                    $order_count_array['yituikuan'] = $order->getOrderCount(['order_status' => -2, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0, 'buyer_id' => array('in', $ids)]); //已退款
+                    $order_count_array['all'] = $order->getOrderCount(['website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0, 'buyer_id' => array('in', $ids)]); //全部
+                    $order_count_array['chuli'] = $order->getOrderCount(['order_status' => 6, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0, 'buyer_id' => array('in', $ids)]); //链上处理中
+                }
+
+            }
+        }else{
+            if ($buyer_id) {
+                $order_count_array['daifukuan'] = $order->getOrderCount(['order_status' => ['IN',[0,7]], 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //代付款
+                $order_count_array['daifahuo'] = $order->getOrderCount(['order_status' => 1, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //代发货
+                $order_count_array['yifahuo'] = $order->getOrderCount(['order_status' => 2, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已发货
+                $order_count_array['yishouhuo'] = $order->getOrderCount(['order_status' => 3, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已收货
+                $order_count_array['yiwancheng'] = $order->getOrderCount(['order_status' => 4, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已完成
+                $order_count_array['yiguanbi'] = $order->getOrderCount(['order_status' => 5, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已关闭
+                $order_count_array['tuikuanzhong'] = $order->getOrderCount(['order_status' => -1, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //退款中
+                $order_count_array['yituikuan'] = $order->getOrderCount(['order_status' => -2, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //已退款
+                $order_count_array['all'] = $order->getOrderCount(['website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //全部
+                $order_count_array['chuli'] = $order->getOrderCount(['order_status' => 6, 'website_id' => $this->website_id, 'shop_id' => 0, 'buyer_id' => $buyer_id, 'is_deleted' => 0]); //链上处理中
+            } else {
+                $order_count_array['daifukuan'] = $order->getOrderCount(['order_status' => 0, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //代付款
+                $order_count_array['uncheck'] = $order->getOrderCount(['order_status' => 7, 'website_id' => $this->website_id, 'is_deleted' => 0]); //代付款
+                $order_count_array['daifahuo'] = $order->getOrderCount(['website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0,'shipping_status' => 0, 'pay_status' => 2,'order_status' =>[['neq',4],['neq',5],['neq',-1]]]); //代发货
+                $order_count_array['yifahuo'] = $order->getOrderCount(['order_status' => 2, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //已发货
+                $order_count_array['yishouhuo'] = $order->getOrderCount(['order_status' => 3, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //已收货
+                $order_count_array['yiwancheng'] = $order->getOrderCount(['order_status' => 4, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //已完成
+                $order_count_array['yiguanbi'] = $order->getOrderCount(['order_status' => 5, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //已关闭
+                $order_count_array['tuikuanzhong'] = $order->getOrderCount(['order_status' => -1, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //退款中
+                $order_count_array['yituikuan'] = $order->getOrderCount(['order_status' => -2, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //已退款
+                $order_count_array['all'] = $order->getOrderCount(['website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //全部
+                $order_count_array['chuli'] = $order->getOrderCount(['order_status' => 6, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0]); //链上处理中
 //            if ($this->groupStatus) {
 //                $group_server = new GroupShopping();
 //                $unGroupOrderIds = $group_server->getPayedUnGroupOrder($this->instance_id,$this->website_id);
@@ -1532,7 +1596,10 @@ class Order extends BaseController
 //            if ($this->storeStatus) {
 //                $order_count_array['daiquhuo'] = $order->getOrderCount(['order_status' => 1, 'website_id' => $this->website_id, 'shop_id' => 0, 'is_deleted' => 0, 'store_id' => ['>', 0]]); //代发货
 //            }
+            }
         }
+
+
 
         return $order_count_array;
     }
@@ -2137,6 +2204,7 @@ class Order extends BaseController
     public function bonusMember(){
         if(request()->isPost()){
             $bonus = new VslOrderBonusLogModel();
+            $order_team_bonus = new VslOrderTeamLogModel();
             $user = new UserModel();
             $member = new VslMemberModel();
             $agent = new VslAgentLevelModel();
@@ -2162,42 +2230,74 @@ class Order extends BaseController
             }
             $list = [];
             $bonusLog = $bonus->getQuery($condition,'*');
-            if(!$bonusLog || !$details){
+            $teamBonusLog = $order_team_bonus->getQuery($condition,'*');
+            if(!$bonusLog  && !$teamBonusLog){
                 return $list;
             }
 
-            foreach($bonusLog as $val){
-                $bonusDetails =  json_decode(htmlspecialchars_decode($val[$details]),true);
-                if(!$bonusDetails || !is_array($bonusDetails)){
-                    continue;
-                }
-                foreach($bonusDetails as $uid => $memberBonus){
-                    if(isset($list[$uid])){
-                        $list[$uid]['bonus'] += $memberBonus['bonus'];
-                    }else{
-                        $list[$uid]['bonus'] = $memberBonus['bonus'];
-                        $list[$uid]['level_award'] = (int)$memberBonus['level_award'];
-                        $user_info = $user->getInfo(['uid'=>$uid],'user_headimg,user_tel,user_name,nick_name');
-                        $member_info = $member->getInfo(['uid'=>$uid],'global_agent_level_id,area_agent_level_id,team_agent_level_id');
-                        if($type==1){
-                            $list[$uid]['level_name'] = $agent->getInfo(['id'=>$member_info['global_agent_level_id']],'level_name')['level_name'];
-                        }
-                        if($type==2){
-                            $list[$uid]['level_name'] = $agent->getInfo(['id'=>$member_info['area_agent_level_id']],'level_name')['level_name'];
-                        }
-                        if($type==3){
-                            $list[$uid]['level_name'] = $agent->getInfo(['id'=>$member_info['team_agent_level_id']],'level_name')['level_name'];
-                        }
-                        $list[$uid]['user_headimg'] =$user_info['user_headimg'];
-                        $list[$uid]['user_name'] = $user_info['user_name']?:($user_info['nick_name']?:$user_info['user_tel']);
-                        $list[$uid]['user_tel'] =$user_info['user_tel'];
-                        $list[$uid]['uid'] = $uid;
+            if($bonusLog){
+                foreach($bonusLog as $val){
+                    $bonusDetails =  json_decode(htmlspecialchars_decode($val[$details]),true);
+                    if(!$bonusDetails || !is_array($bonusDetails)){
+                        continue;
                     }
+                    foreach($bonusDetails as $uid => $memberBonus){
+                        if(isset($list[$uid])){
+                            $list[$uid]['bonus'] += $memberBonus['bonus'];
+                        }else{
+                            $list[$uid]['bonus'] = $memberBonus['bonus'];
+                            $list[$uid]['level_award'] = (int)$memberBonus['level_award'];
+                            $user_info = $user->getInfo(['uid'=>$uid],'user_headimg,user_tel,user_name,nick_name');
+                            $member_info = $member->getInfo(['uid'=>$uid],'global_agent_level_id,area_agent_level_id,team_agent_level_id');
+                            if($type==1){
+                                $list[$uid]['level_name'] = $agent->getInfo(['id'=>$member_info['global_agent_level_id']],'level_name')['level_name'];
+                            }
+                            if($type==2){
+                                $list[$uid]['level_name'] = $agent->getInfo(['id'=>$member_info['area_agent_level_id']],'level_name')['level_name'];
+                            }
+                            if($type==3){
+                                $list[$uid]['level_name'] = $agent->getInfo(['id'=>$member_info['team_agent_level_id']],'level_name')['level_name'];
+                            }
+                            $list[$uid]['user_headimg'] =$user_info['user_headimg'];
+                            $list[$uid]['user_name'] = $user_info['user_name']?:($user_info['nick_name']?:$user_info['user_tel']);
+                            $list[$uid]['user_tel'] =$user_info['user_tel'];
+                            $list[$uid]['uid'] = $uid;
+                        }
+                    }
+                    unset($memberBonus);
                 }
-                unset($memberBonus);
             }
-            unset($val);
+
+            if($teamBonusLog){
+                foreach($teamBonusLog as $val){
+                    $bonusDetails =  json_decode(htmlspecialchars_decode($val[$details]),true);
+                    if(!$bonusDetails || !is_array($bonusDetails)){
+                        continue;
+                    }
+                    foreach($bonusDetails as $key => $memberBonus){
+                        $uid = $memberBonus['uid'];
+                        if(isset($list[$uid])){
+                            $list[$uid]['bonus'] += $memberBonus['commission'];
+                        }else{
+                            $list[$uid]['bonus'] = $memberBonus['commission'];
+                            $list[$uid]['level_award'] = 0;
+                            $user_info = $user->getInfo(['uid'=>$uid],'user_headimg,user_tel,user_name,nick_name');
+                            $list[$uid]['level_name'] = $memberBonus['distributor_level_name'];
+                            $list[$uid]['user_headimg'] =$user_info['user_headimg'];
+                            $list[$uid]['user_name'] = $user_info['user_name']?:($user_info['nick_name']?:$user_info['user_tel']);
+                            $list[$uid]['user_tel'] =$user_info['user_tel'];
+                            $list[$uid]['uid'] = $uid;
+                        }
+                    }
+                    unset($memberBonus);
+                }
+            }
+//
+//
+//            unset($val);
             $list = array_merge($list);
+//            var_dump($list);die;
+
             return $list;
         }
         $info['order_id']= request()->get("order_id", 0);
@@ -2523,5 +2623,261 @@ class Order extends BaseController
         $order_service = new OrderService();
         $res = $order_service->checkPay($order_id,$check_status);
         return AjaxReturn($res);
+    }
+
+    /**
+     * 自营订单列表
+     */
+    public function myOrderList()
+    {
+        $order_service = new OrderService();
+
+        if (request()->isAjax()) {
+            $page_index = request()->post('page_index', 1);
+            $page_size = request()->post('page_size', PAGESIZE);
+            $start_create_date = request()->post('start_create_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_create_date'));
+            $end_create_date = request()->post('end_create_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_create_date'));
+            $start_pay_date = request()->post('start_pay_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_pay_date'));
+            $end_pay_date = request()->post('end_pay_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_pay_date'));
+            $start_send_date = request()->post('start_send_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_send_date'));
+            $end_send_date = request()->post('end_send_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_send_date'));
+            $start_finish_date = request()->post('start_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_finish_date'));
+            $end_finish_date = request()->post('end_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_finish_date'));
+            $user = request()->post('user', '');
+            $user_type = request()->post('user_type', '');
+            $order_no = request()->post('order_no', '');
+            $order_status = request()->post('order_status', '');
+            $payment_type = request()->post('payment_type', '');
+            $express_no = request()->post('express_no', '');
+            $goods_name = request()->post('goods_name', '');
+            $order_type = request()->post('order_type', '');
+            $order_id_array = request()->post('order_id_array/a');
+            $delivery_order_status = request()->post('delivery_order_status');
+            $express_order_status = request()->post('express_order_status');
+            $shipping_type = request()->post('shipping_type');//订单配送方式
+            $condition['is_deleted'] = 0; // 未删除订单
+            if ($express_no) {
+                $condition['express_no'] = ['LIKE', '%' . $express_no . '%'];
+            }
+
+            if ($goods_name) {
+                if(is_numeric($goods_name)) {
+                    $condition['or'] = true;
+                    $condition['goods_name'] = ['LIKE', '%' . $goods_name . '%'];
+                    $condition['goods_id'] = ['=', $goods_name];
+                }else{
+                    $condition['goods_name'] = ['LIKE', '%' . $goods_name . '%'];
+                }
+            }
+            if ($order_type) {
+                $condition['order_type'] = $order_type;
+            }
+            if ($start_create_date) {
+                $condition['create_time'][] = ['>=', $start_create_date];
+            }
+            if ($end_create_date) {
+                $condition['create_time'][] = ['<=', $end_create_date + 86399];
+            }
+            if ($start_pay_date) {
+                $condition['pay_time'][] = ['>=', $start_pay_date];
+            }
+            if ($end_pay_date) {
+                $condition['pay_time'][] = ['<=', $end_pay_date + 86399];
+            }
+            if ($start_send_date) {
+                $condition['consign_time'][] = ['>=', $start_send_date];
+            }
+            if ($end_send_date) {
+                $condition['consign_time'][] = ['<=', $end_send_date + 86399];
+            }
+            if ($start_finish_date) {
+                $condition['finish_time'][] = ['>=', $start_finish_date];
+            }
+            if ($end_finish_date) {
+                $condition['finish_time'][] = ['<=', $end_finish_date + 86399];
+            }
+            if ($order_status != '') {
+                // $order_status 1 待发货
+                if ($order_status == 1) {
+                    // 订单状态为待发货实际为已经支付未完成还未发货的订单
+                    $condition['shipping_status'] = 0; // 0 待发货
+                    $condition['pay_status'] = 2; // 2 已支付
+                    //$condition['store_id'] = 0; // 2 已支付
+                    $condition['order_status'][] = array(
+                        'neq',
+                        4
+                    ); // 4 已完成
+                    $condition['order_status'][] = array(
+                        'neq',
+                        5
+                    ); // 5 关闭订单
+                    $condition['order_status'][] = array(
+                        'neq',
+                        -1
+                    ); // -1 售后
+                    //$condition['vgsr_status'] = 2;
+                } elseif ($order_status == 10) {// 拼团，已支付未成团订单
+                    $condition['vgsr_status'] = 1;
+                } elseif ($order_status == 11) {// 拼团，已支付未成团订单
+                    $condition['store_id'] = ['>', 0];
+                    $condition['order_status'] = 1;
+                } else {
+                    $condition['order_status'] = $order_status;
+                }
+            } else {
+//                //不包括售后订单
+//                $condition['order_status'] = array(
+//                    '>=',
+//                    0
+//                );
+            }
+            if (!empty($payment_type)) {
+                $condition['payment_type'] = $payment_type;
+            }
+            //变更类型 普通会员订单 2分销订单 3分红订单
+
+            $member = new UserModel();
+            if (!empty($user) && $user_type == 1) {
+                $condition['receiver_name|receiver_mobile|user_name|buyer_id'] = array(
+                    'like',
+                    '%' . $user . '%'
+                );
+            }else if(!empty($user) && $user_type == 2){
+                if(intval($user) > 0 && strlen($user) < 11){
+                    //查询是否为uid
+                    $check_info = $member->getInfo(['uid'=>$user],'uid');
+                    if($check_info){
+                        $serch_uid =$check_info;
+                    }else{
+                        $serch_uid = $member->getInfo(['user_tel|nick_name|real_name'=>['like','%'.$user.'%'],'website_id'=>$this->website_id],'uid');
+                    }
+                }else{
+                    $serch_uid = $member->getInfo(['user_tel|nick_name|real_name'=>['like','%'.$user.'%'],'website_id'=>$this->website_id],'uid');
+                }
+
+                if($serch_uid && $serch_uid['uid']){
+                    $order_commission = new VslOrderDistributorCommissionModel();
+                    $ids = '';
+                    $ids1 = $order_commission->Query(['website_id'=>$this->website_id,'commissionA_id'=>$serch_uid['uid']],'distinct order_id');//一级佣金订单
+                    if($ids1 && !empty($ids)){
+                        $ids = $ids.','.implode(',',$ids1);
+                    }elseif($ids1){
+                        $ids = implode(',',$ids1);
+                    }
+                    $ids2 = $order_commission->Query(['website_id'=>$this->website_id,'commissionB_id'=>$serch_uid['uid']],'distinct order_id');//二级佣金订单
+                    if($ids2 && !empty($ids)){
+                        $ids = $ids.','.implode(',',$ids2);
+                    }elseif($ids2){
+                        $ids = implode(',',$ids2);
+                    }
+                    $ids3 = $order_commission->Query(['website_id'=>$this->website_id,'commissionC_id'=>$serch_uid['uid']],'distinct order_id');//三级佣金订单
+                    if($ids3 && !empty($ids)){
+                        $ids = $ids.','.implode(',',$ids3);
+                    }elseif($ids3){
+                        $ids = implode(',',$ids3);
+                    }
+                    $condition['order_id'] = ['in',$ids];
+                }
+            }else if(!empty($user) && $user_type == 3){
+                if(intval($user) > 0 && strlen($user) < 11){
+                    //查询是否为uid
+                    $check_info = $member->getInfo(['uid'=>$user],'uid');
+                    if($check_info){
+                        $serch_uid =$check_info;
+                    }else{
+                        $serch_uid = $member->getInfo(['user_tel|nick_name|real_name'=>['like','%'.$user.'%'],'website_id'=>$this->website_id],'uid');
+                    }
+                }else{
+                    $serch_uid = $member->getInfo(['user_tel|nick_name|real_name'=>['like','%'.$user.'%'],'website_id'=>$this->website_id],'uid');
+                }
+
+                if($serch_uid && $serch_uid['uid']){
+                    $order_Bonus = new VslOrderBonusLogModel();
+                    $condition['order_id'] = ['in',implode(',',array_unique($order_Bonus->Query(['website_id'=>$this->website_id,'team_bonus_details|area_bonus_details|global_bonus_details'=>['like', '%_'.$serch_uid['uid'].'_%']],'order_id')))];//分红订单id
+                }else{
+                    $condition['order_id'] = ['in',''];
+                }
+            }
+
+            if (!empty($order_no)) {
+                $condition['order_no'] = array(
+                    'like',
+                    '%' . $order_no . '%'
+                );
+            }
+
+            if ($delivery_order_status){
+                $condition['delivery_order_status'] = $delivery_order_status;
+            }
+            if ($express_order_status){
+                $condition['express_order_status'] = $express_order_status;
+            }
+            if ($order_id_array) {
+                $condition['order_id'] = ['IN', $order_id_array];
+            }
+            if ($shipping_type) {
+                $condition['shipping_type'] = $shipping_type;
+            }
+            $condition['website_id'] = $this->website_id;
+            if($order_status != 7) {
+                //7是使用线下支付的待审核状态，全部由平台来审核，所以这里不能只查自营店
+                $condition['shop_id'] = 0;
+            }
+            if (request()->post('order_amount')){
+                $condition['order_amount'] = true;
+            }
+            if (request()->post('order_memo')){
+                $condition['order_memo'] = true;
+            }
+            $distributor = new Distributor();
+            $uids = $distributor->sort($this->uid);
+            $ids = [];
+            foreach ($uids as $i){
+                $ids[] = $i['uid'];
+            }
+            if(count($ids)){
+                $condition['buyer_id'] = array('in', $ids);
+            }else{
+                $condition['buyer_id'] = array('in', [-1]);
+            }
+            $member_id = request()->post('member_id', '');
+            if(!empty($member_id)){
+                $condition['buyer_id'] = $member_id;
+            }
+
+            $list = $order_service->getOrderList($page_index, $page_size, $condition, 'create_time desc');
+            return $list;
+        } else {
+            $user_type = 1;
+            $user = '';
+            $distributor_id = request()->get('distributor_id', '');
+            $user_model = new UserModel();
+            if($distributor_id){
+                $user_type = 2;
+                $user = $distributor_id;
+            }
+            $agent_id = request()->get('agent_id', '');
+            if($agent_id){
+                $user_type = 3;
+                $user = $agent_id;
+            }
+
+            $this->assign('user_type', $user_type);
+            $this->assign('user', $user);
+            $status = request()->get('order_status', '9');
+            $order_no = request()->get('order_no', '');
+            $this->assign('status', $status);
+            $this->assign('order_no', $order_no);
+            $member_id = request()->get('member_id', '');
+            $this->assign('member_id', $member_id);
+            // 获取物流公司
+            $express = new ExpressService();
+            $expressList = $express->expressCompanyQuery();
+            $this->assign('expressList', $expressList);
+            $orderServer = new OrderType();
+            $orderTypeList = $orderServer->getOrderTypeList();
+            $this->assign('orderTypeList', $orderTypeList);
+            return view($this->style . 'Order/myList');
+        }
     }
 }

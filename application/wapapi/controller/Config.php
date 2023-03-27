@@ -192,7 +192,6 @@ class Config extends BaseController
     //新接口
     public function newConfig()
     {
-
         $program =  requestForm();//1==》移动端，2=》小程序，3=》app
         $websiteSer = new WebSiteSer();
         $website_setting = $websiteSer->getWebSiteInfo($this->website_id);
