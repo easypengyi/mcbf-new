@@ -9,7 +9,7 @@ use data\service\Config as WebConfig;
 use data\service\WebSite;
 use think\Controller;
 /**
- * 图片上传控制器     
+ * 图片上传控制器
  */
 use data\service\Upload\AliOss;
 use think\Config;
@@ -142,6 +142,7 @@ class Upload extends Controller {
                     if ($retval > 0) {
                         $data['origin_file_name'] = $this->file_name;
                         $data['file_name'] = $this->reset_file_path . $newfile;
+                        $data['file_path'] = $ok["path"];
                         $data['state'] = '1';
                         $data['message'] = "上传成功";
                         $data['file_id'] = $retval;
@@ -260,7 +261,7 @@ class Upload extends Controller {
         $file =  request()->get('file', 'mp');
         // 验证文件
         $this->file_path = 'upload/' . Session::get(request()->module() . 'website_id') . '/' . Session::get(request()->module() . 'instance_id') . '/'.$file.'/';
-        
+
         $this->file_name = $_FILES["file_upload"]["name"]; // 文件原名
         $this->file_size = $_FILES["file_upload"]["size"]; // 文件大小
         $this->file_type = $_FILES["file_upload"]["type"]; // 文件类型
@@ -299,7 +300,7 @@ class Upload extends Controller {
         }
         // 重新设置文件路径
 //        $this->resetFilePath(1);//不需要重置
-    
+
         // 检测文件夹是否存在，不存在则创建文件夹
         if (!file_exists($this->file_path)){
             $mode = intval('0777', 8);
@@ -381,7 +382,7 @@ class Upload extends Controller {
             $mode = intval('0777', 8);
             mkdir($this->file_path, $mode, true);
         }
-        
+
         $ok = $this->moveUploadFiles($_FILES["file_upload"]["tmp_name"], $this->file_path . $this->file_name);
         if ($ok["code"]) {
             @unlink($_FILES['file_upload']);
@@ -510,7 +511,7 @@ class Upload extends Controller {
      */
     public function uploadSsl() {
         // 验证文件
-        
+
         $data = array();
         $cert = request()->get("ssl", "");
         $certkey = request()->get("sslkey", "");
@@ -643,7 +644,7 @@ class Upload extends Controller {
 
     /**
      * 上传文件后，ajax返回信息
-     * @param array $return            
+     * @param array $return
      */
     private function ajaxFileReturn() {
         if (empty($this->return['code']) || null == $this->return['code'] || "" == $this->return['code']) {
@@ -747,9 +748,9 @@ class Upload extends Controller {
     /**
      * 各类型图片生成
      *
-     * @param unknown $photoPath            
-     * @param unknown $ext            
-     * @param number $type            
+     * @param unknown $photoPath
+     * @param unknown $ext
+     * @param number $type
      */
     public function photoCreate($upFilePath, $photoPath, $ext, $type, $pic_name, $album_id, $width, $height, $pic_tag, $pic_id, $domain, $bucket, $upload_img) {
         $width1 = 0.6 * $width;
@@ -992,8 +993,8 @@ class Upload extends Controller {
     /**
      * 原图上传(上传到外网的同时,也会在本地生成图片(在缩略图生成使用后会被删除))
      *
-     * @param unknown $file_path            
-     * @param unknown $key            
+     * @param unknown $file_path
+     * @param unknown $key
      */
     public function moveUploadFile($file_path, $key) {
         $ok = @move_uploaded_file($file_path, $key);
@@ -1007,7 +1008,7 @@ class Upload extends Controller {
             if(strpos($this->file_type,'image') !== false && $this->file_type != "image/gif" && $this->file_type != "image/png" && $this->file_type != "image/x-icon"){
                 (new \data\service\ImgCompress($key, 1))->compressImg($key);
             }
-            
+
             if ($this->upload_type == 2) {
                 $alioss = new AliOss();
                 $result = $alioss->setAliOssUplaod($key, $key);
@@ -1109,7 +1110,7 @@ class Upload extends Controller {
         $data = array("code" => 1, "sql_str" => $str);
         return json_encode($data);
     }
-    
+
     /**
      * 功能说明：app上传
      */

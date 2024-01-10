@@ -27,6 +27,7 @@ class Addons extends BaseService {
     public function getModuleList($search_text = '') {
         $addonsCategoryModel = new SysAddonsCategoryModel();
         $addonsModel = new SysAddonsModel();
+        $list = $addonsModel->getQuery([], 'id,logo', 'create_time desc');
         $addonsClickModel = new SysAddonsClicksModel();
         $module_id_array = explode(',', $this->module_id_array);
         $modules = \think\Request::instance()->module();

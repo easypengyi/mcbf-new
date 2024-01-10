@@ -18,19 +18,6 @@
                         <input type="text" class="v__control_input" id="user" placeholder="用户名/昵称/手机号码" autocomplete="off">
                     </div>
                 </div>
-
-                <div class="v__control-group">
-                    <label class="v__control-label">注册时间</label>
-                    <div class="v__controls v-date-input-control">
-                        <label for="orderTime">
-                            <input type="text" class="v__control_input pr-30" id="orderTime" placeholder="请选择时间" autocomplete="off" data-types="datetime">
-                            <i class="icon icon-calendar"></i>
-                            <input type="hidden" id="orderStartDate">
-                            <input type="hidden" id="orderEndDate">
-                        </label>
-                    </div>
-                </div>
-
             </div>
         </div>
         <div class="filter-item clearfix">
@@ -47,36 +34,6 @@
     </div>
 </form>
 
-                <div class="screen-title">
-                    <span class="text">信息列表</span>
-                </div>
-                <div class="flex-auto-center mb-20 bg-info text-center border-info" style="background-color: #edf4ff;border-color: #d8e8fc;">
-                    <div class="flex-1 padding-15">
-                        <h3 class="strong">会员数</h3>
-                        <p>{$user_count_num}</p>
-                    </div>
-                    <div class="flex-1 padding-15">
-                        <h3 class="strong">剩余积分</h3>
-                        <p id="user_balance">{$user_balance_num}</p>
-                    </div>
-                    <div class="flex-1 padding-15">
-                        <h3 class="strong">黑名单</h3>
-                        <p id="user_black">{$user_black_num}</p>
-                    </div>
-                    <div class="flex-1 padding-15">
-                        <h3 class="strong">可用积分</h3>
-                        <p id="user_point">{$user_point_num}</p>
-                    </div>
-                </div>
-<!--<div class="mb-10 flex flex-pack-justify">-->
-<!--    <div class="">-->
-<!--        <a class="btn btn-default addUsers" href="javascript:void(0);">添加会员</a>-->
-<!--        <a class="btn btn-default updateLevel" href="javascript:void(0);">修改等级</a>-->
-<!--        <a class="btn btn-default updateGroup" href="javascript:void(0);" data-uid="0">修改标签</a>-->
-<!--        <a class="btn btn-default joinBlackLists" href="javascript:void(0);">加入黑名单</a>-->
-<!--        <a class="btn btn-default delBlackLists" href="javascript:void(0);">移除黑名单</a>-->
-<!--    </div>-->
-<!--</div>-->
                 <table class="table v-table table-auto-center">
                     <thead>
                         <tr class="order-list-item">
@@ -84,10 +41,11 @@
                             <th>ID</th>
                             <th>推荐人</th>
                             <th>会员信息</th>
-                            <th>等级/标签</th>
-                            <th>余额/积分</th>
-                            <th>成交</th>
-                            <th>注册时间</th>
+                            <th>申请信息</th>
+                            <th>申请套餐</th>
+                            <th>合同截图</th>
+                            <th>申请时间</th>
+                            <th>状态</th>
                             <th class="col-md-2 pr-14 operationLeft">操作</th>
                         </tr>
                     </thead>
@@ -107,45 +65,17 @@
 require(['util'],function(util){
     util.initPage(getMemberList);
 
-    util.layDate('#orderTime',true,function(value, date, endDate){
-        var h=date.hours<10 ?"0"+date.hours : date.hours;
-        var m=date.minutes<10 ?"0"+date.minutes : date.minutes;
-        var s=date.seconds<10 ?"0"+date.seconds : date.seconds;
-        var h1=endDate.hours<10 ?"0"+endDate.hours : endDate.hours;
-        var m1=endDate.minutes<10 ?"0"+endDate.minutes : endDate.minutes;
-        var s1=endDate.seconds<10 ?"0"+endDate.seconds : endDate.seconds;
-        var date1=date.year+'-'+date.month+'-'+date.date+' '+h+":"+m+":"+s;
-        var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+h1+":"+m1+":"+s1;
-        if(value){
-            $('#orderStartDate').val(date1);
-            $('#orderEndDate').val(date2);
-        }
-        else{
-            $('#orderStartDate').val('');
-            $('#orderEndDate').val('');
-        }
-    });
     function getMemberList(page_index){
         $("#page_index").val(page_index);
         var user = $("#user").val();
         var member_id = $("#member_id").val();
-        var user_group = $("#user_group").val();
-        var member_status = $("#member_status").val();
-        var member_level = $("#member_level").val();
-        var start_create_date = $("#orderStartDate").val();
-        var end_create_date = $("#orderEndDate").val();
         $.ajax({
             type : "post",
-            url : "{:__URL('PLATFORM_MAIN/member/myList')}",
+            url : "{:__URL('PLATFORM_MAIN/member/applyList')}",
             async : true,
             data : {
                 "page_index" : page_index,
-                "start_create_date":start_create_date,
-                "end_create_date":end_create_date,
                 "search_text" : user,
-                "member_level" : member_level,
-                "user_group" : user_group,
-                "member_status" : member_status,
                 "member_id" : member_id
             },
             success : function(data) {
@@ -212,30 +142,35 @@ require(['util'],function(util){
                             }
                         }
                         html +='</td>';
+
                         html +='<td>';
-                        html +='<p class="p"><span class="label font-color-red">等级:'+ data["data"][i]["level_name"] +'</span></p>';
-                        if(data["data"][i]["group_name"]){
-                            html +='<span class="label font-color-success">标签:' + data["data"][i]["group_name"] + '</span>';
-                        }else{
-                            html +='<span class="label font-color-success">标签:未设置标签</span>';
-                        }
-                        html +='</td>';
-                        html +='<td>';
-                        html +='<p class="p"><span class="label font-color-red">可用余额:'+ data["data"][i]["balance"] +'</span></p>';
-                        html +='<span class="label font-color-success">可用积分:' + data["data"][i]["point"] + '</span>';
-                        html +='<span class="label font-color-success">可用美丽分:' + data["data"][i]["beautiful_point"] + '</span>';
+                        html +='<div class="line-1-ellipsis">姓名:'+ data["data"][i]["apply_real_name"] +'</div>';
+                        html +='<div class="line-1-ellipsis">电话:' + data["data"][i]["apply_user_tel"] + '</div>';
+                        html +='<div class="line-1-ellipsis">昵称:' + data["data"][i]["apply_nickname"] + '</div>';
 
                         html +='</td>';
                         html +='<td>';
-                        html +='<p class="p"><span class="label font-color-red">订单:'+ data["data"][i]["order_num"] +'</span></p>';
-                        html +='<span class="label font-color-success">金额:'+ data["data"][i]["order_money"] +'</span>';
+                        html +='<div class="line-1-ellipsis">' + data["data"][i]["type_name"] + '</div>';
                         html +='</td>';
-                        html += '<td >'+ data["data"][i]["reg_time"] +'</td>';
+                        html +='<td>';
+                        html +='<a href="'+data["data"][i]["image_url"]+'"><img src="'+__IMG(data["data"][i]["image_url"])+'" height="30" width="30" alt=""></a>';
+                        html +='</td>';
+                        html += '<td >'+ data["data"][i]["create_time"] +'</td>';
+                        html += '<td >';
+                        if(data["data"][i]["status"] == 0){
+                            html += '<span class="label font-color-success">'+ data["data"][i]["status_name"] +'</span>';
+                        }else if(data["data"][i]["status"] == 1){
+                            html += '<span class="label font-color-blue">'+ data["data"][i]["status_name"] +'</span>';
+                        }
+                        else if(data["data"][i]["status"] == 2){
+                            html += '<span class="label font-color-red">'+ data["data"][i]["status_name"] +'</span>';
+                        }
+                        html += '</td>';
+
                         html +='<td class="operationLeft fs-0">';
-                        html +='<a href="' +  __URL('PLATFORM_MAIN/Member/myDetail?member_id='+ data['data'][i]['uid']) +'"  class="btn-operation">详情</a>';
-                        html +='<a href="' +  __URL('PLATFORM_MAIN/Order/myOrderList?member_id='+ data['data'][i]['uid']) +'" class="btn-operation">订单</a>';
-                        if(data["data"][i]["member_level"] == 1){
-                            html +='<a href="javascript:void(0);" class="btn-operation applyVip" data-id ='+ data['data'][i]['uid']+'  class="btn-operation">开通VIP</a>';
+                        if(data["data"][i]["status"] == 0){
+                            html +='<a href="javascript:void(0);" class="btn-operation checkApply" data-id ='+ data['data'][i]['id']+' data-status="1" class="btn-operation">审核通过</a>';
+                            html +='<a href="javascript:void(0);" class="btn-operation checkApply" data-id ='+ data['data'][i]['id']+' data-status="2" class="btn-operation">审核拒绝</a>';
                         }
 
                         html +='</td>';
@@ -250,7 +185,7 @@ require(['util'],function(util){
                 });
                 $("#list").html(html);
                 util.tips();
-                applyVip();
+                checkApply();
             }
         });
     }
@@ -259,48 +194,21 @@ require(['util'],function(util){
     });
 
         //
-       function applyVip(){
-        $('.applyVip').on('click',function(){
-            var uid = $(this).data('id');
-            var url = "{:__URL('PLATFORM_MAIN/member/applyVip')}";
-            util.confirm('申请开通VIP', 'url:'+url, function(){
-                var real_name = this.$content.find('#real_name').val();
-                if(!real_name){
-                    util.message('请填写用户姓名','danger');
-                    return false;
-                }
-                var user_tel = this.$content.find('#user_tel').val();
-                if(!user_tel){
-                    util.message('请填写用户手机号','danger');
-                    return false;
-                }
-
-                var type = this.$content.find('#type').val();
-                if(!type){
-                    util.message('请选择套餐','danger');
-                    return false;
-                }
-
-                var image_url = this.$content.find('#image_url').val();
-                if(!image_url){
-                    util.message('请先上传合同信息','danger');
-                    return false;
-                }
-
+       function checkApply(){
+        $('.checkApply').on('click',function(){
+            var id = $(this).data('id');
+            var status = $(this).attr('data-status');
+            util.alert('确定把该会员审核为VIP会员吗？', function(){
                 $.ajax({
                     type : "post",
-                    url : "{:__URL('PLATFORM_MAIN/member/addApplyVip')}",
+                    url : "{:__URL('PLATFORM_MAIN/member/checkApply')}",
                     data : {
-                        "uid" : uid,
-                        "real_name" : real_name,
-                        "user_tel": user_tel,
-                        "nickname": this.$content.find('#nickname').val(),
-                        "type" : type,
-                        "image_url": image_url
+                        "id" : id,
+                        "status" : status
                     },
                     success : function(data) {
                         if (data["code"] === 0) {
-                            util.message(data["message"],'success');
+                            util.message(data["message"],'success', getMemberList($("#page_index").val()));
                         }else{
                             util.message(data["message"], 'danger');
                         }

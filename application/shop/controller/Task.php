@@ -2,6 +2,7 @@
 
 namespace app\shop\controller;
 
+use addons\distribution\Distribution;
 use addons\orderbarrage\model\VslOrderBarrageRuleModel;
 use addons\orderbarrage\model\VslOrderBarrageVirtualModel;
 use addons\orderbarrage\server\OrderBarrage;
@@ -1462,6 +1463,19 @@ class Task extends Controller
         $order_id = request()->param('order_id', 0);
         $order = new Order();
         $order->orderComplete($order_id, 1);
+        echo "success";die;
+    }
+
+    /**
+     * 手动结算订单直推佣金
+     */
+    public function handSettleOrderCommission(){
+        $order_id = request()->param('order_id', 0);
+        $params['order_id'] = $order_id;
+        $params['website_id'] = 1;
+        $distribution = new Distribution();
+        $distribution->updateOrderCommission($params);
+
         echo "success";die;
     }
 }

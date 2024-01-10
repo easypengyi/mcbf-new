@@ -327,15 +327,17 @@ class Member extends BaseController
         $distributor_service = new Distributor();
         $member_info = $this->user->getMemberInfo();
         $mobile = $member_info['mobile'];
-        $check_mx = false;
-        if($distributor_service->checkContract($mobile, 6)){
-            $check_mx = true;
-
-        }
-        $check_cc = false;
-        if($distributor_service->checkContract($mobile, 7)){
-            $check_cc = true;
-        }
+//        $check_mx = false;
+//        if($distributor_service->checkContract($mobile, 6)){
+//            $check_mx = true;
+//
+//        }
+//        $check_cc = false;
+//        if($distributor_service->checkContract($mobile, 7)){
+//            $check_cc = true;
+//        }
+        $check_mx = true;
+        $check_cc = true;
         $data['mobile'] = $mobile;
         $data['check_mx'] = $check_mx;
         $data['check_cc'] = $check_cc;

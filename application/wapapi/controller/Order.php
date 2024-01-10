@@ -1676,14 +1676,14 @@ class Order extends BaseController
 //            $order_count = $order_model->getCount($condition);
 ////            var_dump($order_count);die;
 //            if($order_count == 0){
-            $userModel = new VslMemberModel();
-            $user_info = $userModel->getInfo(['uid'=> $this->uid], 'uid,distributor_level_id,mobile');
-            if(!$this->checkContract($user_info['mobile'], 6)){
-                return json(['code' => -6, 'message' => '请先前往会员中心签约居间服务合同-（美星)后，再兑换']);
-            }
-            if(!$this->checkContract($user_info['mobile'], 7)){
-                return json(['code' => -6, 'message' => '请先前往会员中心签约居间服务合同-（晨彩)后，再兑换']);
-            }
+//            $userModel = new VslMemberModel();
+//            $user_info = $userModel->getInfo(['uid'=> $this->uid], 'uid,distributor_level_id,mobile');
+//            if(!$this->checkContract($user_info['mobile'], 6)){
+//                return json(['code' => -6, 'message' => '请先前往会员中心签约居间服务合同-（美星)后，再兑换']);
+//            }
+//            if(!$this->checkContract($user_info['mobile'], 7)){
+//                return json(['code' => -6, 'message' => '请先前往会员中心签约居间服务合同-（晨彩)后，再兑换']);
+//            }
 
             #查看是否已经绑定上级，而且开启了强制绑定
             $distributorServer = new \addons\distribution\service\Distributor();

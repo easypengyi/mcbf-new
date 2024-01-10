@@ -72,4 +72,27 @@ class VslMemberModel extends BaseModel {
         $count = $this->viewCount($viewObj,$condition);
         return $count;
     }
+
+    /**
+     * 申请开通vip套餐
+     *
+     * @return array
+     */
+    public static function applyType($type = 0){
+        $arr = [
+            ['value'=> 1, 'name'=> '套餐1', 'amount'=> 1000],
+            ['value'=> 2, 'name'=> '套餐2', 'amount'=> 2000],
+            ['value'=> 3, 'name'=> '套餐3', 'amount'=> 3000]
+        ];
+        if($type > 0){
+            foreach ($arr as $value){
+                if($value['value'] ==  $type){
+                    $arr = $value;
+                    break;
+                }
+            }
+        }
+
+        return $arr;
+    }
 }

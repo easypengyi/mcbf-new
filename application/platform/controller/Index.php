@@ -1,6 +1,7 @@
 <?php
 namespace app\platform\controller;
 use addons\distribution\model\VslDistributorCommissionWithdrawModel;
+use addons\distribution\service\Distributor;
 use addons\miniprogram\model\WeixinAuthModel;
 use data\model\CustomTemplateModel;
 use data\model\VslAccountRecordsModel;
@@ -9,6 +10,7 @@ use data\model\VslCmsTopicModel;
 use data\model\VslExpressCompanyShopRelationModel;
 use data\model\VslGoodsCategoryModel;
 use data\model\VslGoodsModel;
+use data\model\VslMemberAccountModel;
 use data\model\VslMemberBalanceWithdrawModel;
 use data\model\VslNvRecordModel;
 use data\model\VslOrderShippingFeeModel;
@@ -42,6 +44,7 @@ class Index extends BaseController
         $this->assign('debug', $debug);
         $model = $this->user->getRequestModel();
         $is_company = Session::get($model . 'is_company');
+
         if($is_company == 1){
             return view($this->style . 'index/index_company');
         }
@@ -434,6 +437,28 @@ class Index extends BaseController
         );
         return $result;
     }
+
+    public function getTyData(){
+        $distributor = new Distributor();
+        $uids = $distributor->sort($this->uid);
+
+        $ids = [];
+        foreach ($uids as $i){
+            $ids[] = $i['uid'];
+        }
+        $member_account = new VslMemberAccountModel();
+        $parent_info = $member_account->getInfo(['uid' => $this->uid, 'website_id' => $this->website_id], '*');//特约公司账号
+        $order = new OrderService();
+        $order_num = $order->getOrderCount(['buyer_id' => ['in', $ids], 'website_id' => $this->website_id,'order_status' => [['>',0],['<',5]]]);
+        $result = array(
+            'balance'=> $parent_info['balance'],
+            "user_num" => count($ids),
+            "order_num" => $order_num
+        );
+        return $result;
+    }
+
+
     /**
      * 移动端首页二维码
      */

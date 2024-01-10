@@ -20,7 +20,42 @@
 {block name="main"}
 				<!-- page -->
 			   <div class="flex">
+                   <!--运营状况-->
+                   <div class="v-card-body" style="width: 500px;">
+                       <div class="newbie mb-20 flex flex-pack-justify">
+                           <div class="bold">基本资料</div>
+                       </div>
+                       <div class="engage">
 
+                           <div class="payment" style="width:100%">
+                               <div class="payment-one">
+                                   <div class="pay-img"><img src="/public/platform/images/index/9.png" alt=""></div>
+                                   <div class="string"></div>
+                                   <div class="figures">
+                                       <div class="figure">
+                                           <div class="pay-mange">账户积分</div>
+                                           <div class="pay-num"><a href="javascript:void(0)" class="index-order-blue" id="balance">0</a></div>
+
+                                       </div>
+                                       <div class="figure">
+                                           <div class="pay-mange">会员数量</div>
+                                           <div class="pay-num"><a href="javascript:void(0)" class="index-order-blue" id="user_num">0</a></div>
+                                       </div>
+                                       <div class="figure">
+                                           <div class="pay-mange">订单数量</div>
+                                           <div class="pay-num"><a href="javascript:void(0)" class="index-order-blue" id="order_num">0</a></div>
+                                       </div>
+
+                                   </div>
+                               </div>
+
+                           </div>
+
+
+
+
+                       </div>
+                   </div>
 			   </div>
 
 
@@ -46,7 +81,7 @@
 			});
 		}
             getTransactionStatus(1);
-            loading();
+            // loading();
 
     		$('#emoji').on('click',function(){
     			util.emojiDialog(function(data){
@@ -94,20 +129,13 @@
         function getTransactionStatus(time) {
             $.ajax({
                 type:"post",
-                url : "{:__URL('PLATFORM_MAIN/index/getTransactionStatus')}",
+                url : "{:__URL('PLATFORM_MAIN/index/getTyData')}",
                 async : true,
                 data :{'times':time},
                 success : function(data) {
-                    $("#vistor").html(data['visitor_num']);
-                    $("#visitor_num").html(data['visitor_num']);
+                    $("#balance").html(data['balance']);
+                    $("#user_num").html(data['user_num']);
 					$("#order_num").html(data['order_num']);
-                    $("#order_money").html(data['order_money']);
-                    $("#pay_num").html(data['pay_num']);
-                    $("#pay_money").html(data['pay_money']);
-                    $("#unit_price").html(data['unit_price']);
-                    $("#order_conversion").html(data['order_conversion']);
-                    $("#orderpay_conversion").html(data['orderpay_conversion']);
-                    $("#pay_conversion").html(data['pay_conversion']);
                 }
             });
         }

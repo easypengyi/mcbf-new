@@ -30,6 +30,7 @@
                                             <option value="4">充值</option>
                                             <option value="8">余额提现</option>
                                             <option value="10">调整</option>
+                                            <option value="100">特约开通VIP</option>
                                             {if $globalStatus==1 ||  $areaStatus==1 ||  $teamStatus==1}
                                             <option value="11">分红提现</option>
                                             {/if}
@@ -187,7 +188,7 @@
          * 余额流水数据导出
          */
         $('.dataExcel').on('click',function(){
-            var tip1 = document.getElementById("tip1").innerText; 
+            var tip1 = document.getElementById("tip1").innerText;
             var tip1 = parseInt(tip1)+parseInt(1);
             var total_tips2=tip1>99?"99+":tip1;
 

@@ -53,7 +53,7 @@ class MemberAccount extends BaseService {
      * @param int $account_type 1:积分，2:余额
      */
     public function addMemberAccountData($account_type, $uid, $sign, $number, $from_type, $data_id, $text = '', $is_examine = '', $make_money = '', $wx_openid = '', $withdraw_no = '', $type = '', $account_number = '',$service_charge=0,$bank_account_id='',$charge=0, $real_name = '') {
-        
+
         $member_account_record = new VslMemberAccountRecordsModel();
         //前期检测
         $member_account = new VslMemberAccountModel();
@@ -63,7 +63,7 @@ class MemberAccount extends BaseService {
         $member_all_balance = $all_info['balance'];
         $freezing_balance = $all_info['freezing_balance'];
         //美丽分
-        if ($account_type == 3) { 
+        if ($account_type == 3) {
             //当前可用积分
             $data_member['beautiful_point'] = $member_all_beautiful_point + $number;
             if($data_member['beautiful_point'] < 0){
@@ -92,7 +92,7 @@ class MemberAccount extends BaseService {
             return $res;
         }
         //更新对应会员账户
-        if ($account_type == 1) { 
+        if ($account_type == 1) {
             //当前可用积分
             $data_member['point'] = $member_all_point + $number;
             if($data_member['point'] < 0){
@@ -174,7 +174,7 @@ class MemberAccount extends BaseService {
                         'balance' => $member_all_balance - abs($service_charge)-abs($charge)
                     );
                     $member_account->save($data_member, ['uid' => $uid, 'website_id' => $this->website_id]);
-                    //此处判断是汇聚支付 还是通联支付 
+                    //此处判断是汇聚支付 还是通联支付
                     $webConfig = new Config();
                     $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
                     if($joinPay['value']['joinpaytw_is_use'] == 1){
@@ -288,7 +288,7 @@ class MemberAccount extends BaseService {
         if($type==1){//提现审核通过，自动打款(银行卡提现)
             $bank = new VslMemberBankAccountModel();
             $bank_id = $bank->getInfo(['account_number'=>$account_number,'uid'=>$uid],'id')['id'];
-            //此处判断是汇聚支付 还是通联支付 
+            //此处判断是汇聚支付 还是通联支付
             $webConfig = new Config();
             $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
             if($joinPay['value']['joinpaytw_is_use'] == 1){
@@ -631,7 +631,7 @@ class MemberAccount extends BaseService {
                 $balance_withdraw = new VslMemberBalanceWithdrawModel();
                 $balance_info = $balance_withdraw->getInfo(['id' => $data_id],'service_charge,charge');
                 $withdraw_data = array(
-                    'status' => 4, 
+                    'status' => 4,
                     'memo'=>$text,
                     'modify_date' => time(),
                 );
@@ -1484,15 +1484,15 @@ class MemberAccount extends BaseService {
             if ($type == 1) {
                 $bank = new VslMemberBankAccountModel();
                 $bank_id = $bank->getInfo(['account_number'=>$account_number,'uid'=>$uid],'id')['id'];
-                //此处判断是汇聚支付 还是通联支付 
+                //此处判断是汇聚支付 还是通联支付
                 $webConfig = new Config();
                 $joinPay = $webConfig->getConfig($this->instance_id, 'JOINPAY', $this->website_id);
                 if($joinPay['value']['joinpaytw_is_use'] == 1){
                     $card_type = 2;
-                    
+
                     $joinpay = new Joinpay();
                     $retval = $joinpay->jpWithdraw($withdraw_no,$uid,$bank_id,abs($balance_info['service_charge']));
-                    
+
                 }else{
                     $tlpay = new tlPay();
                     $retval = $tlpay->tlWithdraw($withdraw_no,$uid,$bank_id,abs($balance_info['service_charge']));
@@ -1963,6 +1963,9 @@ class MemberAccount extends BaseService {
             case 82:
                 $type_name = '积分转账';
                 break;
+            case 100:
+                $type_name = '特约开通VIP';
+                break;
             default:
                 $type_name = '';
                 break;
@@ -2021,7 +2024,7 @@ class MemberAccount extends BaseService {
             $sql = "update vsl_member_account set beautiful_point=$my_new_beautiful_point where uid=$uid and website_id=$website_id and beautiful_point=$my_beautiful_point";
             debugFile($sql, 'transBeautifulPoint-1', 1111112);
             $results = Db::execute($sql);
-            if($results <= 0){ 
+            if($results <= 0){
                 Db::rollback();
                 return ['code'=>-1,'message'=>'更新转出账户失败,转账失败,请稍后重试'];
             }
@@ -2030,11 +2033,11 @@ class MemberAccount extends BaseService {
             $user_beautiful_point = $user_info['beautiful_point'];
             $user_sql = "update vsl_member_account set beautiful_point=$user_new_beautiful_point where uid=$user_id and website_id=$website_id and beautiful_point=$user_beautiful_point";
             $res = Db::execute($user_sql);
-            if($res <= 0){ 
+            if($res <= 0){
                 Db::rollback();
                 return ['code'=>-1,'message'=>'更新转入账户失败,转账失败,请稍后重试'];
             }
-            #转出记录            
+            #转出记录
             $data = array(
                 'records_no' => getSerialNo(),
                 'account_type' => 3,
@@ -2074,6 +2077,6 @@ class MemberAccount extends BaseService {
             Db::rollback();
             return ['code'=>-1,'message'=>$e->getMessage()];
         }
-        
+
     }
 }

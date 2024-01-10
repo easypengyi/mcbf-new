@@ -9,10 +9,12 @@ use data\model\UserModel;
 use data\model\VslGoodsModel;
 use data\model\VslMemberAccountModel;
 use data\model\VslMemberAccountRecordsModel;
+use data\model\VslMemberApplyModel;
 use data\model\VslMemberBalanceWithdrawModel;
 use data\model\VslMemberGroupModel;
 use data\model\VslMemberLevelModel;
 use data\model\VslMemberModel;
+use data\model\VslMemberViewModel;
 use data\model\VslOrderModel;
 use data\service\ExcelsExport;
 use data\service\Member as MemberService;
@@ -1480,6 +1482,190 @@ class Member extends BaseController
 
         return view($this->style . 'Member/myDetail');
     }
+
+    /**
+     * 申请VIP
+     *
+     * @return array|\think\response\View
+     */
+    public function applyVip(){
+        $type_list = VslMemberModel::applyType();
+        $this->assign('type_list', $type_list);
+        return view($this->style . 'Member/applyVip');
+    }
+
+    /**
+     * 申请VIP
+     *
+     * @return array
+     */
+    public function addApplyVip(){
+        $member_id = request()->post('uid', '');
+        $real_name = request()->post('real_name', '');
+        $user_tel = request()->post('user_tel', '');
+        $nickname = request()->post('nickname', '');
+        $type = request()->post('type', '');
+        $image_url = request()->post('image_url', '');
+        if(!$member_id || !$real_name || !$user_tel || !$type){
+            return  ['code' => -1, 'message' => '请填写用户信息'];
+        }
+        if(!$member_id){
+            return  ['code' => -1, 'message' => '用户信息有误，请刷新页面'];
+        }
+        $member_model = new VslMemberModel();
+        $info = $member_model->getInfo(['uid' => $member_id, 'website_id' => $this->website_id], '*');
+        if(is_null($info)){
+            return  ['code' => -1, 'message' => '用户信息有误，请刷新页面'];
+        }
+        if($info['member_level'] == 2){
+            return  ['code' => -1, 'message' => '此用户已经是VIP会员了'];
+        }
+
+        $member_apply = new VslMemberApplyModel();
+        //是否已申请
+        $apply = $member_apply->getInfo(['uid'=> $member_id, 'status'=> 0]);
+        if(!is_null($apply)){
+            return  ['code' => -1, 'message' => '已申请，请耐心等待客服审核'];
+        }
+        $data_member = [
+            'uid'=> $member_id,
+            'pid'=> $this->uid,
+            'real_name'=> $real_name,
+            'user_tel'=> $user_tel,
+            'nickname'=> $nickname,
+            'type'=> $type,
+            'image_url'=> $image_url,
+            'create_time'=> time()
+
+        ];
+
+        $res = $member_apply->save($data_member);
+        if($res){
+            return  ['code' => 0, 'message' => '申请成功，请耐心等待客服审核'];
+        }else{
+            return  ['code' => -1, 'message' => '申请失败，请联系客服'];
+        }
+    }
+
+    /**
+     * 会员列表主页
+     */
+    public function applyList()
+    {
+
+        if (request()->isAjax()) {
+            $page_index = request()->post('page_index',1);
+            $page_size = request()->post('page_size',PAGESIZE);
+            $member_id = request()->post('member_id', '');
+            $search_text = request()->post('search_text', '');
+            if($member_id){
+                $condition['a.uid'] = $member_id;
+            }
+            $condition['su.is_member'] = 1;
+            if($search_text){
+                $condition['su.nick_name|su.user_tel|su.user_name'] = [
+                    'like',
+                    '%' . $search_text . '%'
+                ];
+            }
+            $member_view = new VslMemberApplyModel();
+            $result = $member_view->getViewList($page_index, $page_size, $condition, 'a.id desc');
+            foreach ($result['data'] as &$item){
+                $item['create_time'] = date('Y-m-d H:i:s', $item['create_time']);
+                if($item['status'] == 0){
+                    $str = '新申请';
+                }else if($item['status'] == 1){
+                    $str = '通过';
+                }else if($item['status'] == 2){
+                    $str = '拒绝';
+                }
+                $item['status_name'] = $str;
+                $type_info = VslMemberModel::applyType($item['type']);
+                $item['type_name'] = $type_info['name'];
+            }
+            return $result;
+        } else {
+            return view($this->style . 'Member/applyList');
+        }
+    }
+
+    /**
+     * 审核
+     *
+     * @return array|\multitype
+     */
+    public function checkApply(){
+        $id = request()->post('id', '');
+        $status = request()->post('status', '');
+        $member_apply = new VslMemberApplyModel();
+        //是否已申请
+        $apply = $member_apply->getInfo(['id'=> $id, 'status'=> 0]);
+        if(is_null($apply)){
+            return  ['code' => -1, 'message' => '已审核'];
+        }
+        //拒绝
+        if($status == 2){
+            $res = $member_apply->save(['status'=> 2], ['id'=> $id, 'status'=> 0]);
+            if($res){
+                return ['code' => 0, 'message' => '拒绝成功'];
+            }else{
+                return ['code' => 0, 'message' => '拒绝失败'];
+            }
+        }
+        $member_model = new VslMemberModel();
+        $user_model = new UserModel();
+        $info = $member_model->getInfo(['uid' => $apply['uid'], 'website_id' => $this->website_id], '*');
+        if(is_null($info)){
+            return  ['code' => -1, 'message' => '用户信息有误，请刷新页面'];
+        }
+        if($info['member_level'] == 2){
+            return  ['code' => -1, 'message' => '此用户已经是VIP会员了'];
+        }
+
+        //获取套餐扣减积分
+        $type_info = VslMemberModel::applyType($apply['type']);
+        $number = $type_info['amount'];
+        $member_account = new VslMemberAccountModel();
+        $parent_info = $member_account->getInfo(['uid' => $apply['pid'], 'website_id' => $this->website_id], '*');//特约公司账号
+        //余额是否充值
+        if($parent_info['balance'] < $number){
+            return AjaxReturn(-1, [], '特约账户积分不足');
+        }
+        $parent_balance = $parent_info['balance'] - $number;
+        //添加流水
+        $data_records = array(
+            'records_no' => 'Bc' . getSerialNo(),
+            'account_type' => 2,
+            'uid' => $apply['pid'],
+            'sign' => 0,
+            'number' => -$number,
+            'from_type' => 100,
+            'data_id' => 0,
+            'balance'=> $parent_balance,
+            'text' => '特约开通VIP积分减扣',
+            'create_time' => time(),
+            'website_id' => $this->website_id
+        );
+        $member_account_record = new VslMemberAccountRecordsModel();
+        $member_account_record->startTrans();
+        try {
+            //更新特约余额
+            $member_account->save(['balance'=> $parent_balance], ['uid' => $apply['pid'], 'website_id' => $this->website_id]);
+            //添加特约账户流水
+            $res = $member_account_record->save($data_records);
+            //更新用户等级
+            $member_model->save(['member_level'=> 2, 'real_name'=> $apply['real_name'], 'mobile'=> $apply['user_tel']], ['uid' => $apply['uid']]);
+            $user_model->save(['real_name'=> $apply['real_name'], 'user_tel'=> $apply['user_tel'], 'nick_name'=> $apply['nickname']], ['uid' => $apply['uid']]);
+            //更新记录
+            $member_apply->save(['status'=> 1], ['id'=> $id, 'status'=> 0]);
+            $member_account_record->commit();
+            return AjaxReturn(0, [], '操作成功');
+        } catch (\Exception $e) {
+            $member_account_record->rollback();
+            return AjaxReturn(-1, [], $e->getMessage());
+        }
+    }
+
 
     /**
      * 积分、余额调整

@@ -1552,15 +1552,17 @@ class Distributor extends BaseService
         $commission_info = $commission->getInfo(['uid' => $uid], '*');
         $result['commission'] = $commission_info['commission'];
 
-        $check_mx = false;
-        if($this->checkContract($result['mobile'], 6)){
-            $check_mx = true;
-        }
-
-        $check_cc = false;
-        if($this->checkContract($result['mobile'], 7)){
-            $check_cc = true;
-        }
+//        $check_mx = false;
+//        if($this->checkContract($result['mobile'], 6)){
+//            $check_mx = true;
+//        }
+//
+//        $check_cc = false;
+//        if($this->checkContract($result['mobile'], 7)){
+//            $check_cc = true;
+//        }
+        $check_mx = true;
+        $check_cc = true;
         $result['check_mx'] = $check_mx;
         $result['check_cc'] = $check_cc;
         //是否是对接人
@@ -5006,8 +5008,8 @@ class Distributor extends BaseService
                 }
 
                 runhook("Notify", "sendCustomMessage", ['messageType' => 'new_offline', "uid" => $uid, "add_time" => time(), 'referee_id' => $distributor['default_referee_id']]); //成为下线通知
-                $member->save(['referee_id' => $distributor['default_referee_id'], 'default_referee_id' => null], ['uid' => $uid]);
-                $this->addRefereeLog($uid, $distributor['default_referee_id'], $distributor['website_id'], $distributor['shop_id'], 0, 0, 3);
+                //$member->save(['referee_id' => $distributor['default_referee_id'], 'default_referee_id' => null], ['uid' => $uid]);
+                //$this->addRefereeLog($uid, $distributor['default_referee_id'], $distributor['website_id'], $distributor['shop_id'], 0, 0, 3);
                 $this->updateDistributorLevelInfo($distributor['default_referee_id']);
                 if (getAddons('globalbonus', $distributor['website_id'])) {
                     $global = new GlobalBonus();
@@ -8225,8 +8227,8 @@ class Distributor extends BaseService
                 return 1;
             }
             runhook("Notify", "sendCustomMessage", ['messageType' => 'new_offline', "uid" => $uid, "add_time" => time(), 'referee_id' => $distributor['default_referee_id']]); //成为下线通知
-            $member->save(['referee_id' => $distributor['default_referee_id'], 'default_referee_id' => null], ['uid' => $uid]);
-            $this->addRefereeLog($uid, $distributor['default_referee_id'], $distributor['website_id'], 0,0,0,4);
+            //$member->save(['referee_id' => $distributor['default_referee_id'], 'default_referee_id' => null], ['uid' => $uid]);
+            //$this->addRefereeLog($uid, $distributor['default_referee_id'], $distributor['website_id'], 0,0,0,4);
             $this->updateDistributorLevelInfo($distributor['default_referee_id']);
             if (getAddons('globalbonus', $distributor['website_id'])) {
                 $global = new GlobalBonus();
