@@ -255,7 +255,7 @@ class Config extends BaseController
         }
 //        $userServer = new User();
 //        $base_config['is_subscribe'] = $userServer->checkUserIsSubscribe($this->uid);//是否关注公众号
-        $config_array = ['SEO_TITLE', 'SEO_META', 'SEO_DESC', 'LOGINVERIFYCODE', 'BPAY', 'ALIPAY','DPAY','TLPAY','ETHPAY','EOSPAY','WPAY', 'WCHAT', 'QQLOGIN', 'EMAILMESSAGE', 'MOBILEMESSAGE', 'WITHDRAW_BALANCE','BPAYMP', 'DPAYMP','MPPAY','GPPAY','BPAYAPP', 'ALIPAYAPP','DPAYAPP','WPAYAPP', 'WCHATAPP','GLOPAY','OFFLINEPAY','OFFLINEPAYMP','OFFLINEPAYAPP','JOINPAY','MPJOINPAY','JOINPAYAPP'];
+        $config_array = ['SEO_TITLE', 'SEO_META', 'SEO_DESC', 'LOGINVERIFYCODE', 'BPAY', 'PPAY', 'ALIPAY','DPAY','TLPAY','ETHPAY','EOSPAY','WPAY', 'WCHAT', 'QQLOGIN', 'EMAILMESSAGE', 'MOBILEMESSAGE', 'WITHDRAW_BALANCE','BPAYMP', 'PPAYMP', 'DPAYMP','MPPAY','GPPAY','BPAYAPP', 'ALIPAYAPP','DPAYAPP','WPAYAPP', 'WCHATAPP','GLOPAY','OFFLINEPAY','OFFLINEPAYMP','OFFLINEPAYAPP','JOINPAY','MPJOINPAY','JOINPAYAPP'];
         $blockchain = getAddons('blockchain',$this->website_id);
         $eth_set = false;
         $eos_set = false;
@@ -278,6 +278,7 @@ class Config extends BaseController
             'wap_pay_set' => [
                 'ali_pay' => false,
                 'bpay' => false,
+                'bppay' => false,
                 'dpay' => false,
                 'eospay' => false,
                 'ethpay' => false,
@@ -308,6 +309,8 @@ class Config extends BaseController
                 'ali_pay' => false,
                 'wechat_pay' => false,
                 'bpay' => false,
+                'bppay'=> false,
+                'ppay' => false,
                 'dpay' => false,
                 'gppay' => false,
                 'offline_pay' => [
@@ -386,6 +389,11 @@ class Config extends BaseController
                         $data['pay_config']['wap_pay_set']['bpay'] = true;
                     }
                     break;
+                case 'PPAY':
+                    if ($v['is_use'] == 1) {
+                        $data['pay_config']['wap_pay_set']['bppay'] = true;
+                    }
+                    break;
                 case 'ALIPAY':
                     if(!$v['is_use']){
                         $data['pay_config']['wap_pay_set']['ali_pay'] = false;
@@ -434,6 +442,11 @@ class Config extends BaseController
                 case 'BPAYMP':
                     if ($v['is_use'] == 1) {
                         $data['pay_config']['mp_pay_set']['bpay'] = true;
+                    }
+                    break;
+                case 'PPAYMP':
+                    if ($v['is_use'] == 1) {
+                        $data['pay_config']['mp_pay_set']['bppay'] = true;
                     }
                     break;
                 case 'MPPAY':
@@ -640,6 +653,9 @@ class Config extends BaseController
             $is_qlkefu = $qlkefu->isQlkefuShop($this->website_id);
             $data['addons']['qlkefu'] = $is_qlkefu['is_use'];
         }
+        //控制美丽分
+        $data['addons']['beautiful_point'] = 1;
+
         $data['config']['website_id'] = $this->website_id;
         $condition['website_id'] = $this->website_id;
         $condition['shop_id'] = $this->instance_id;

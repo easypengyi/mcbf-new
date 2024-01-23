@@ -3862,11 +3862,13 @@ class Channel extends BaseService
             }
         }
         $order_detail['order_goods'] = $order_goods_list;
-
         foreach ($order_goods_list as $k => $v) {
             $purchase_to[] = $v['purchase_to'];
         }
-        $purchase_to = array_unique($purchase_to);
+        $purchase_to = [];
+        if($purchase_to){
+            $purchase_to = array_unique($purchase_to);
+        }
         $order_detail['purchase_to'] = implode('+',$purchase_to);
 
         //订单操作

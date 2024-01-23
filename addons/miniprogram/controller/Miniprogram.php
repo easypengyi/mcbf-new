@@ -1183,6 +1183,20 @@ class Miniprogram extends BaseMiniProgram
     }
 
     /**
+     * 美丽分支付
+     */
+    public function payPConfigMir()
+    {
+        $web_config = new configServer();
+        if (request()->isAjax()) {
+            $is_use = request()->post('is_use', 0);
+            // 获取数据
+            $retval = $web_config->setPpayConfigMir($this->instance_id,$is_use);
+            return AjaxReturn($retval);
+        }
+    }
+
+    /**
      * 到货付款
      */
     public function payDConfigMir()

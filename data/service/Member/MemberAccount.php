@@ -64,32 +64,60 @@ class MemberAccount extends BaseService {
         $freezing_balance = $all_info['freezing_balance'];
         //美丽分
         if ($account_type == 3) {
-            //当前可用积分
-            $data_member['beautiful_point'] = $member_all_beautiful_point + $number;
-            if($data_member['beautiful_point'] < 0){
-                $data_member['beautiful_point'] = 0;
+            if($from_type == 1){
+                $data_member = array(
+                    'beautiful_point' => $member_all_beautiful_point - abs($number)
+                );
+                $order = new VslOrderModel();
+                $shop_id = $order->getInfo(['order_id' => $data_id], 'shop_id')['shop_id'];
+                $res = $member_account->save($data_member, ['uid' => $uid, 'website_id' => $all_info['website_id']]);
+                //添加会员账户流水
+                $data = array(
+                    'records_no' => 'Op' . getSerialNo(),
+                    'account_type' => $account_type,
+                    'shop_id' => $shop_id ? $shop_id : 0,
+                    'uid' => $uid,
+                    'sign' => 1,
+                    'number' => (-1) * abs($number),
+                    'balance'=> $member_all_balance,
+                    'point'=> $data_member['beautiful_point'],
+                    'from_type' => $from_type,
+                    'data_id' => $data_id,
+                    'text' => $text,
+                    'create_time' => time(),
+                    'website_id' => $all_info['website_id']
+                );
+
+                $member_account_record->save($data);
+                return $res;
+            }else{
+                //当前可用积分
+                $data_member['beautiful_point'] = $member_all_beautiful_point + $number;
+                if($data_member['beautiful_point'] < 0){
+                    $data_member['beautiful_point'] = 0;
+                }
+                if ($number > 0) {
+                    //计算会员累计积分
+                    // $data_member['member_sum_point'] = $member_all_point + $number;
+                }
+                $res = $member_account->save($data_member, ['uid' => $uid, 'website_id' =>  $all_info['website_id']]);
+                $data = array(
+                    'records_no' => getSerialNo(),
+                    'account_type' => $account_type,
+                    'uid' => $uid,
+                    'sign' => $sign,
+                    'number' => $number,
+                    'from_type' => $from_type,
+                    'data_id' => $data_id,
+                    'text' => $text,
+                    'create_time' => time(),
+                    'point'=>$member_all_beautiful_point + $number,
+                    'balance'=>$member_all_balance,
+                    'website_id' =>  $all_info['website_id']
+                );
+                $member_account_record->save($data);
+                return $res;
             }
-            if ($number > 0) {
-                //计算会员累计积分
-                // $data_member['member_sum_point'] = $member_all_point + $number;
-            }
-            $res = $member_account->save($data_member, ['uid' => $uid, 'website_id' =>  $all_info['website_id']]);
-            $data = array(
-                'records_no' => getSerialNo(),
-                'account_type' => $account_type,
-                'uid' => $uid,
-                'sign' => $sign,
-                'number' => $number,
-                'from_type' => $from_type,
-                'data_id' => $data_id,
-                'text' => $text,
-                'create_time' => time(),
-                'point'=>$member_all_beautiful_point + $number,
-                'balance'=>$member_all_balance,
-                'website_id' =>  $all_info['website_id']
-            );
-            $member_account_record->save($data);
-            return $res;
         }
         //更新对应会员账户
         if ($account_type == 1) {

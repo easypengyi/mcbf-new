@@ -10,7 +10,7 @@ use addons\distribution\model\SysMessagePushModel;
 use addons\distribution\service\Distributor as DistributorSer;
 use addons\giftvoucher\model\VslGiftVoucherModel;
 use addons\giftvoucher\server\GiftVoucher;
-use addons\thingcircle\model\MsgReminderModel;
+use data\model\MsgReminderModel;
 use data\service\BaseService;
 use data\service\Member as MembserSer;
 use data\service\User as UserSer;

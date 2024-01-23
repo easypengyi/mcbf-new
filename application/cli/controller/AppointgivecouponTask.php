@@ -31,10 +31,10 @@ class AppointgivecouponTask extends Command
             try {
                 $appoint_give_coupon_mdl = new VslAppointgivecouponModel();
                 $firstData = $appoint_give_coupon_mdl->getQuery(['status' => 0], '*', 'create_time asc');
-                if (!$firstData) {
-                    sleep(2);
-                    continue;
-                }
+//                if (!$firstData) {
+//                    sleep(2);
+//                    continue;
+//                }
                 //status: 0：等待执行   1：执行成功   2：执行失败  3：执行中
                 foreach ($firstData as $val) {
                     $appointgivecoupon->updateAppointgivecoupon(['status' => 3], ['id' => $val['id']]);

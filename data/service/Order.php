@@ -4814,7 +4814,17 @@ class Order extends BaseService
                             Db::rollback();
                             return ['code' => -1, 'message' => '余额退款失败'];
                         }
-                    } else if ($payment_type == 1 || $payment_type == 2) {
+                    }
+                    else if ($payment_type == 7) {
+                        // 退还会员的账户美丽分
+                        $retval = $this->updateMemberBeautifulPoint($order_id, reset($order_goods_info)->order->buyer_id, $refund_real_money_new);
+                        if (!is_numeric($retval)) {
+                            debugFile($retval, 'createLuckySpell-0-7-1-2-2', 1111113);
+                            Db::rollback();
+                            return ['code' => -1, 'message' => '美丽分退款失败'];
+                        }
+                    }
+                    else if ($payment_type == 1 || $payment_type == 2) {
                         // 在线原路退款（微信/支付宝）
                         $refund = $this->onlineOriginalRoadRefund($order_id, $refund_real_money_new, $payment_type, $refund_trade_no, reset($order_goods_info)->order->pay_money);
                         if ($refund['is_success'] != 1) {
@@ -5529,6 +5539,53 @@ class Order extends BaseService
                     'from_type' => 2,
                     'data_id' => $order_id,
                     'text' => '订单余额退款，会员可用余额增加',
+                    'create_time' => time(),
+                    'website_id' => $account['website_id']
+                );
+                $res = $member_account_record->save($data);
+            }
+
+            $member_account_record->commit();
+            return $res;
+        } catch (\Exception $e) {
+            recordErrorLog($e);
+            $member_account_record->rollback();
+            return $e->getMessage();
+        }
+    }
+
+    /**
+     * 在线原路退款（美丽分）
+     *
+     * @param unknown $goods_sku_list
+     */
+    public function updateMemberBeautifulPoint($order_id, $uid, $refund_real_money)
+    {
+        $member_account_record = new VslMemberAccountRecordsModel();
+        $member_account_record->startTrans();
+        try {
+            if ($refund_real_money == 0) {
+                return "退款金额不能为0";
+            }
+            $member = new VslMemberAccountModel();
+            $account = $member->getInfo(['uid' => $uid], '*');
+
+            if ($account) {
+                $beautiful_point = $account['beautiful_point'] + $refund_real_money;
+                $res_member = $member->save(['beautiful_point' => $beautiful_point], ['uid' => $uid]);
+
+                //添加会员账户流水
+                $data = array(
+                    'records_no' => 'Br' . getSerialNo(),
+                    'account_type' => 3,
+                    'uid' => $uid,
+                    'sign' => 1,
+                    'number' => $refund_real_money,
+                    'point' => $beautiful_point,
+                    'balance' => $account['balance'],
+                    'from_type' => 2,
+                    'data_id' => $order_id,
+                    'text' => '订单退款，会员美丽分增加',
                     'create_time' => time(),
                     'website_id' => $account['website_id']
                 );

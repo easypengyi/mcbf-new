@@ -28,6 +28,10 @@ class VslGoodsModel extends BaseModel {
         return [55, 65, 66, 67, 77, 78, 79];
     }
 
+    public static function getBeautifulGoods(){
+        return [91];
+    }
+
     protected $autoWriteTimestamp = true;
 
     public function album_picture()

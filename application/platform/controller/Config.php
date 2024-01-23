@@ -125,6 +125,7 @@ class Config extends BaseController {
                 //                $list['pay_list'] = $config->getPayConfig($this->instance_id);
                 $list['pay_list'] = $config->getAllPayConfig($this->instance_id);
                 $list['b_set'] = $config->getConfig(0, 'BPAY', $this->website_id);
+                $list['p_set'] = $config->getConfig(0, 'PPAY', $this->website_id);
                 $list['d_set'] = $config->getConfig(0, 'DPAY', $this->website_id);
                 $list['wx_set'] = $config->getConfig(0, 'WPAY', $this->website_id);
                 $list['ali_set'] = $config->getConfig(0, 'ALIPAY', $this->website_id);
@@ -247,6 +248,7 @@ class Config extends BaseController {
         //小程序路由已经兼容微商来和店大师（addons_url_platform、addons_url_admin）
         $this->assign('payWxConfigMirUrl', __URL(call_user_func('addons_url_' . $this->module,'miniprogram://Miniprogram/payWxConfigMir')));
         $this->assign('payBConfigMirUrl', __URL(call_user_func('addons_url_' . $this->module,'miniprogram://Miniprogram/payBConfigMir')));
+        $this->assign('payPConfigMirUrl', __URL(call_user_func('addons_url_' . $this->module,'miniprogram://Miniprogram/payPConfigMir')));
         $this->assign('payDConfigMirUrl', __URL(call_user_func('addons_url_' . $this->module,'miniprogram://Miniprogram/payDConfigMir')));
         $this->assign('payGpConfigMirUrl', __URL(call_user_func('addons_url_' . $this->module,'miniprogram://Miniprogram/payGpConfigMir')));
         $this->assign('payTLConfigMirUrl', __URL(call_user_func('addons_url_' . $this->module,'miniprogram://Miniprogram/payTLConfigMir')));
@@ -342,6 +344,7 @@ class Config extends BaseController {
             case '1'://wap端(WAP、PC和微信支付)支付方式
                 $list['pay_list'] = $config->getPayConfig($shop_id);
                 $list['b_set'] = $config->getConfig(0, 'BPAY', $this->website_id);
+                $list['p_set'] = $config->getConfig(0, 'PPAY', $this->website_id);
                 $list['d_set'] = $config->getConfig(0, 'DPAY', $this->website_id);
                 $list['wx_set'] = $config->getConfig(0, 'WPAY', $this->website_id);
                 $list['ali_set'] = $config->getConfig(0, 'ALIPAY', $this->website_id);
@@ -355,6 +358,7 @@ class Config extends BaseController {
             case '2'://小程序支付方式
                 $list['pay_list'] = $config->getPayConfigMir($shop_id);
                 $list['b_set'] = $config->getConfig(0, 'BPAYMP', $this->website_id);
+                $list['p_set'] = $config->getConfig(0, 'PPAYMP', $this->website_id);
                 $list['d_set'] = $config->getConfig(0, 'DPAYMP', $this->website_id);
                 $list['wx_set'] = $config->getConfig(0, 'MPPAY', $this->website_id);
                 $list['gp_set'] = $config->getConfig(0, 'GPPAY', $this->website_id);
@@ -1050,6 +1054,19 @@ class Config extends BaseController {
             $is_use = request()->post('is_use', 0);
             // 获取数据
             $retval = $web_config->setBpayConfig($this->instance_id, '', '', '', $is_use);
+            return AjaxReturn($retval);
+        }
+    }
+
+    /**
+     * 美丽分支付配置
+     */
+    public function pPayConfig() {
+        $web_config = new WebConfig();
+        if (request()->isAjax()) {
+            $is_use = request()->post('is_use', 0);
+            // 获取数据
+            $retval = $web_config->setPpayConfig($this->instance_id, '', '', '', $is_use);
             return AjaxReturn($retval);
         }
     }

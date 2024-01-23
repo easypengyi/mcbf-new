@@ -338,6 +338,36 @@ class Config extends BaseService
         // TODO Auto-generated method stub
     }
 
+    /**
+     * 美丽分支付
+     *
+     * @param $instanceid
+     * @param $partnerid
+     * @param $seller
+     * @param $ali_key
+     * @param $is_use
+     * @return false|int
+     */
+    public function setPpayConfig($instanceid, $partnerid, $seller, $ali_key, $is_use)
+    {
+        $data = array(
+            'ali_partnerid' => $partnerid,
+            'ali_seller' => $seller,
+            'ali_key' => $ali_key
+        );
+        $value = json_encode($data);
+        $params = array(
+            'instance_id' => $instanceid,
+            'website_id' => $this->website_id,
+            'key' => 'PPAY',
+            'value' => $value,
+            'is_use' => $is_use
+        );
+        $res = $this->setConfigOne($params);
+        return $res;
+        // TODO Auto-generated method stub
+    }
+
     public function setDpayConfig($instanceid, $partnerid, $seller, $ali_key, $is_use)
     {
         $data = array(
@@ -688,6 +718,22 @@ class Config extends BaseService
             'instance_id' => $instanceid,
             'website_id' => $this->website_id,
             'key' => 'BPAYMP',
+            'value' => $value,
+            'is_use' => $is_use
+        );
+        $res = $this->setConfigOne($params);
+        return $res;
+        // TODO Auto-generated method stub
+    }
+
+    public function setPpayConfigMir($instanceid, $is_use)
+    {
+        $data = [];
+        $value = json_encode($data);
+        $params = array(
+            'instance_id' => $instanceid,
+            'website_id' => $this->website_id,
+            'key' => 'PPAYMP',
             'value' => $value,
             'is_use' => $is_use
         );
@@ -1122,9 +1168,9 @@ class Config extends BaseService
      */
     public function getPayConfig($shop_id, $show_all = 0)
     {
-        $key_string = ['WPAY','ALIPAY','BPAY','DPAY','TLPAY','GLOPAY','OFFLINEPAY','JOINPAY'];//'WPAY,ALIPAY,BPAY,DPAY,TLPAY,GLOPAY,OFFLINEPAY,JOINPAY';
+        $key_string = ['WPAY','ALIPAY','BPAY','DPAY','TLPAY','GLOPAY','OFFLINEPAY','JOINPAY','PPAY'];//'WPAY,ALIPAY,BPAY,DPAY,TLPAY,GLOPAY,OFFLINEPAY,JOINPAY';
         if ($show_all) {
-            $key_string = ['WPAY','ALIPAY','BPAY','DPAY','TLPAY','GLOPAY','ETHPAY','EOSPAY','OFFLINEPAY','JOINPAY'];//'WPAY,ALIPAY,BPAY,DPAY,TLPAY,GLOPAY,ETHPAY,EOSPAY,OFFLINEPAY,JOINPAY';
+            $key_string = ['WPAY','ALIPAY','BPAY','DPAY','TLPAY','GLOPAY','ETHPAY','EOSPAY','OFFLINEPAY','JOINPAY','PPAY'];//'WPAY,ALIPAY,BPAY,DPAY,TLPAY,GLOPAY,ETHPAY,EOSPAY,OFFLINEPAY,JOINPAY';
         }
         $joinpay_info = $this->getConfig(0, 'JOINPAY', $this->website_id);
         if (empty($joinpay_info)) {
@@ -1133,6 +1179,10 @@ class Config extends BaseService
         $b_info = $this->getConfig(0, 'BPAY', $this->website_id);
         if (empty($b_info)) {
             $this->setBpayConfig($shop_id, '', '', '', 0);
+        }
+        $p_info = $this->getConfig(0, 'PPAY', $this->website_id);
+        if (empty($p_info)) {
+            $this->setPpayConfig($shop_id, '', '', '', 0);
         }
         $d_info = $this->getConfig(0, 'DPAY', $this->website_id);
         if (empty($d_info)) {
@@ -1177,6 +1227,8 @@ class Config extends BaseService
         foreach ($notify_list as $k => $notify_info) {
             if ($notify_info['key'] == 'BPAY') {
                 $new_notify_list[0] = $notify_info;
+            } else if ($notify_info['key'] == 'PPAY') {
+                $new_notify_list[10] = $notify_info;
             } else if ($notify_info['key'] == 'DPAY') {
                 $new_notify_list[1] = $notify_info;
             } else if ($notify_info['key'] == 'WPAY') {
@@ -1213,6 +1265,10 @@ class Config extends BaseService
                     $new_notify_list[$i]["desc"] = "该支付方式适用于网页端(微信端、H5端、PC端)与全渠道提现";
                 } elseif ($new_notify_list[$i]["key"] == "BPAY") {
                     $new_notify_list[$i]["pay_name"] = "余额支付";
+                    $new_notify_list[$i]["logo"] = "/public/platform/static/images/balance-pay.png";
+                    $new_notify_list[$i]["desc"] = "该支付方式适用于网页端(微信端、H5端、PC端)";
+                } elseif ($new_notify_list[$i]["key"] == "PPAY") {
+                    $new_notify_list[$i]["pay_name"] = "美丽分支付";
                     $new_notify_list[$i]["logo"] = "/public/platform/static/images/balance-pay.png";
                     $new_notify_list[$i]["desc"] = "该支付方式适用于网页端(微信端、H5端、PC端)";
                 } elseif ($new_notify_list[$i]["key"] == "TLPAY") {
@@ -1407,9 +1463,9 @@ class Config extends BaseService
      */
     public function getPayConfigMir($shop_id, $show_all=0)
     {
-        $key_string = ['BPAYMP','DPAYMP','MPPAY','GPPAY','TLPAYMP','OFFLINEPAYMP','JOINPAY'];
+        $key_string = ['BPAYMP','DPAYMP','MPPAY','GPPAY','TLPAYMP','OFFLINEPAYMP','JOINPAY','PPAYMP'];
         if ($show_all) {
-            $key_string = ['BPAYMP','DPAYMP','MPPAY','GPPAY','TLPAYMP','OFFLINEPAYMP','JOINPAY'];
+            $key_string = ['BPAYMP','DPAYMP','MPPAY','GPPAY','TLPAYMP','OFFLINEPAYMP','JOINPAY','PPAYMP'];
         }
         $joinpay_info = $this->getConfig(0, 'JOINPAY', $this->website_id);
         if (empty($joinpay_info)) {
@@ -1418,6 +1474,10 @@ class Config extends BaseService
         $b_info = $this->getConfig(0, 'BPAYMP', $this->website_id);
         if (empty($b_info)) {
             $this->setBpayConfigMir(0, 0);
+        }
+        $p_info = $this->getConfig(0, 'PPAYMP', $this->website_id);
+        if (empty($p_info)) {
+            $this->setPpayConfigMir(0, 0);
         }
         $d_info = $this->getConfig(0, 'DPAYMP', $this->website_id);
         if (empty($d_info)) {
@@ -1455,8 +1515,12 @@ class Config extends BaseService
             } elseif ($notify_info['key'] == 'OFFLINEPAYMP') {
                 $new_notify_list[5] = $notify_info;
             } else if ($notify_info['key'] == 'JOINPAY') {
-                $new_notify_list[8] = $notify_info;
+                $new_notify_list[6] = $notify_info;
+            } else if ($notify_info['key'] == 'PPAYMP') {
+                $new_notify_list[7] = $notify_info;
             }
+
+
         }
         unset($notify_info);
         ksort($new_notify_list);
@@ -1491,6 +1555,10 @@ class Config extends BaseService
                     $new_notify_list[$i]["pay_name"] = "汇聚支付";
                     $new_notify_list[$i]["logo"] = "/public/platform/static/images/joiny_pay.png";
                     $new_notify_list[$i]["desc"] = "该支付方式适用于网页端(微信端、H5端、APP端)与银行卡提现转账";
+                } elseif ($new_notify_list[$i]["key"] == "PPAYMP") {
+                    $new_notify_list[$i]["pay_name"] = "美丽分支付";
+                    $new_notify_list[$i]["logo"] = "/public/platform/static/images/balance-pay.png";
+                    $new_notify_list[$i]["desc"] = "该支付方式适用于小程序端支付";
                 }
             }
             return $new_notify_list;

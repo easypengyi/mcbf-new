@@ -26,6 +26,23 @@
             </div>
         </form>
     </div>
+    <div role="tabpanel" class="tab-pane fade" id="ppay" >
+        <form class="form-horizontal form-validate223 widthFixedForm">
+            <div class="form-group"><label class="col-md-2 control-label">是否启用</label>
+                <div class="col-md-8">
+                    <div class="switch-inline"><input type="checkbox" id="ppay_is_use"><label for="ppay_is_use" class=""></label></div>
+                    <p class="help-block">开启后微信公众号端、H5端、PC端均支持余额支付。</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label"></label>
+                <div class="col-md-8">
+                    <button class="btn btn-primary basic_set" type="submit">保存</button>
+                    <a href="{:__URL('platform/config/sysconfig')}?act=payment" class="btn btn-default">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
     <div role="tabpanel" class="tab-pane fade" id="dpay" >
         <form class="form-horizontal form-validate2 widthFixedForm">
             <div class="form-group"><label class="col-md-2 control-label">是否启用</label>
@@ -451,6 +468,18 @@
     <div role="tabpanel" class="tab-pane fade  in active" id="bpaymp" >
         <form class="form-horizontal form-validate9">
             <div class="form-group"><label class="col-md-2 control-label">是否启用</label><div class="col-md-8"> <div class="switch-inline"><input type="checkbox" id="bpay_is_use" ><label for="bpay_is_use" class=""></label></div></div></div>
+            <div class="form-group">
+                <label class="col-md-2 control-la   bel"></label>
+                <div class="col-md-8">
+                    <button class="btn btn-primary basic_set" type="submit">保存</button>
+                    <a href="{:__URL('platform/config/sysconfig')}?act=payment" class="btn btn-default">返回</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div role="tabpanel" class="tab-pane fade" id="ppaymp" >
+        <form class="form-horizontal form-validate99">
+            <div class="form-group"><label class="col-md-2 control-label">是否启用</label><div class="col-md-8"> <div class="switch-inline"><input type="checkbox" id="ppay_is_use" ><label for="ppay_is_use" class=""></label></div></div></div>
             <div class="form-group">
                 <label class="col-md-2 control-la   bel"></label>
                 <div class="col-md-8">
@@ -1100,6 +1129,9 @@
                         if (data['b_set']['is_use'] == '1') {
                             $('#bpay_is_use').attr('checked', 'true');
                         }
+                        if (data['p_set']['is_use'] == '1') {
+                            $('#ppay_is_use').attr('checked', 'true');
+                        }
                         if (data['d_set']['is_use'] == '1') {
                             $('#dpay_is_use').attr('checked', 'true');
                         }
@@ -1184,6 +1216,9 @@
                         $('.J-pay_list').html(html);
                         if (data['b_set']['is_use'] == '1') {
                             $('#bpay_is_use').attr('checked', 'true');
+                        }
+                        if (data['p_set']['is_use'] == '1') {
+                            $('#ppay_is_use').attr('checked', 'true');
                         }
                         if (data['d_set']['is_use'] == '1') {
                             $('#dpay_is_use').attr('checked', 'true');
@@ -2001,6 +2036,28 @@
                 }
             });
         })
+
+        //******* WAP ********//
+        util.validate($('.form-validate223'),function(form){
+            if($('.form-validate223').find('#ppay_is_use').is(':checked')){
+                var is_use =1;
+            }
+            $.ajax({
+                type:"post",
+                url:"{:__URL('PLATFORM_MAIN/config/pPayConfig')}",
+                data:{
+                    'is_use' : is_use
+                },
+                async:true,
+                success:function (data) {
+                    if (data["code"] > 0) {
+                        util.message( data["message"],'success');
+                    }else{
+                        util.message( data["message"],'danger');
+                    }
+                }
+            });
+        })
         //货到付款
         util.validate($('.form-validate2'),function(form){
             if($('.form-validate2').find('#dpay_is_use').is(':checked')){
@@ -2482,6 +2539,28 @@
             $.ajax({
                 type:"post",
                 url:"{$payBConfigMirUrl}",//$payBConfigUrl
+                data:{
+                    'is_use' : is_use
+                },
+                async:true,
+                success:function (data) {
+                    if (data["code"] > 0) {
+                        util.message( data["message"],'success');
+                    }else{
+                        util.message( data["message"],'danger');
+                    }
+                }
+            });
+        })
+
+        //小程序美丽分支付
+        util.validate($('.form-validate99'), function(form){
+            if($('.form-validate99').find('#ppay_is_use').is(':checked')){
+                var is_use =1;
+            }
+            $.ajax({
+                type:"post",
+                url:"{$payPConfigMirUrl}",//$payBConfigUrl
                 data:{
                     'is_use' : is_use
                 },

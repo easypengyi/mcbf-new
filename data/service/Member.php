@@ -18,13 +18,14 @@ use addons\teambonus\service\TeamBonus;
 use addons\channel\server\Channel as ChannelServer;
 use addons\microshop\service\MicroShop as MicroShopService;
 use data\model\AlbumPictureModel;
-use addons\thingcircle\model\MsgReminderModel;
+use data\model\MsgReminderModel;
 use data\model\VslBankModel;
 use data\model\VslGoodsDeletedModel;
 use data\model\VslMemberAccountModel;
 use data\model\VslMemberAccountRecordsModel;
 use data\model\VslMemberAccountRecordsViewModel;
 use data\model\VslMemberBalanceWithdrawModel;
+use data\model\VslMemberEsignModel;
 use data\model\VslMemberExpressAddressModel;
 use data\model\VslMemberFavoritesModel;
 use data\model\VslMemberGroupModel;
@@ -37,6 +38,7 @@ use addons\shop\model\VslShopApplyModel;
 use addons\shop\model\VslShopModel;
 use data\model\UserModel as UserModel;
 use data\model\WebSiteModel;
+use data\service\eqb\EsignService;
 use data\service\Member\MemberAccount;
 use data\service\User as User;
 use data\model\VslMemberBankAccountModel;
@@ -4070,4 +4072,100 @@ class Member extends User
         $list = $member_account->getViewList($page_index, $page_size, $condition, 'l.update_time desc');
         return $list;
     }
+
+    /**
+     * 获取签约信息
+     *
+     * @return VslMemberEsignModel
+     * @throws \think\Exception\DbException
+     */
+    public function getEsignDetail($uid){
+        $express_address = new VslMemberEsignModel();
+        $data = $express_address->get(['uid'=> $uid]);
+        if(is_null($data)){
+            $data = [];
+        }
+        return $data;
+    }
+
+    /**
+     * 获取签约链接
+     *
+     * @param $data
+     * @return array
+     * @throws \think\Exception\DbException
+     */
+    public function getEsignUrl($uid, $data){
+
+        $data['uid'] = $uid;
+        $member_esign = new VslMemberEsignModel();
+
+        $user = $member_esign->get(['uid'=> $uid]);
+        if(is_null($user)){
+            $data['create_time'] = time();
+            $member_esign->isUpdate(false)->save($data);
+        }else{
+            $data['update_time'] = time();
+            $member_esign->save($data, [
+                'uid' => $uid
+            ]);
+        }
+//        $signService = new EsignService();
+//        $res = $signService->personsAuthorizedInfo('b4a1f2c4dc2a4a2a96822f63abb6a445');
+//        var_dump($res);die;
+        //签约文件已生成
+        if(!empty($user['sign_url'])){
+            return [true, ['url'=> $user['sign_url']]];
+        }
+        $signService = new EsignService();
+        if(!empty($user['file_id'])){
+            $res = $signService->fileStatus($user['file_id']);
+            if($res['code'] == 0){
+                $file_id = $user['file_id'];
+                $position = json_decode(html_entity_decode($user['esign_position']), true);
+            }else{
+                return [false, '文件信息有误，请联系客服处理'];
+            }
+        }else {
+            $date = date('Y-m-d');
+            $data['a_date'] = $date;
+            $data['b_date'] = $date;
+            $res = $signService->createTpl($data);
+
+            if ($res['code'] == 0) {
+                $member_esign->save(['file_id' => $res['data']['fileId'],
+                    'file_download_url' => $res['data']['fileDownloadUrl'],
+                    'esign_position' => json_encode($res['esign_position'])], [
+                    'uid' => $uid
+                ]);
+                $file_id = $res['data']['fileId'];
+                $position = $res['esign_position'];
+            } else {
+                return [false, '签署文件创建失败，请联系客服处理！'];
+            }
+        }
+
+        if(!empty($user['sign_flow_id'])){
+            $signFlowId = $user['sign_flow_id'];
+        }else{
+            //查询文件盖章位置
+//        $position = $signService->fileKeywordPositions($file_id);
+            //获取签署id
+            $res = $signService->createByFile($file_id, $position, $data['mobile'], $data['name']);
+
+            if($res['code'] !=0){
+                return [false, '签署流程创建失败，请联系客服处理！'];
+            }
+            $signFlowId = $res['data']['signFlowId'];
+        }
+        
+        $url = $signService->getSignUrl($signFlowId, $data['mobile']);
+        $member_esign->save(['sign_flow_id'=> $signFlowId, 'sign_url'=> $url], [
+            'uid' => $uid
+        ]);
+
+        return [true, ['url'=> $url]];
+    }
+
+
 }

@@ -25,13 +25,13 @@ class WxMsgTemplateSendTask extends Command {
         }
         debugLog('群发消息测试');
         $templateSer = new WxMemberMsgSer();
-        while (1) {
+//        while (1) {
             try {
                 $msg_template_ids = $templateSer->getMsgTemplates(['status' => 2],'id');
-                if (!$msg_template_ids) {
-                    sleep(2);
-                    continue;
-                }
+//                if (!$msg_template_ids) {
+//                    sleep(2);
+//                    continue;
+//                }
                 //status: 1无状态（已结束） 2请求群发 3群发中
                 foreach ($msg_template_ids as $id) {
                     $templateSer->saveMsgTemplate(['status' => 3], ['id' => $id['id']]);
@@ -43,7 +43,7 @@ class WxMsgTemplateSendTask extends Command {
                 //$log_dir = getcwd() . '/wx_msg_send.log';
                 //file_put_contents($log_dir, date('Y-m-d H:i:s') . $msg . PHP_EOL, 8);
             }
-        }
+//        }
     }
 
 }

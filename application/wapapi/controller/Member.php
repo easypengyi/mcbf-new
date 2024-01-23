@@ -17,10 +17,13 @@ use addons\miniprogram\model\WeixinAuthModel;
 use addons\receivegoodscode\server\ReceiveGoodsCode as ReceiveGoodsCodeSer;
 use data\model\UserModel;
 use data\model\VslBankModel;
+use data\model\VslGoodsModel;
 use data\model\VslMemberBankAccountModel;
 use data\model\VslMemberCardModel;
+use data\model\VslMemberEsignModel;
 use data\model\VslMemberLevelModel;
 use data\model\VslMemberRechargeModel;
+use data\model\VslOrderGoodsModel;
 use data\model\VslOrderModel;
 use data\model\VslOrderPaymentModel;
 use addons\presell\model\VslPresellModel;
@@ -68,7 +71,7 @@ class Member extends BaseController
         parent::__construct();
         $this->rpcType = Configs::get('blockchain.rpcType');
         $action = request()->action();
-        if ($_REQUEST['type'] == 'callback' || $action == 'wchatpay' || $action == 'alipay') {
+        if ($_REQUEST['type'] == 'callback' || $action == 'wchatpay' || $action == 'alipay' || $action="esignCallback") {
 
         } else {
             parent::__construct();
@@ -439,6 +442,17 @@ class Member extends BaseController
                 return json(AjaxReturn($checkGroup));
             }
         }
+        $is_beautiful_point_pay = false;
+        //只允许美丽分支付
+        $order_goods_mdl = new VslOrderGoodsModel();
+        $goods_ids = $order_goods_mdl->where(['order_id' => $order_info['order_id']])->column('goods_id');
+        if(count($goods_ids) == 1){
+            if(in_array($goods_ids[0], VslGoodsModel::getBeautifulGoods())){
+                $is_beautiful_point_pay = true;
+            }
+        }
+        $data['data']['is_beautiful_point'] = $is_beautiful_point_pay;
+
         $pay = new UnifyPay();
         $pay_value = $pay->getPayInfo($out_trade_no);
         if (empty($pay_value['pay_money'])) {
@@ -558,6 +572,7 @@ class Member extends BaseController
             $data['data']['end_time'] = $zero2 + ($shop_config['order_buy_close_time'] * 60);
         }
         $data['data']['balance'] = $member_account['balance'];
+        $data['data']['beautiful_point'] = $member_account['beautiful_point'];
 
         //支付密码开关
         $payPassRes = $config_service->getClosePayPassword($this->website_id );
@@ -1413,6 +1428,68 @@ class Member extends BaseController
         }
     }
 
+    /**
+     * 美丽分支付
+     *
+     * @return \multitype|\think\response\Json
+     */
+    public function beautifulPointPay()
+    {
+        $member = new MemberAccount();
+        $member_account = $member->getMemberAccount($this->uid); // 用户余额
+        $beautiful_point = $member_account['beautiful_point'];
+        $out_trade_no = request()->post('out_trade_no');
+        $pay_money = request()->post('pay_money');
+        if (empty($out_trade_no)) {
+            return json(AjaxReturn(LACK_OF_PARAMETER));
+        }
+        $pay_ment = new VslOrderPaymentModel();
+        $payment_info = $pay_ment->getInfo(['out_trade_no' => $out_trade_no],'type,pay_money,type_alis_id,shop_id,pay_body,pay_status');
+        $order = new VslOrderModel();
+        $real_pay_money = $order->getsum(['out_trade_no'=>$out_trade_no],'pay_money');
+        if ($beautiful_point < $pay_money || $beautiful_point < $payment_info['pay_money'] || $beautiful_point < $real_pay_money) {
+            $data['code'] = -1;
+            $data['message'] = "美丽分不足。";
+            return json($data);
+        } else {
+            try {
+                $order_service = new OrderService();
+                $order_info = $order->getInfo(['out_trade_no|out_trade_no_presell' => $out_trade_no], 'order_id, order_type,order_status,pay_money,pay_status,money_type');
+                if ($order_info['pay_status']==2 && $order_info['pay_money']!=0){
+                    return AjaxReturn(FAIL,[],'请勿重复支付!');
+                }
+                $res = 0;
+                if($order_info){
+                    $res = $order_service->orderOnLinePay($out_trade_no, 7, 0, 1);
+                }
+
+                if ($res == 1) {
+                    $account_flow = new MemberAccount();
+                    $order_id_list = $order->field('order_id, pay_money')->where(['out_trade_no' => $out_trade_no])->select();
+                    foreach ($order_id_list as $k => $v) {
+                        $account_flow->addMemberAccountData(3, $this->uid, 0, $v['pay_money'], 1, $v['order_id'], '商城订单，美丽分支付');
+                    }
+
+                    $this->paySuccess2UpdataInvoiceInfo($out_trade_no);
+                    $data['code'] = 0;
+                    $data['message'] = "支付成功";
+                    return json($data);
+                }else{
+                    $data['code'] = -1;
+                    $data['message'] = "支付失败";
+                    return json($data);
+                }
+                //修改账户余额
+            } catch (\Exception $e) {
+                $data['code'] = -2;
+                $data['message'] = "服务器内部错误。";
+                return json($data);
+            }
+        }
+    }
+
+
+
     //货款支付(渠道商采购用)
     public function proceeds_pay()
     {
@@ -1889,6 +1966,35 @@ class Member extends BaseController
             $data['point_detail']['data'][$k]['text'] = str_replace("积分",$point_style,$v['text']);
             $data['point_detail']['data'][$k]['type_name'] = str_replace("余额",$balance_style,$v['type_name']);
             $data['point_detail']['data'][$k]['type_name'] = str_replace("积分",$point_style,$v['type_name']);
+        }
+        $data['point_detail']['page_index'] = $page_index;
+        $result['code'] = 0;
+        $result['data'] = $data;
+
+        return json($result);
+    }
+
+    //店铺流水
+    public function beautifulPoint()
+    {
+        $shop_id = $this->instance_id;
+        $condition['nmar.shop_id'] = $shop_id;
+        $condition['nmar.uid'] = $this->uid;
+        $condition['nmar.account_type'] = 3;
+        $condition['nmar.number'] = array('<>', 0);
+        // 查看用户在该商铺下的积分消费流水
+        $page_index = request()->post('page_index') ?:1;
+        $page_size = request()->post('page_size') ?: PAGESIZE;
+        $member_point_list = $this->getAccountList($page_index, $page_size, $condition);
+        // 查看积分总数
+        $member = new MemberAccount();
+        $member_info = $member->getMemberAccount($this->uid);
+        $data['point'] = $member_info['beautiful_point'];
+        $data['point_detail'] = $this->object2array($member_point_list);
+        foreach ($data['point_detail']['data'] as $k=>$v){
+            if($v['from_type'] != 34 && $v['from_type'] != 35 && $v['from_type'] != 50 && $v['from_type'] != 51 && $v['from_type'] != 52 && !strstr($v['number'], '-')){
+                $data['point_detail']['data'][$k]['number'] = "+".$v['number'];
+            }
         }
         $data['point_detail']['page_index'] = $page_index;
         $result['code'] = 0;
@@ -4755,6 +4861,135 @@ class Member extends BaseController
             $list['message'] = "暂无数据";
             return json($list);
         }
+    }
+
+
+    /**
+     * 获取e签宝合同信息
+     */
+    public function esign()
+    {
+        $uid = $this->uid;
+        $thing_server = new \data\service\Member();
+        $res = $thing_server->getEsignDetail($uid);
+        //标为已读
+        return json(['code' => 1, 'message' => '获取成功', 'data' => $res]);
+    }
+
+    /**
+     * 签约合同
+     */
+    public function saveEsign()
+    {
+        $name = request()->post('name'); // 收件人
+        $id_card = request()->post('id_card'); // 电话
+        $address = request()->post('address'); // 电话
+        $mobile = request()->post('mobile'); // 电话
+
+        $data = array(
+            'name' => $name,
+            'mobile' => $mobile,
+            'id_card' => $id_card,
+            'address' => $address
+        );
+        $uid = $this->uid;
+        $thing_server = new \data\service\Member();
+        list($result, $data) = $thing_server->getEsignUrl($uid, $data);
+
+        if ($result) {
+            return json(['code' => 1, 'message' => '获取成功!', 'data' => $data]);
+        } else {
+            return json(['code' => -1, 'message' => $data]);
+        }
+    }
+
+    /**
+     * e签宝回调
+     */
+    public function esignCallback(){
+        $secret = "a3ecd0ec8b3c3ada6a395e813b3f7d85";
+        $file = fopen('/www/wwwroot/mcbf-admin/runtime/callback.log', "a");
+        fwrite($file, "startTime\n" . date('Y-m-d H:i:s'));
+
+        file_get_contents("php://input");
+
+        if($_SERVER['REQUEST_METHOD'] != 'POST'){
+            fwrite($file,'非法回调');exit;
+        }
+
+        fwrite($file, json_encode($_SERVER));
+
+//    校验签名 如果header里放入的值为X_TSIGN_OPEN_SIGNATURE，到header里会自动加上HTTP_，并且转化为大写，取值时如下
+        if (!isset($_SERVER['HTTP_X_TSIGN_OPEN_SIGNATURE'])) {
+            echo "签名不能为空\n";
+            exit;
+        }
+        $sign = $_SERVER['HTTP_X_TSIGN_OPEN_SIGNATURE'];
+        fwrite($file, 'sign:' . $sign);
+
+
+        //1.获取时间戳的字节流
+        if (!isset($_SERVER['HTTP_X_TSIGN_OPEN_TIMESTAMP'])) {
+            echo "时间戳不能为空\n";
+            exit;
+        }
+        $timeStamp = $_SERVER['HTTP_X_TSIGN_OPEN_TIMESTAMP'];
+
+        //2.获取query请求的字节流，对 Query 参数按照字典对 Key 进行排序后,按照value1+value2方法拼接
+//        $params = "";
+//        if (!empty($params)) {
+//            ksort($params);
+//        }
+
+//        $requestQuery = '';
+////        foreach ($params as $val) {
+////            $requestQuery .= $val;
+////        }
+//
+//        fwrite($file, '获取query的数据:' . $requestQuery . "\n");
+
+        //3. 获取body的数据
+        $body = file_get_contents("php://input");
+//        $result = json_decode($body, true);
+//        $body = json_encode($result);
+//        fwrite($file, '获取body的数据:' . $body . "\n");
+//
+//        //4.组装数据并计算签名
+//        $data = $timeStamp . $requestQuery . $body;
+//        fwrite($file, '组装数据并计算签名:' . $data . "\n");
+//        var_dump($data);echo  "\n";
+//
+//        echo $sign . "\n";
+//        $mySign = hash_hmac("sha256", $data, $secret);
+//
+//        echo $mySign . "\n";
+//        if ($mySign != $sign) {
+//            echo '验签失败';
+//            fwrite($file, "签名校验失败\n");
+//        } else {
+//            echo '验签成功';
+//        }
+
+        $result = json_decode($body, true);
+        switch ($result['action']) {
+            case 'SIGN_MISSON_COMPLETE':
+                //签署人签署完成回调
+                if($result['signResult'] == 2){
+                    $member_esign = new VslMemberEsignModel();
+                    $info = $member_esign->get(['sign_flow_id'=> $result['signFlowId']]);
+                    if(!is_null($info)){
+                        //更新签约状态
+                        $member_esign->save(['status' => 1, 'result'=> $body, 'update_time'=>time()], [
+                            'sign_flow_id' => $result['signFlowId']
+                        ]);
+                    }
+                }
+                break;
+            case 'SIGN_FLOW_COMPLETE':
+                //流程结束逻辑处理
+                break;
+        }
+
     }
 
 }

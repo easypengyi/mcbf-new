@@ -34,7 +34,7 @@ class PointDeduction extends BaseService
         # 会员卡抵扣计算
         if($is_membercard){
             $membercard = new MembercardSer();
-            $payment_info = $membercard->dealMembercardReturnPoint($payment_info);//会员卡额外积分
+            $payment_info = $membercard->dealMembercardReturnPoint($payment_info, $uid);//会员卡额外积分
             //统计总积分
             $membercard_total_give_point = 0;
             foreach($payment_info as $shop_id => $shop_info){
@@ -47,7 +47,7 @@ class PointDeduction extends BaseService
             }
             $return_data['total_return_point'] = $membercard_total_give_point;
             //会员卡抵扣处理
-            $payment_info = $membercard->membercardReturnOrderInfo($payment_info,$is_membercard_deduction,$return_data);
+            $payment_info = $membercard->membercardReturnOrderInfo($payment_info,$is_membercard_deduction,$return_data, $uid);
         }
         return $payment_info;
     }

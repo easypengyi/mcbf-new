@@ -879,7 +879,7 @@ class Wapstore extends baseStore
         $VoucherServer = new VoucherServer();
         $result = $VoucherServer->getUserUse($gift_voucher_code, $this->instance_id, $this->store_id, $this->assistantId);
         if ($result) {
-            $this->addUserLog('使用礼品券', $result);
+            $this->addUserLog('使用礼品券11', $result);
         }
         return json(AjaxReturn($result));
     }

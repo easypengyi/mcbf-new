@@ -1274,6 +1274,10 @@ class OrderStatus extends BaseService
                 'type_name' => '到店支付'
             ),
             array(
+                'type_id' => '7',
+                'type_name' => '美丽分支付'
+            ),
+            array(
                 'type_id' => '10',
                 'type_name' => '线下支付'
             ),

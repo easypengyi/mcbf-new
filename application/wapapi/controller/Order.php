@@ -544,7 +544,19 @@ class Order extends BaseController
         $user_model = new UserModel();
         $user_info = $user_model::get(['user_model.uid' => $this->uid], ['member_account']);
         $data['data']['balance'] = $user_info->member_account->balance ?: 0;
+        $data['data']['beautiful_point'] = $user_info->member_account->beautiful_point ?: 0;
         $data['data']['pay_password'] = !empty($user_info->payment_password) ? 1 : 0;
+
+        $is_beautiful_point_pay = false;
+        //只允许美丽分支付
+        $order_goods_mdl = new VslOrderGoodsModel();
+        $goods_ids = $order_goods_mdl->where(['order_id' => $order_id])->column('goods_id');
+        if(count($goods_ids) == 1){
+            if(in_array($goods_ids[0], VslGoodsModel::getBeautifulGoods())){
+                $is_beautiful_point_pay = true;
+            }
+        }
+        $data['data']['is_beautiful_point'] = $is_beautiful_point_pay;
         /*if (isset($isChain) && in_array($isChain, ['eth', 'eos'])) {
             $data['code'] = 1;
             $data['message'] = '请求成功';
@@ -2062,7 +2074,7 @@ class Order extends BaseController
     /**
      * 队列创建订单
      */
-    public function queueOrderCreate($data)
+    public function queueOrderCreate($data, $is_sys = 0)
     {
         try{
             if(!is_array($data)){

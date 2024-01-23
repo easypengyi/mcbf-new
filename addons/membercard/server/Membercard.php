@@ -1314,8 +1314,11 @@ class Membercard extends BaseService
      * 处理会员卡 - 返积分
      * @param $payment_info
      */
-    public function dealMembercardReturnPoint ($payment_info)
+    public function dealMembercardReturnPoint ($payment_info, $uid = 0)
     {
+        if($uid > 0){
+            $this->uid = $uid;
+        }
         if (!$this->uid){return;}
         $membercard_data = $this->checkMembercardStatus($this->uid);
         # 先处理会员卡返积分
@@ -1369,9 +1372,11 @@ class Membercard extends BaseService
      * @param      $return_data
      * @return mixed
      */
-    public function membercardReturnOrderInfo ($payment_info,$is_membercard_deduction=false,&$return_data)
+    public function membercardReturnOrderInfo ($payment_info,$is_membercard_deduction=false,&$return_data, $uid = 0)
     {
-        
+        if($uid > 0){
+            $this->uid = $uid;
+        }
         $membercard_data = $this->checkMembercardStatus($this->uid);
         //处理会员卡显示
         $return_data['membercard_info'] = [
