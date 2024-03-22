@@ -3,6 +3,7 @@
 namespace addons\store;
 
 use addons\Addons;
+use addons\store\model\VslStoreAssistantModel;
 use addons\store\server\Store as storeServer;
 
 /**
@@ -480,9 +481,22 @@ class Store extends Addons
     {
         $storeServer = new storeServer();
         $storeList = $storeServer->storeList(1, 0, ['shop_id' => $this->instance_id, 'website_id' => $this->website_id]);
+//        var_dump($storeList[0]['start_time'], $storeList[0]['finish_time']);die;
         $this->assign("store_list", $storeList["data"]);
         $jobsList = $storeServer->jobsList(1, 0, ['shop_id' => $this->instance_id, 'website_id' => $this->website_id]);
         $this->assign("jobs_list", $jobsList["data"]);
+
+        $data = [];
+        $begin = VslStoreAssistantModel::BEGIN;
+        $end   = VslStoreAssistantModel::END;
+        for ($i = $begin; $i<=$end; $i++){
+            $data[] = [
+                'value'=> $i,
+                'start'=> $i,
+                'end'=> $i + 1
+            ];
+        }
+        $this->assign("time_list", $data);
         $this->fetch('template/' . $this->module . '/addAssistant');
     }
     /**
@@ -497,6 +511,20 @@ class Store extends Addons
         $this->assign("jobs_list", $jobsList["data"]);
         $assistantInfo = $storeServer->assistantDetail($assistant_id);
         $this->assign('assistant_info', $assistantInfo);
+
+        $data = [];
+        $begin = VslStoreAssistantModel::BEGIN;
+        $end   = VslStoreAssistantModel::END;
+
+        for ($i = $begin; $i<=$end; $i++){
+            $data[] = [
+                'value'=> $i,
+                'start'=> $i,
+                'end'=> $i + 1
+            ];
+        }
+        $this->assign("time_list", $data);
+
         $this->fetch('template/' . $this->module . '/addAssistant');
     }
     /*

@@ -73,6 +73,7 @@ class Gift extends baseGift {
     public function updateGift() {
         $data['title'] = request()->post('title', '');
         $data['gift_id'] = request()->post('gift_id', '');
+        $data['goods_id'] = request()->post('goods_id', 0);
         $data['cate_id'] = request()->post('cate_id', 0);
         $data['content'] = request()->post('content', '');
         $data['sort'] = request()->post('sort', 0);

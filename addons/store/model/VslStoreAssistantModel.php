@@ -7,6 +7,9 @@ use data\model\BaseModel;
 class VslStoreAssistantModel extends BaseModel
 {
     protected $table = 'vsl_store_assistant';
+
+    const BEGIN = 9;
+    const END = 20;
     
     /**
      * 获取店员列表

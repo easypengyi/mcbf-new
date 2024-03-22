@@ -4141,6 +4141,10 @@ class Member extends User
                 $file_id = $res['data']['fileId'];
                 $position = $res['esign_position'];
             } else {
+                $member_esign->save([
+                    'result' => json_encode($res)], [
+                    'uid' => $uid
+                ]);
                 return [false, '签署文件创建失败，请联系客服处理！'];
             }
         }

@@ -13,7 +13,10 @@ use addons\liveshopping\model\LiveModel;
 use addons\liveshopping\model\LiveRecordModel;
 use addons\liveshopping\model\LiveUserDataModel;
 use addons\membercard\server\Membercard as MembercardSer;
+use addons\store\model\VslStoreAssistantModel;
+use addons\store\model\VslStoreJobsModel;
 use data\model\AlbumPictureModel;
+use data\model\VslAppointOrderModel;
 use data\model\VslMemberLevelModel;
 use addons\discount\model\VslPromotionDiscountModel as DiscountModel;
 use addons\discount\server\Discount;
@@ -60,7 +63,7 @@ use data\service\ShopAccount;
 use addons\invoice\server\Invoice as InvoiceServer;
 use addons\shop\service\Shop as ShopServer;
 use addons\microshop\service\MicroShop as  MicroShopService;
-use addons\systemform\server\Systemform as CustomFormServer;
+use addons\customform\server\Custom as CustomFormServer;
 use addons\receivegoodscode\server\ReceiveGoodsCode as ReceiveGoodsCodeSer;
 use addons\supplier\server\Supplier as SupplierSer;
 use addons\luckyspell\server\Luckyspell as luckySpellServer;
@@ -1262,12 +1265,73 @@ class Goods extends BaseController
             }
             $custom_id = $goodsSer->getGoodsDetailById($goods_id, 'goods_id,price,goods_name,form_base_id')['form_base_id'];
             $custom = new CustomFormServer();
-            $result = $custom->getCustomFormDetaillist($custom_id,$goods_id );
+            $result = $custom->getCustomFormDetail($custom_id);
             $return_data['customform'] = $result['value'];
         }else{
             $return_data['customform'] = $this->user->getOrderCustomForm();
         }
+
         $return_data['shop'] = array_values($payment_info);
+        //预约项目 展示医生和预约时间
+        if($goodsType == 6){
+            $store_id = $return_data['shop'][0]['store_id'];
+            $where = [];
+            $where['jobs_id'] = array('in', [6,7]);
+            $begin = VslStoreAssistantModel::BEGIN;
+            $end   = VslStoreAssistantModel::END;
+            $today = date('Y-m-d');
+            $tomorrow = date("Y-m-d", strtotime("+1 day"));
+            $after_today = date("Y-m-d", strtotime("+2 day"));
+
+            $where['store_id'] = $store_id;
+            //获取医生列表
+            $doctor_list = VslStoreAssistantModel::field('assistant_id as id,assistant_name as text,reservation_times')
+                ->where($where)
+                ->order('jobs_id', 'asc')
+                ->select();
+            $doctors = [];
+            foreach ($doctor_list as $d){
+                //时间格式话
+                if(!empty($d['reservation_times'])){
+                    $reservation_times = explode(',', $d['reservation_times']);
+//                        var_dump($reservation_times);
+                    $no_list = [];
+                    for($i=$begin; $i<=$end; $i++){
+                        if(!in_array($i, $reservation_times)){
+                            $i_format = $i<10 ? '0'.$i : $i;
+                            $j = $i+1;
+                            $j_format = $j<10 ? '0'.$j : $j;
+                            $no_list[] = ['begin'=> $i_format, 'end'=> $j_format];
+                        }
+                    }
+                    $no_map = [];
+                    foreach ($no_list as $io){
+                        $no_map[] = [$today.' '.$io['begin'].':00:00', $today.' '.$io['end'].':00:00'];
+                        $no_map[] = [$tomorrow.' '.$io['begin'].':00:00', $tomorrow.' '.$io['end'].':00:00'];
+                        $no_map[] = [$after_today.' '.$io['begin'].':00:00', $after_today.' '.$io['end'].':00:00'];
+                    }
+
+                    //获取医生已被预约时间
+                    $where = [];
+                    $where['assistant_id'] = array('=', $d['id']);
+                    $where['pay_status'] = array('=', 1);
+                    $where['order_status'] = array('>=', 1);
+                    $orders =  VslAppointOrderModel::field('order_id,appoint_time,appoint_no')->where($where)->select();
+                    foreach ($orders as $o){
+                        $day = date('Y-m-d', strtotime($o['appoint_time']));
+                        $end = $o['appoint_no'] + 1;
+                        $end_format = $end < 10 ? '0'.$end : $end;
+                        $no_map[] = [$o['appoint_time'], $day.' '.$end_format.':00:00'];
+                    }
+                    $d['no_data'] = $no_map;
+
+                    $doctors[] = $d;
+                }
+            }
+
+            $return_data['shop'][0]['doctor_list'] = $doctors;
+        }
+
         $return_data['total_tax'] = $total_tax ?: 0;
         
         //返回websorket地址
@@ -2589,6 +2653,7 @@ class Goods extends BaseController
         $goods_category_server = new GoodsCategory();
         $condition['is_visible'] = 1;
         $condition['website_id'] = $this->website_id;
+        $condition['category_id'] = array('<>', 127);
         $category_info = $goods_category_server->getGoodsCategoryList(1, 0, $condition, 'level ASC,sort ASC', '*');
         $category_list_visible = [];// 用于筛选父类is_visible = 0的内容
         foreach ($category_info['data'] as $k => $value) {

@@ -12,9 +12,17 @@ use addons\invoice\server\Invoice as InvoiceServer;
 use addons\membercard\server\Membercard as MembercardSer;
 use addons\presell\service\Presell;
 use addons\receivegoodscode\server\ReceiveGoodsCode as ReceiveGoodsCodeSer;
+use addons\store\model\VslStoreAssistantModel;
 use addons\supplier\model\VslSupplierModel;
+use data\extend\weixin\WxPayApi as WxPayApi;
+use data\extend\weixin\WxPayData\WxPayRefund;
+use data\extend\WeiXinPay;
+use data\model\AlbumPictureModel;
 use data\model\RabbitOrderRecordModel;
+use data\model\VslAppointOrderModel;
 use data\model\VslGoodsSkuModel;
+use data\model\VslMemberAccountModel;
+use data\model\VslMemberAccountRecordsModel;
 use data\model\VslMemberModel;
 use data\service\Config;
 use data\model\DistrictModel;
@@ -40,6 +48,7 @@ use addons\coupontype\server\Coupon;
 use addons\seckill\server\Seckill as SeckillServer;
 use data\service\Goods as GoodsService;
 use addons\store\server\Store;
+use think\Db;
 use think\Request;
 use think\Session;
 use addons\groupshopping\server\GroupShopping;
@@ -2913,11 +2922,40 @@ class Order extends BaseController
         $member_recharge = new VslMemberRechargeModel();
         $payment = new VslOrderPaymentModel();
         $out_trade_no = request()->post('out_trade_no', '');
+        $is_appoint = request()->post('is_appoint', 0);
         if (empty($out_trade_no)) {
             $data['code'] = -1;
             $data['message'] = "外部交易号不能为空";
             return json($data);
         }
+
+        if($is_appoint == 1){
+            $pay_ment = new VslAppointOrderModel();
+            $order_info = $pay_ment->getInfo(['out_trade_no' => $out_trade_no],'order_id,pay_money,pay_status,website_id');
+
+            $data['code'] = 0;
+            if ($order_info['pay_status'] == 1) {
+                $data['data']['pay_status'] = 2;
+            } else {
+                $data['data']['pay_status'] = 0;
+            }
+            $data['data']['presell_id'] = '';  //预售ID
+            $data['data']['group_id'] = '';      //拼团活动ID
+            $data['data']['group_record_id'] = '';    //拼团记录ID
+            $data['data']['pay_gift_status'] = '';    //支付有礼状态
+            $data['data']['is_channel'] = '';
+            $data['data']['card_store'] = []; //计时/次商品使用门店信息
+            $data['data']['wx_card_state'] = ''; //计时/次商品微信卡券领取状态
+            $data['data']['card_ids'] = ''; //计时/次商品微信卡券领取id
+            $data['data']['order_type'] = 1; //订单类型
+            $data['data']['order_from'] = 1; //充值订单
+            $data['data']['shipping_type'] = 1;
+            $data['data']['order_id'] = $order_info['order_id']; //订单id
+            $data['data']['offline'] = 0; //线下转款支付
+            return json($data);
+        }
+
+
         if (strstr($out_trade_no, 'eos')) {
             $data['code'] = 0;
             $block = new Block();
@@ -4274,6 +4312,343 @@ class Order extends BaseController
             $data['code'] = -2;
             $data['message'] = "服务器内部错误。";
             return json($data);
+        }
+    }
+
+
+    public function doctorOrderCreate($post_data = "")
+    {
+        try {
+            if (empty($post_data)) {
+                $post_data = request()->post('order_data/a');
+            }
+            $shop_list = $post_data['shop_list'];
+            if(empty($post_data['shop_list']) || count($shop_list) == 0){
+                return AjaxReturn(FAIL,[],'请先选择门店信息!');
+            }
+            if(empty($post_data['doctor_id'])){
+                return AjaxReturn(FAIL,[],'请先选择医生!');
+            }
+            if(empty($post_data['appoint_time'])){
+                return AjaxReturn(FAIL,[],'请先选择预约时间!');
+            }
+
+            $order = new VslAppointOrderModel();
+            $where = [];
+            $where['appoint_time'] = array('=', $post_data['appoint_time']);
+            $where['pay_status'] = array('=', 1);
+            $where['order_status'] = array('>=', 1);
+            $appoint_no = date('H', strtotime($post_data['appoint_time']));
+            //医生的预约时间
+            $map = [];
+            $map['jobs_id'] = array('in', [5,6]);
+            $map['store_id'] = $shop_list[0]['store_id'];
+            $map['assistant_id'] = $post_data['doctor_id'];
+            //获取医生列表
+            $doctor_info = VslStoreAssistantModel::field('assistant_id as id,assistant_name as text,reservation_times')
+                ->where($map)
+                ->find();
+            if(is_null($doctor_info)){
+                return AjaxReturn(FAIL,[],'时间已被预约,刷新后重试！');
+            }
+
+            $reservation_times = explode(',', $doctor_info['reservation_times']);
+            if(!in_array($appoint_no, $reservation_times)){
+                return AjaxReturn(FAIL,[],'时间已被预约,刷新后重试！');
+            }
+
+            //是否被预约
+            $info = $order->getInfo($where,'order_id,pay_money,pay_status,website_id');
+            if(!is_null($info)){
+                return AjaxReturn(FAIL,[],'时间已被预约,刷新后重试!');
+            }
+
+
+
+            $uid = $this->uid;
+            $website_id = $this->website_id;
+            $shipping_time = time();
+            $ip = get_ip();
+            $order_service = new OrderService();
+            $user_model = new UserModel();
+            $out_trade_no = 'TC'.$order_service->getOrderTradeNo();
+            $order_from = $post_data['order_from'] ?: 2;
+            $user_info = $user_model::get($uid);
+            $goods = $shop_list[0]['goods_list'][0];
+
+            $data_order = [
+                'out_trade_no'=> $out_trade_no,
+                'order_from'=> $order_from,
+                'buyer_id'=> $uid,
+                'user_name'=> $user_info['user_name'],
+                'buyer_ip'=> $ip,
+                'buyer_message'=> $goods['leave_message'],
+                'goods_money'=> $goods['price'],
+                'order_money'=> $post_data['total_amount'],
+                'pay_money'=> $post_data['total_amount'],
+                'order_status'=> 0,
+                'store_id'=> $shop_list[0]['store_id'],
+                'assistant_id'=> $post_data['doctor_id'],
+                'appoint_time'=> $post_data['appoint_time'],
+                'appoint_no'=> $appoint_no,
+                'goods_id'=> $goods['goods_id'],
+                'sku_id'=> $goods['sku_id'],
+                'website_id'=> $website_id,
+                'create_time'=> $shipping_time
+            ];
+
+            $res = $order->save($data_order);
+            if($res){
+                $message['code'] = 0;
+                $message['message'] = "订单提交成功";
+                $message['custom_type'] = "order_create";
+                $message['data']['out_trade_no'] = $out_trade_no;
+//                    // 领货码 - 使用记录
+                return json($message);
+            }
+
+        } catch (\Exception $e) {
+            $data['code'] = -2;
+            $data['message'] = "服务器内部错误。";
+            return json($data);
+        }
+    }
+
+    /**
+     * 订单列表
+     *
+     * @return \data\model\unknown|\think\response\Json
+     */
+    public function appointOrderList(){
+        $page_index = request()->post('page_index', 1);
+        $page_size = request()->post('page_size') ?: PAGESIZE;
+        $order_no =  request()->post('search_text');
+
+        $order_model = new VslAppointOrderModel();
+        $condition['nm.is_deleted'] = 0; // 未删除订单
+        $condition['nm.pay_status'] = 1;
+        $condition['nm.buyer_id'] = $this->uid;
+
+        if (!empty($order_no)) {
+            $condition['out_trade_no'] = array(
+                "like",
+                "%" . $order_no . "%"
+            );
+        }
+        $list = $order_model->getViewList($page_index, $page_size, $condition, 'create_time desc');
+        if(count($list['data']) == 0){
+            return $list;
+        }
+
+        $img_ids = [];
+        foreach ($list['data'] as &$item){
+            $order_status_name = '未支付';
+            if($item['order_status'] == 1){
+                $order_status_name = '已支付';
+            }else if($item['order_status'] == 2){
+                $order_status_name = '已完成';
+            }else if($item['order_status'] == -1){
+                $order_status_name = '已取消';
+            }
+            $item['order_status_name'] = $order_status_name;
+            $item['order_real_money'] = $item['pay_money'];
+            $item['pay_time'] = '下单时间：'.date('Y-m-d H:i:s', $item['pay_time']);
+            $img_ids[] = $item['picture'];
+        }
+
+        $pic = new AlbumPictureModel();
+        $pic_list = $pic::where('pic_id', 'in', array_unique($img_ids))->column('pic_cover', 'pic_id');
+
+        foreach ($list['data'] as $key=> $d){
+            $order_item_list = [];
+            $spec = [];
+            $d['goods_image'] = isset($pic_list[$d['picture']]) ? $pic_list[$d['picture']] : '';
+            $spec[] = [
+                'spec_name'=> '预约时间：',
+                'spec_value_name'=> $d['appoint_time']
+            ];
+            $order_item_list[] = [
+                'goods_name'=> $d['goods_name'],
+                'pic_cover'=> $d['goods_image'],
+                'spec'=> $spec
+            ];
+            $list['data'][$key]['order_item_list'] = $order_item_list;
+        }
+
+        return json([
+            'code' => 1,
+            'message' => '获取成功',
+            'data' => [
+                'order_list' => $list['data'],
+                'page_count' => $list['page_count'],
+                'total_count' => $list['total_count']
+            ]
+        ]);
+    }
+
+    /**
+     * 取消预约
+     *
+     * @return array|\think\response\Json
+     */
+    public function cancelAppointOrder(){
+        $order_id = request()->post('order_id');
+        $order = new VslAppointOrderModel();
+        $where = [];
+        $where['order_id'] = array('=', $order_id);
+        $where['buyer_id'] = array('=', $this->uid);
+        $where['pay_status'] = array('=', 1);
+        $where['order_status'] = array('>=', 1);
+        //是否被预约
+        $info = $order->getInfo($where,'order_id,pay_money,pay_status,pay_time,payment_type,website_id,buyer_id,appoint_time');
+        if(is_null($info)){
+            $data['code'] = -2;
+            $data['message'] = "订单有误，请刷新后尝试";
+            return json($data);
+        }
+
+
+        if($info['order_status'] == 2){
+            $data['code'] = -2;
+            $data['message'] = "订单已完成无法取消";
+            return json($data);
+        }
+
+        $date = date('Y-m-d H:i:s');
+        if($info['appoint_time'] < $date){
+            $data['code'] = -2;
+            $data['message'] = "预约时间已到期，无法取消";
+            return json($data);
+        }
+
+        //两个小时内不允许取消
+        $end_time = $info['pay_time'] + 2*60*60;
+
+        if($end_time > time()){
+            $data['code'] = -2;
+            $data['message'] = "2个小时内，无法取消";
+            return json($data);
+        }
+
+        try {
+            Db::startTrans();
+
+            $order->save(['order_status'=> -1], $where);
+            //余额支付退到余额
+            if($info['payment_type'] == 5){
+                // 退还会员的账户余额
+                $retval = $this->updateMemberAccount($order_id, $info['buyer_id'], $info['pay_money']);
+                if (!is_numeric($retval)) {
+                    Db::rollback();
+                    return ['code' => -1, 'message' => '余额退款失败'];
+                }
+            }else if($info['payment_type'] == 1){
+                //微信原路退回
+                $res = $this->orderConfirmRefund($order_id);
+                if($res['is_success'] == 0){
+                    Db::rollback();
+                    return ['code' => -1, 'message' => '原路退款失败，请联系平台处理'];
+                }
+            }
+            Db::commit();
+            $data['code'] = 1;
+            $data['message'] = "取消成功";
+
+            return json($data);
+        } catch (\Exception $e) {
+            return ['code' => -1, 'message' => '取消失败'];
+        }
+    }
+
+    /**
+     * 原路退回
+     *
+     * @param $order_id
+     * @return array
+     * @throws \data\extend\weixin\WxPayException
+     */
+    public function orderConfirmRefund($order_id){
+        $order = new VslAppointOrderModel();
+        $order_info = $order->getInfo(['order_id' => $order_id, 'pay_status'=> 1], 'order_id,out_trade_no,order_status,pay_money,website_id');//判断是否是砍价订单
+        $refund_no = date("YmdHis") . rand(100000, 999999);
+        $refund_fee = $order_info['pay_money'] * 100;
+        $website_id = $order_info['website_id'];
+        $WxPayApi = new WxPayApi();
+        $input = new WxPayRefund();
+        $input->SetOut_refund_no($refund_no);
+        $input->SetOut_trade_no($order_info['out_trade_no']);
+        $input->SetRefund_fee($refund_fee);
+        $input->SetTotal_fee($refund_fee);
+
+        // 订单是否是小程序
+        $is_mp = $order_info['pay_from'] == 6 ? 1: 0;
+        $order = $WxPayApi->refund($input, 30, $website_id, $is_mp);
+
+        $msg = '操作成功';
+        // 检测签名配置是否正确
+        if ($order['return_code'] == "FAIL") {
+
+            $is_success = 0;
+            $msg = $order['return_msg'];
+        } else {
+            // 检查退款业务是否正确
+            if ($order['result_code'] == "FAIL") {
+
+                $is_success = 0;
+                $msg = $order['err_code_des'];
+            } else {
+                $is_success = 1;
+            }
+        }
+
+        return array(
+            'is_success' => $is_success,
+            'msg' => $msg
+        );
+    }
+
+    /**
+     * 在线原路退款（账户余额）
+     *
+     * @param unknown $goods_sku_list
+     */
+    public function updateMemberAccount($order_id, $uid, $refund_real_money)
+    {
+        $member_account_record = new VslMemberAccountRecordsModel();
+        $member_account_record->startTrans();
+        try {
+            if ($refund_real_money == 0) {
+                return "退款金额不能为0";
+            }
+            $member = new VslMemberAccountModel();
+            $account = $member->getInfo(['uid' => $uid], '*');
+            if ($account) {
+                $balance = $account['balance'] + $refund_real_money;
+                $member->save(['balance' => $balance], ['uid' => $uid]);
+                //添加会员账户流水
+                $data = array(
+                    'records_no' => 'Br' . getSerialNo(),
+                    'account_type' => 2,
+                    'uid' => $uid,
+                    'sign' => 0,
+                    'number' => $refund_real_money,
+                    'point' => $account['point'],
+                    'balance' => $balance,
+                    'from_type' => 2,
+                    'data_id' => $order_id,
+                    'text' => '预约订单余额退款，会员可用余额增加',
+                    'create_time' => time(),
+                    'website_id' => $account['website_id']
+                );
+                $res = $member_account_record->save($data);
+            }
+
+            $member_account_record->commit();
+            return $res;
+        } catch (\Exception $e) {
+            recordErrorLog($e);
+            $member_account_record->rollback();
+            return $e->getMessage();
         }
     }
 }

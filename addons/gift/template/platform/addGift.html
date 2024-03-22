@@ -69,6 +69,7 @@
     <div class="form-group">
         <label class="col-md-2 control-label"></label>
         <div class="col-md-8">
+            <input type="hidden"  id="goods_id" name="goods_id" required value="{$gift_info.goods_id}">
             <button class="btn btn-primary J-submit" type="submit">{if $gift_info}保存{else}添加{/if}</button>
             <a href="javascript:history.go(-1);" class="btn btn-default">返回</a>
         </div>
@@ -111,6 +112,7 @@
             }
             var gift_id = $("#gift_id").val();
             var gift_name = $("#gift_name").val();
+            var goods_id = $("#goods_id").val();
             var price = $("#price").val();
             var stock = $("#stock").val();
             var description = $('#UE-gift-content').data('content');
@@ -135,6 +137,7 @@
                 data: {
                     'gift_id': gift_id,
                     'gift_name': gift_name,
+                    'goods_id': goods_id,
                     'price': price,
                     'description': description,
                     'stock': stock,

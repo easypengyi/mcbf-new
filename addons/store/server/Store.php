@@ -389,6 +389,7 @@ class Store extends BaseService
                 'shop_id' => $this->instance_id,
                 'website_id' => $this->website_id,
                 'store_id' => $input['store_id'],
+                'reservation_times' => $input['reservation_times'],
                 'jobs_id' => $input['jobs_id'],
                 'assistant_name' => $input['assistant_name'],
                 'status' => $input['status'],
@@ -433,6 +434,7 @@ class Store extends BaseService
                 'shop_id' => $this->instance_id,
                 'website_id' => $this->website_id,
                 'store_id' => $input['store_id'],
+                'reservation_times' => $input['reservation_times'],
                 'jobs_id' => $input['jobs_id'],
                 'assistant_name' => $input['assistant_name'],
                 'status' => $input['status'],
@@ -574,7 +576,7 @@ class Store extends BaseService
         }
         $assistantModel = new VslStoreAssistantModel();
         $info = $assistantModel->getInfo(['assistant_id' => $assistant_id],
-            'assistant_id,store_id,jobs_id,shop_id,website_id,assistant_name,assistant_tel,status,assistant_headimg,is_commission,cash_method,cash_reward,write_off_method,write_off_reward');
+            'assistant_id,store_id,jobs_id,shop_id,website_id,assistant_name,assistant_tel,status,assistant_headimg,is_commission,cash_method,cash_reward,write_off_method,write_off_reward,reservation_times');
         $info['store_info'] = $this->storeDetail($store_id);
         $info['jobs_info'] = $this->jobDetail($info['jobs_id']);
         $apl_commission = 0;//提现权限
@@ -602,7 +604,16 @@ class Store extends BaseService
             }
         }
         //获取奖金信息
-        $info['jobs_info']['operation'] = $this->getModule($info['jobs_info']['module_id_array']);
+        $model_list = $this->getModule($info['jobs_info']['module_id_array']);
+        foreach ($model_list as $key=> $m_item){
+            if($m_item['module_id'] == 4){
+                $model_list[] = [
+                    "module_id"=> "11",
+                    "module_name"=> "预约订单"
+                ];
+            }
+        }
+        $info['jobs_info']['operation'] = $model_list;
         $shop_name = $this->mall_name;
         if (getAddons('shop', $this->website_id)) {
             $shop = new Shop();

@@ -16,8 +16,11 @@ use addons\invoice\server\Invoice as InvoiceServer;
 use addons\miniprogram\model\WeixinAuthModel;
 use addons\receivegoodscode\server\ReceiveGoodsCode as ReceiveGoodsCodeSer;
 use data\model\UserModel;
+use data\model\VslAppointOrderModel;
 use data\model\VslBankModel;
 use data\model\VslGoodsModel;
+use data\model\VslMemberAccountModel;
+use data\model\VslMemberAccountRecordsModel;
 use data\model\VslMemberBankAccountModel;
 use data\model\VslMemberCardModel;
 use data\model\VslMemberEsignModel;
@@ -416,170 +419,220 @@ class Member extends BaseController
     {
         $config = new AddonsConfigService();
         $out_trade_no = request()->post('out_trade_no', '');
+        $is_appoint = request()->post('is_appoint', 0);
 
-        if (strstr($out_trade_no, 'QD')) {
-            $res = $this->getChannelPayValue($out_trade_no);
-            return $res;
-        }
-        if (strstr($out_trade_no, 'Dll')) {
-            $res = $this->getAgentPayValue($out_trade_no);
-            return $res;
-        }
-        if (empty($out_trade_no)) {
-            $data['code'] = 0;
-            $data['message'] = '没有获取到支付信息';
-            $data['data'] = null;
-            return json($data);
-        }
-        $order_mdl = new VslOrderModel();
-        $order_info = $order_mdl->field('presell_id, money_type, order_type, website_id, shop_id, order_id')->where(['out_trade_no' => $out_trade_no])->whereOr(['out_trade_no_presell' => $out_trade_no])->find();
-        if ($this->groupshopping) {
-            $group_server = new GroupShopping();
-            $checkGroup = $group_server->checkGroupIsCanByOrder($out_trade_no);
-            if ($checkGroup < 0) {
-                $orderSer = new OrderService();
-                $orderSer->orderClose($order_info['order_id']);
-                return json(AjaxReturn($checkGroup));
+        if($is_appoint == 0){
+            if (strstr($out_trade_no, 'QD')) {
+                $res = $this->getChannelPayValue($out_trade_no);
+                return $res;
             }
-        }
-        $is_beautiful_point_pay = false;
-        //只允许美丽分支付
-        $order_goods_mdl = new VslOrderGoodsModel();
-        $goods_ids = $order_goods_mdl->where(['order_id' => $order_info['order_id']])->column('goods_id');
-        if(count($goods_ids) == 1){
-            if(in_array($goods_ids[0], VslGoodsModel::getBeautifulGoods())){
-                $is_beautiful_point_pay = true;
+            if (strstr($out_trade_no, 'Dll')) {
+                $res = $this->getAgentPayValue($out_trade_no);
+                return $res;
             }
-        }
-        $data['data']['is_beautiful_point'] = $is_beautiful_point_pay;
+            if (empty($out_trade_no)) {
+                $data['code'] = 0;
+                $data['message'] = '没有获取到支付信息';
+                $data['data'] = null;
+                return json($data);
+            }
+            $order_mdl = new VslOrderModel();
+            $order_info = $order_mdl->field('presell_id, money_type, order_type, website_id, shop_id, order_id')->where(['out_trade_no' => $out_trade_no])->whereOr(['out_trade_no_presell' => $out_trade_no])->find();
+            if ($this->groupshopping) {
+                $group_server = new GroupShopping();
+                $checkGroup = $group_server->checkGroupIsCanByOrder($out_trade_no);
+                if ($checkGroup < 0) {
+                    $orderSer = new OrderService();
+                    $orderSer->orderClose($order_info['order_id']);
+                    return json(AjaxReturn($checkGroup));
+                }
+            }
+            $is_beautiful_point_pay = false;
+            //只允许美丽分支付
+            $order_goods_mdl = new VslOrderGoodsModel();
+            $goods_ids = $order_goods_mdl->where(['order_id' => $order_info['order_id']])->column('goods_id');
+            if(count($goods_ids) == 1){
+                if(in_array($goods_ids[0], VslGoodsModel::getBeautifulGoods())){
+                    $is_beautiful_point_pay = true;
+                }
+            }
+            $data['data']['is_beautiful_point'] = $is_beautiful_point_pay;
 
-        $pay = new UnifyPay();
-        $pay_value = $pay->getPayInfo($out_trade_no);
-        if (empty($pay_value['pay_money'])) {
-            $redis = connectRedis();
-            $pay_info = $redis->get($out_trade_no);
-            if (!empty($pay_info)) {
-                $pay_arr = unserialize($pay_info);
-                $pay_value['create_time'] = $pay_arr['create_time'];
-                $pay_value['order_type'] = 6;
-                $pay_value['pay_money'] = $pay_arr['all_should_paid_amount'];
-                if ($pay_arr['all_should_paid_amount'] == 0) {
+            $pay = new UnifyPay();
+            $pay_value = $pay->getPayInfo($out_trade_no);
+            if (empty($pay_value['pay_money'])) {
+                $redis = connectRedis();
+                $pay_info = $redis->get($out_trade_no);
+                if (!empty($pay_info)) {
+                    $pay_arr = unserialize($pay_info);
+                    $pay_value['create_time'] = $pay_arr['create_time'];
+                    $pay_value['order_type'] = 6;
+                    $pay_value['pay_money'] = $pay_arr['all_should_paid_amount'];
+                    if ($pay_arr['all_should_paid_amount'] == 0) {
+                        $data['code'] = 2;
+                        $data['message'] = '订单价格为0.00，无需再次支付!';
+                        $data['data'] = null;
+                        return json($data);
+                    }
+                    $pay_value['out_trade_no'] = $out_trade_no;
+                    if (empty($order_info)) {
+                        $order_info['order_type'] = 6;
+                        $order_info['website_id'] = $this->website_id;
+                    }
+                    $redis->del($out_trade_no);
+                }
+            } else {
+                $checkPayStatus = $pay->checkPayStatus($out_trade_no);//检测订单是否已经支付
+                if (!$checkPayStatus) {
                     $data['code'] = 2;
-                    $data['message'] = '订单价格为0.00，无需再次支付!';
+                    $data['message'] = '订单已经支付或者订单价格为0.00，无需再次支付!';
                     $data['data'] = null;
                     return json($data);
                 }
-                $pay_value['out_trade_no'] = $out_trade_no;
-                if (empty($order_info)) {
-                    $order_info['order_type'] = 6;
-                    $order_info['website_id'] = $this->website_id;
-                }
-                $redis->del($out_trade_no);
             }
-        } else {
-            $checkPayStatus = $pay->checkPayStatus($out_trade_no);//检测订单是否已经支付
-            if (!$checkPayStatus) {
-                $data['code'] = 2;
+            $config_service = new Config();
+            $shop_config = $config_service->getShopConfig(0);
+            $order_status = $this->getOrderStatusByOutTradeNo($out_trade_no);
+
+            if (empty($pay_value)) {
+                $data['code'] = 0;
+                $data['message'] = '订单主体信息已发生变动';
+                $data['data'] = null;
+                return json($data);
+            }
+            // 订单关闭状态下是不能继续支付的
+            if ($order_status == 5) {
+                $data['code'] = 0;
+                $data['message'] = '订单已关闭.00，无需再次支付!';
+                $data['data'] = null;
+                return json($data);
+            }
+            if ($order_info['order_type'] == 7 && $order_info['money_type'] == 1) {//预售订单并且已付定金
+                $presell_mdl = new VslPresellModel();
+                $pay_end_time = $presell_mdl->getInfo(['id' => $order_info['presell_id']], 'pay_end_time')['pay_end_time'];
+                if (time() > $pay_end_time) {
+                    $data['code'] = 0;
+                    $data['message'] = '订单支付时间已过期';
+                    $data['data'] = null;
+                    return json($data);
+                }
+            } elseif ($order_info['order_type'] == 5) {//拼团订单，关闭时间不同
+                $groupConfig = $config->getAddonsConfig('groupshopping', $order_info['website_id'], 0, 1);
+                if (time() > $pay_value['create_time'] + $groupConfig['pay_time_limit'] * 60) {
+                    $data['code'] = 0;
+                    $data['message'] = '订单支付时间已过期';
+                    $data['data'] = null;
+                    return json($data);
+                }
+            } elseif ($order_info['order_type'] == 6) {//秒杀
+                $seckill_config = $config->getAddonsConfig('seckill', $order_info['website_id'], 0, 1);
+                if (time() > $pay_value['create_time'] + $seckill_config['pay_limit_time'] * 60) {
+                    $data['code'] = 0;
+                    $data['message'] = '订单支付时间已过期';
+                    $data['data'] = null;
+                    return json($data);
+                }
+            } elseif ($order_info['order_type'] == 8) {//砍价
+                $bargain_config = $config->getAddonsConfig('bargain', $order_info['website_id'], 0, 1);
+                if (time() > $pay_value['create_time'] + $bargain_config['pay_time_limit'] * 60) {
+                    $data['code'] = 0;
+                    $data['message'] = '订单支付时间已过期';
+                    $data['data'] = null;
+                    return json($data);
+                }
+            } else {
+                $zero1 = time(); // 当前时间 ,注意H 是24小时 h是12小时
+                $zero2 = $pay_value['create_time'];
+                if ($zero1 > ($zero2 + ($shop_config['order_buy_close_time'] * 60))) {
+                    $data['code'] = 0;
+                    $data['message'] = '订单支付时间已过期';
+                    $data['data'] = null;
+                    return json($data);
+                }
+            }
+            //获取余额
+            $member = new MemberAccount();
+            $member_account = $member->getMemberAccount($this->uid); // 用户余额
+
+            $password = $this->get_user_password();
+            if (empty($password)) {
+                $data['data']['pay_password'] = 0;
+            } else {
+                $data['data']['pay_password'] = 1;
+            }
+
+            $data['message'] = '选择支付方式';
+            $data['data']['pay_money'] = $pay_value['pay_money'];
+            $data['data']['now_time'] = time();
+            $data['code'] = $pay_value['pay_money']>0? 1:2;
+            if ($order_info['order_type'] == 7 && $order_info['money_type'] == 1) {//预售订单并且已付定金
+                $data['data']['end_time'] = $pay_end_time;
+            } elseif ($order_info['order_type'] == 5) {//拼团订单
+                $data['data']['end_time'] = $pay_value['create_time'] + $groupConfig['pay_time_limit'] * 60;
+            } elseif ($order_info['order_type'] == 6) {
+                $data['data']['end_time'] = $pay_value['create_time'] + $seckill_config['pay_limit_time'] * 60;
+            } elseif ($order_info['order_type'] == 8) {
+                $data['data']['end_time'] = $pay_value['create_time'] + $bargain_config['pay_time_limit'] * 60;
+            } else {
+                $data['data']['end_time'] = $zero2 + ($shop_config['order_buy_close_time'] * 60);
+            }
+            $data['data']['balance'] = $member_account['balance'];
+            $data['data']['beautiful_point'] = $member_account['beautiful_point'];
+
+            //支付密码开关
+            $payPassRes = $config_service->getClosePayPassword($this->website_id );
+            $data['data']['cpp'] = 0;
+            if ($payPassRes){
+                $data['data']['cpp'] = $payPassRes['value'] ? 1: 0;//1关闭
+            }
+        }else{
+            $order_mdl = new VslAppointOrderModel();
+            $order_info = $order_mdl->field('website_id,order_id,pay_status,order_status,pay_money')
+                ->where(['out_trade_no' => $out_trade_no])->find();
+
+            if(is_null($order_info)){
+                $data['code'] = 0;
+                $data['message'] = '订单无效，请确认！';
+                $data['data'] = null;
+                return json($data);
+            }
+
+            //金额
+            if($order_info['pay_money'] <= 0 || $order_info['pay_status'] == 1){
+                $data['code'] = 0;
                 $data['message'] = '订单已经支付或者订单价格为0.00，无需再次支付!';
                 $data['data'] = null;
                 return json($data);
             }
-        }
-        $config_service = new Config();
-        $shop_config = $config_service->getShopConfig(0);
-        $order_status = $this->getOrderStatusByOutTradeNo($out_trade_no);
+            $data['data']['is_beautiful_point'] = false;
+            //获取余额
+            $member = new MemberAccount();
+            $member_account = $member->getMemberAccount($this->uid); // 用户余额
 
-        if (empty($pay_value)) {
-            $data['code'] = 0;
-            $data['message'] = '订单主体信息已发生变动';
-            $data['data'] = null;
-            return json($data);
-        }
-        // 订单关闭状态下是不能继续支付的
-        if ($order_status == 5) {
-            $data['code'] = 0;
-            $data['message'] = '订单已关闭.00，无需再次支付!';
-            $data['data'] = null;
-            return json($data);
-        }
-        if ($order_info['order_type'] == 7 && $order_info['money_type'] == 1) {//预售订单并且已付定金
-            $presell_mdl = new VslPresellModel();
-            $pay_end_time = $presell_mdl->getInfo(['id' => $order_info['presell_id']], 'pay_end_time')['pay_end_time'];
-            if (time() > $pay_end_time) {
-                $data['code'] = 0;
-                $data['message'] = '订单支付时间已过期';
-                $data['data'] = null;
-                return json($data);
+            $password = $this->get_user_password();
+            if (empty($password)) {
+                $data['data']['pay_password'] = 0;
+            } else {
+                $data['data']['pay_password'] = 1;
             }
-        } elseif ($order_info['order_type'] == 5) {//拼团订单，关闭时间不同
-            $groupConfig = $config->getAddonsConfig('groupshopping', $order_info['website_id'], 0, 1);
-            if (time() > $pay_value['create_time'] + $groupConfig['pay_time_limit'] * 60) {
-                $data['code'] = 0;
-                $data['message'] = '订单支付时间已过期';
-                $data['data'] = null;
-                return json($data);
-            }
-        } elseif ($order_info['order_type'] == 6) {//秒杀
-            $seckill_config = $config->getAddonsConfig('seckill', $order_info['website_id'], 0, 1);
-            if (time() > $pay_value['create_time'] + $seckill_config['pay_limit_time'] * 60) {
-                $data['code'] = 0;
-                $data['message'] = '订单支付时间已过期';
-                $data['data'] = null;
-                return json($data);
-            }
-        } elseif ($order_info['order_type'] == 8) {//砍价
-            $bargain_config = $config->getAddonsConfig('bargain', $order_info['website_id'], 0, 1);
-            if (time() > $pay_value['create_time'] + $bargain_config['pay_time_limit'] * 60) {
-                $data['code'] = 0;
-                $data['message'] = '订单支付时间已过期';
-                $data['data'] = null;
-                return json($data);
-            }
-        } else {
-            $zero1 = time(); // 当前时间 ,注意H 是24小时 h是12小时
-            $zero2 = $pay_value['create_time'];
-            if ($zero1 > ($zero2 + ($shop_config['order_buy_close_time'] * 60))) {
-                $data['code'] = 0;
-                $data['message'] = '订单支付时间已过期';
-                $data['data'] = null;
-                return json($data);
-            }
-        }
-        //获取余额
-        $member = new MemberAccount();
-        $member_account = $member->getMemberAccount($this->uid); // 用户余额
 
-        $password = $this->get_user_password();
-        if (empty($password)) {
-            $data['data']['pay_password'] = 0;
-        } else {
-            $data['data']['pay_password'] = 1;
+            $data['message'] = '选择支付方式';
+            $data['data']['pay_money'] = $order_info['pay_money'];
+            $data['data']['now_time'] = time();
+            $data['code'] = $order_info['pay_money']>0? 1:2;
+            $data['data']['end_time'] = time() + 60*60;
+            $data['data']['balance'] = $member_account['balance'];
+            $data['data']['beautiful_point'] = $member_account['beautiful_point'];
+
+            $config_service = new Config();
+            $payPassRes = $config_service->getClosePayPassword($this->website_id );
+            $data['data']['cpp'] = 0;
+            if ($payPassRes){
+                $data['data']['cpp'] = $payPassRes['value'] ? 1: 0;//1关闭
+            }
         }
 
-        $data['message'] = '选择支付方式';
-        $data['data']['pay_money'] = $pay_value['pay_money'];
-        $data['data']['now_time'] = time();
-        $data['code'] = $pay_value['pay_money']>0? 1:2;
-        if ($order_info['order_type'] == 7 && $order_info['money_type'] == 1) {//预售订单并且已付定金
-            $data['data']['end_time'] = $pay_end_time;
-        } elseif ($order_info['order_type'] == 5) {//拼团订单
-            $data['data']['end_time'] = $pay_value['create_time'] + $groupConfig['pay_time_limit'] * 60;
-        } elseif ($order_info['order_type'] == 6) {
-            $data['data']['end_time'] = $pay_value['create_time'] + $seckill_config['pay_limit_time'] * 60;
-        } elseif ($order_info['order_type'] == 8) {
-            $data['data']['end_time'] = $pay_value['create_time'] + $bargain_config['pay_time_limit'] * 60;
-        } else {
-            $data['data']['end_time'] = $zero2 + ($shop_config['order_buy_close_time'] * 60);
-        }
-        $data['data']['balance'] = $member_account['balance'];
-        $data['data']['beautiful_point'] = $member_account['beautiful_point'];
 
-        //支付密码开关
-        $payPassRes = $config_service->getClosePayPassword($this->website_id );
-        $data['data']['cpp'] = 0;
-        if ($payPassRes){
-            $data['data']['cpp'] = $payPassRes['value'] ? 1: 0;//1关闭
-        }
 
         return json($data);
 
@@ -683,11 +736,64 @@ class Member extends BaseController
         $out_trade_no = request()->post('out_trade_no', '');
         // 支付来源,1 微信浏览器,4 ios,5 Android,6 小程序,2 手机浏览器,3 PC
         $type = request()->post('type', 3);
+        $is_appoint = request()->post('is_appoint', 0);
         if (empty($out_trade_no)) {
             $data['code'] = 0;
             $data['data'] = '';
             $data['message'] = "没有获取到订单信息";
             return json($data);
+        }
+        //套餐微信支付
+        if($is_appoint == 1){
+            $order_model = new VslAppointOrderModel();
+            $payment_info = $order_model->getInfo(['out_trade_no' => $out_trade_no],'out_trade_no');
+            if (is_null($payment_info)) {
+                $data['code'] = 0;
+                $data['data'] = '';
+                $data['message'] = "没有获取到订单信息";
+                return json($data);
+            }
+            $order_model->save(['pay_from' => $type, 'payment_type'=> 1], ['out_trade_no' => $out_trade_no]);
+            $red_url = $this->realm_ip . "/wapapi/pay/wchatUrlBack";
+//            $red_url = "http://www.meicbf.com/wapapi/pay/wchatUrlBack";
+            $pay = new UnifyPay();
+            if ($type == 1) {
+                $res = $pay->appointWchatPay($out_trade_no, 'JSAPI', $red_url);
+                if ($res["return_code"] && $res["return_code"] == "SUCCESS" && $res["result_code"] && $res["result_code"] == "SUCCESS") {
+                    $retval = $pay->getWxJsApi($res);
+                    $data['data'] = json_decode($retval, true);
+                    $data['code'] = 1;
+                    //修改发票状态
+//                    $this->paySuccess2UpdataInvoiceInfo($out_trade_no);
+
+                    return json($data);
+                } else {
+                    $data['data'] = $res;
+                    $data['code'] = -1;
+                    $data['message'] = '支付失败,'.$res['err_code_des'];
+                    return json($data);
+                }
+            }
+
+            if($type == 6){
+                $res = $pay->wchatPayMir($out_trade_no, 'JSAPI', $red_url);
+                if ($res["return_code"] && $res["return_code"] == "SUCCESS") {
+                    $order = new VslAppointOrderModel();
+                    $order_from = $order->getInfo(['out_trade_no' => $out_trade_no], 'website_id');
+                    $website_id = $order_from['website_id'];
+                    $auth = new WeixinAuthModel();
+                    $app_id = $auth->getInfo(['shop_id' => $this->instance_id, 'website_id' => $website_id], 'authorizer_appid')['authorizer_appid'];
+                    $retval = $pay->getWxJsApiMir($res, $app_id);
+                    $data['data'] = json_decode($retval, true);
+                    $data['code'] = 1;
+                    return json($data);
+                } else {
+                    $data['data'] = $res;
+                    $data['code'] = -1;
+                    $data['message'] = '支付失败,'.$res['err_code_des'];
+                    return json($data);
+                }
+            }
         }
         if (strstr($out_trade_no, 'QD')) {
             $qdpay_ment = new VslChannelOrderPaymentModel();
@@ -1239,14 +1345,21 @@ class Member extends BaseController
     //余额支付
     public function balance_pay()
     {
-        $member = new MemberAccount();
-        $member_account = $member->getMemberAccount($this->uid); // 用户余额
-        $balance = $member_account['balance'];
         $out_trade_no = request()->post('out_trade_no');
         $pay_money = request()->post('pay_money');
         if (empty($out_trade_no)) {
             return json(AjaxReturn(LACK_OF_PARAMETER));
         }
+        //预约订单支付
+        $is_appoint = request()->post('is_appoint', 0);
+        if($is_appoint == 1){
+            return $this->balancePayAppointOrder($out_trade_no, $pay_money);
+        }
+
+        $member = new MemberAccount();
+        $member_account = $member->getMemberAccount($this->uid); // 用户余额
+        $balance = $member_account['balance'];
+
         $pay_ment = new VslOrderPaymentModel();
         $payment_info = $pay_ment->getInfo(['out_trade_no' => $out_trade_no],'type,pay_money,type_alis_id,shop_id,pay_body,pay_status');
         $order = new VslOrderModel();
@@ -1423,6 +1536,70 @@ class Member extends BaseController
 
                 $data['code'] = -2;
                 $data['message'] = "服务器内部错误。";
+                return json($data);
+            }
+        }
+    }
+
+    /**
+     * 预约订单支付
+     *
+     * @param $out_trade_no
+     * @param $pay_money
+     * @return \multitype|\think\response\Json
+     */
+    public function balancePayAppointOrder($out_trade_no, $pay_money){
+        $pay_ment = new VslAppointOrderModel();
+        $order_info = $pay_ment->getInfo(['out_trade_no' => $out_trade_no],'order_id,pay_money,pay_status,website_id');
+
+        $member = new MemberAccount();
+        $member_account_model = new VslMemberAccountModel();
+        $member_account = $member->getMemberAccount($this->uid); // 用户余额
+        $balance = $member_account['balance'];
+
+        if ($balance < $pay_money || $balance < $order_info['pay_money']) {
+            $data['code'] = -1;
+            $data['message'] = "余额不足。";
+            return json($data);
+        } else {
+            if ($order_info['pay_status']==1 && $order_info['pay_money']!=0){
+                return AjaxReturn(FAIL,[],'请勿重复支付!');
+            }
+            Db::startTrans();
+            try {
+                $pay_ment->save(['pay_status'=>1, 'payment_type'=> 5, 'order_status'=> 1, 'pay_time'=> time()], ['out_trade_no' => $out_trade_no]);
+
+                $order_pay_money = $order_info['pay_money'];
+                $data_member = array(
+                    'balance' => $balance - abs($order_pay_money)
+                );
+                $res = $member_account_model->save($data_member, ['uid' => $this->uid]);
+                //添加会员账户流水
+                $data = array(
+                    'records_no' => 'Op' . getSerialNo(),
+                    'account_type' => 2,
+                    'shop_id' => 0,
+                    'uid' => $this->uid,
+                    'sign' => 1,
+                    'number' => (-1) * abs($order_pay_money),
+                    'balance'=> $data_member['balance'],
+                    'point'=> $data_member['beautiful_point'],
+                    'from_type' => 1,
+                    'data_id' => $order_info['order_id'],
+                    'text' => '预约订单支付',
+                    'create_time' => time(),
+                    'website_id' => $order_info['website_id']
+                );
+                $member_account_record = new VslMemberAccountRecordsModel();
+                $member_account_record->save($data);
+                Db::commit();
+                $data['code'] = 0;
+                $data['message'] = "支付成功";
+                return json($data);
+            } catch (\Exception $e) {
+                Db::rollback();
+                $data['code'] = -1;
+                $data['message'] = "支付失败";
                 return json($data);
             }
         }

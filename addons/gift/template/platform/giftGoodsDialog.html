@@ -84,9 +84,11 @@ require(['util','tpl'],function(util,tpl){
     // 选择
     $('#goods-dialog').on('click','.selec_btn',function(){
         var goods_name = $(this).data('goods_name');
+        var goods_id = $(this).data('goods_id');
         var price = $(this).data('price');
         var description = $(this).data('description');
-        var imgList = $(this).next('.J-imgList').html()
+        var imgList = $(this).next('.J-imgList').html();
+        $('#goods_id').val(goods_id);
         $('#gift_name').val(goods_name);
         $('#price').val(price);
         $('.J-desc').html("<div id='UE-gift-content' data-content='"+description+"'></div>");

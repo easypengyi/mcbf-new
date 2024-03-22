@@ -9,6 +9,7 @@ use addons\channel\model\VslChannelGoodsSkuModel;
 use addons\channel\model\VslChannelOrderModel;
 use addons\channel\model\VslChannelOrderPaymentModel;
 use addons\channel\server\Channel;
+use data\model\VslAppointOrderModel;
 use data\service\AddonsConfig;
 use data\model\VslMemberRechargeModel;
 use data\model\VslOrderModel;
@@ -634,6 +635,7 @@ class Pay extends BaseController
     public function wchatUrlBack()
     {
             $postStr = file_get_contents('php://input');
+            debugLog($postStr, '');
 //            $postStr = '<xml><appid><![CDATA[wx6336862822972aeb]]></appid><attach><![CDATA[1]]></attach><bank_type><![CDATA[OTHERS]]></bank_type><cash_fee><![CDATA[1]]></cash_fee><fee_type><![CDATA[CNY]]></fee_type><is_subscribe><![CDATA[N]]></is_subscribe><mch_id><![CDATA[1504681951]]></mch_id><nonce_str><![CDATA[79u9penbmf7ss7428wkz6vq1cur1yeat]]></nonce_str><openid><![CDATA[oKYMF5nDhWsbt4Y7Kl3SgZCHFHUA]]></openid><out_trade_no><![CDATA[158942813971831000]]></out_trade_no><result_code><![CDATA[SUCCESS]]></result_code><return_code><![CDATA[SUCCESS]]></return_code><sign><![CDATA[BCF4ECFFBBFB923558F256E49683D89D]]></sign><time_end><![CDATA[20200514114928]]></time_end><total_fee>1</total_fee><trade_type><![CDATA[JSAPI]]></trade_type><transaction_id><![CDATA[4200000561202005147551916499]]></transaction_id></xml>';
             if (! empty($postStr)) {
                 $postObj = simplexml_load_string($postStr, 'SimpleXMLElement', LIBXML_NOCDATA);
@@ -659,6 +661,9 @@ class Pay extends BaseController
                 }elseif(strstr($postObj->out_trade_no, 'QD')){
                     $order = new VslChannelOrderPaymentModel();
                     $order_from = $order->getInfo(['out_trade_no'=>"{$postObj->out_trade_no}",'type'=>1],'pay_from,website_id');
+                } elseif(strstr($postObj->out_trade_no, 'TC')){
+                    $order = new VslAppointOrderModel();
+                    $order_from = $order->getInfo(['out_trade_no'=>"{$postObj->out_trade_no}",'payment_type'=>1],'pay_from,website_id');
                 } else{
                     $order = new VslOrderPaymentModel();
                     $order_from = $order->getInfo(['out_trade_no'=>$postObj->out_trade_no],'pay_from, website_id');

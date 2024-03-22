@@ -1,0 +1,314 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+{/block}
+{block name="main"}
+<!-- page -->
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">订单编号</label>
+                    <div class="v__controls">
+                        <input type="text" id="order_no" class="v__control_input" placeholder="请输入订单编号" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">商品信息</label>
+                    <div class="v__controls">
+                        <input type="text" class="v__control_input" id="goods_name" placeholder="商品名称/商品编号" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">会员信息</label>
+                    <div class="v__controls">
+                        <input type="text" class="v__control_input" id="user" autocomplete="off" placeholder="会员ID/用户名">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">支付方式</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="payment_type">
+                            <option value="">全部</option>
+                            <option value="1">微信</option>
+                            <option value="5">余额支付</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">预约时间</label>
+                    <div class="v__controls v-date-input-control">
+                        <label for="orderTime">
+                            <input type="text" class="v__control_input pr-30" id="orderTime" placeholder="请选择时间" autocomplete="off" data-types="datetime">
+                            <i class="icon icon-calendar"></i>
+                            <input type="hidden" id="orderStartDate">
+                            <input type="hidden" id="orderEndDate">
+                        </label>
+                    </div>
+                </div>
+<!--                <div class="v__control-group">-->
+<!--                    <label class="v__control-label">预约时间</label>-->
+<!--                    <div class="v__controls v-date-input-control">-->
+<!--                        <label for="completeTime">-->
+<!--                            <input type="text" class="v__control_input pr-30" id="completeTime" placeholder="请选择时间" autocomplete="off" data-types="datetime">-->
+<!--                            <i class="icon icon-calendar"></i>-->
+<!--                            <input type="hidden" id="finishStartDate">-->
+<!--                            <input type="hidden" id="finishEndDate">-->
+<!--                        </label>-->
+<!--                    </div>-->
+<!--                </div>-->
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
+                        <a class="btn btn-success ml-15 dataExcel">导出EXCEL</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="screen-title">
+    <span class="text">预约订单列表</span>
+</div>
+<!--<ul class="nav nav-tabs v-nav-tabs">-->
+<!--<li role="presentation" class="active"><a href="#" class="flex-auto-center">全部</a></li>-->
+<!--<li role="presentation"><a href="#" class="flex-auto-center">提现流水</a></li>-->
+<!--<li role="presentation"><a href="#" class="flex-auto-center">充值流水</a></li>-->
+<!--<li role="presentation"><a href="#" class="flex-auto-center">消费流水</a></li>-->
+<!--</ul>-->
+<table class="table v-table table-auto-center mb-10">
+    <thead>
+    <tr class="order-list-item">
+        <th class="col-md-3">预约项目</th>
+        <th class="col-md-1">预约价格</th>
+        <th class="col-md-1">预约时间</th>
+        <th class="col-md-2">预约人信息</th>
+        <th class="col-md-1">状态</th>
+        <th class="col-md-2">操作</th>
+    </tr>
+    </thead>
+</table>
+<div class="tables" id="list">
+
+</div>
+
+
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+{/block}
+{block name="script"}
+<script>
+    require(['util'],function(util){
+        util.initPage(getAccountList);
+        // util.layDate('#startDate');
+        // util.layDate('#endDate');
+        util.layDate('#orderTime',true,function(value, date, endDate){
+            var h=date.hours<10 ?"0"+date.hours : date.hours;
+            var m=date.minutes<10 ?"0"+date.minutes : date.minutes;
+            var s=date.seconds<10 ?"0"+date.seconds : date.seconds;
+            var h1=endDate.hours<10 ?"0"+endDate.hours : endDate.hours;
+            var m1=endDate.minutes<10 ?"0"+endDate.minutes : endDate.minutes;
+            var s1=endDate.seconds<10 ?"0"+endDate.seconds : endDate.seconds;
+            var date1=date.year+'-'+date.month+'-'+date.date+' '+h+":"+m+":"+s;
+            var date2=endDate.year+'-'+endDate.month+'-'+endDate.date+' '+h1+":"+m1+":"+s1;
+
+            if(value){
+                $('#orderStartDate').val(date1);
+                $('#orderEndDate').val(date2);
+            }
+            else{
+                $('#orderStartDate').val('');
+                $('#orderEndDate').val('');
+            }
+
+        });
+        function getAccountList(page_index) {
+            $("#page_index").val(page_index);
+            var order_no = $("#order_no").val();
+            var start_create_date = $("#orderStartDate").val();
+            var end_create_date = $("#orderEndDate").val();
+            // var start_finish_date = $("#finishStartDate").val();
+            // var end_finish_date = $("#finishEndDate").val();
+            var user = $("#user").val();
+            var goods_name = $("#goods_name").val();
+            var payment_type = $("#payment_type").val();
+        $.ajax({
+            type: "post",
+            url: "{:__URL('PLATFORM_MAIN/order/appointOrderList')}",
+            async: true,
+            data: {
+                "page_index": page_index,
+                "page_size": $("#showNumber").val(),
+                "order_no": order_no,
+                "start_create_date": start_create_date,
+                "end_create_date": end_create_date,
+                // "start_finish_date": start_finish_date,
+                // "end_finish_date": end_finish_date,
+                "user": user,
+                "goods_name": goods_name,
+                "payment_type": payment_type,
+            },
+            success: function (data) {
+                var html = '';
+                if (data['data'] == undefined || data['data'].length == 0) {
+                    html += '<table class="table v-table table-auto-center mb-10"><tbody><tr align="center"><td colspan="7" class="h-200">暂无符合条件的订单</td></tr></tbody></table>';
+                    $("#list").html(html);
+                    $("#all_orders").html(data['total_count']);
+                    $("#all_orders_money").html(data['all_pay_money']);
+                    return true;
+                }
+                row = 0;
+                $.each(data['data'], function (k_order, v_order) {
+                    var order_no = v_order['out_trade_no'];//订单编号
+                    var create_time = timeStampTurnTime(v_order['create_time']);//下单时间
+                    var pic_cover_micro = v_order['goods_image'];//订单编号
+                    html += '<table class="table v-table table-auto-center mb-10"><tbody><tr class="order-list-item">';
+                    html += '<td colspan="6" class="text-left bg-f9">';
+                    html += '<span class="mr-15-oList">' + v_order['store_name'] + '</span>';
+                    html += '<span class="mr-15-oList">订单号：' + order_no + '</span>';
+                    html += '<span class="mr-15-oList">下单时间：' + create_time + '</span>';
+                    html += '<span>预约订单</span>';
+                    html += '</td>';
+
+                    row += 1;
+
+                    html += '<tr class="goods-order-items"><td class="col-md-3">';
+                    html += '<div class="media text-left">';
+                    html += '<div class="media-left" style="width:60px;height:60px;">';
+                    html += '<img src="' + __IMG(pic_cover_micro) + '" alt="" width="60" height="60">';
+                    html += '</div>';
+                    html += '<div class="media-left"> </div>';
+                    html += '<div class="media-body break-word">';
+                    html += '<div class="line-2-ellipsis">';
+                    html += '<a href="' + __URLS('SHOP_MAIN/goods/goodsinfo&goodsid=' + v_order['goods_id']) + '" target="_blank">' + v_order['goods_name'] + '</a>';
+                    html += '</div></td>';
+                    html += '<td class="col-md-1">' + v_order['goods_money'] + '积分</td>';
+                    html += '<td class="text-center col-md-2" rowspan="' + row + '" >';
+                    html += v_order['appoint_time'] + '<br>';
+                    html += '</td>';
+                    if (row > 1) {
+                        html += '<td  rowspan="' + row + '" class="border-left col-md-2">';
+                    } else {
+                        html += '<td  rowspan="' + row + '" class="col-md-2">';
+                    }
+                    html += '<a href="' + __URL('PLATFORM_MAIN/member/myDetail?member_id=' + v_order['buyer_id']) + '" class="text-primary block mt-04" target="_blank">' + v_order['nick_name'] + '</a>' + v_order['name'] + '<br>' + v_order['user_tel'] + '';
+                    html += '</td>';
+                    html += '<td class="text-center col-md-2" rowspan="' + row + '" >';
+                    html += v_order['order_status_name'] + '<br>';
+                    html += '</td>';
+                    html += '<td class="text-center col-md-2">';
+                    if(v_order['order_status'] == 0){
+                        html += '<a href="javascript:void(0);" data-order-id="' + v_order['order_id'] + '" class="label v-label-grey v-label-red confirm_del" >删除</a>';
+                    }
+                    if(v_order['order_status'] == 1){
+                        html += '<a href="javascript:void(0);" data-order-id="' + v_order['order_id'] + '" class="btn-operation confirm_arrival">确认到店</a>';
+                    }
+
+                    html += '</td>';
+                    html += '</td>';
+                    html += '</tr>';
+
+                    html +='</tbody></table>';
+                })
+                $('#page').paginator('option', {
+                    totalCounts: data['total_count']  // 动态修改总数
+                });
+                $("#list").html(html);
+
+                util.tips();
+            }
+        });
+    }
+        $('.search').on('click',function(){
+            util.initPage(getAccountList);
+        });
+
+        $("#list").on('click', '.confirm_arrival', function () {
+            var order_id = $(this).attr('data-order-id');
+
+            util.alert('确认到店？', function () {
+                $.ajax({
+                    type: "post",
+                    url: "{:__URL('PLATFORM_MAIN/order/confirmAppoint')}",
+                    async: true,
+                    data: {
+                        "order_id": order_id,
+                    },
+                    success: function (data) {
+                        if (data["code"] > 0) {
+                            util.message(data["message"], 'success', getAccountList($('#page_index').val()));
+                        } else {
+                            util.message(data["message"], 'danger', getAccountList($('#page_index').val()));
+                        }
+                    }
+                })
+            })
+        });
+
+        $("#list").on('click', '.confirm_del', function () {
+            var order_id = $(this).attr('data-order-id');
+
+            util.alert('确认删除？', function () {
+                $.ajax({
+                    type: "post",
+                    url: "{:__URL('PLATFORM_MAIN/order/delAppoint')}",
+                    async: true,
+                    data: {
+                        "order_id": order_id,
+                    },
+                    success: function (data) {
+                        if (data["code"] > 0) {
+                            util.message(data["message"], 'success', getAccountList($('#page_index').val()));
+                        } else {
+                            util.message(data["message"], 'danger', getAccountList($('#page_index').val()));
+                        }
+                    }
+                })
+            })
+        });
+
+        /**
+         * 余额流水数据导出
+         */
+        $('.dataExcel').on('click',function(){
+            var tip1 = document.getElementById("tip1").innerText;
+            var tip1 = parseInt(tip1)+parseInt(1);
+            var total_tips2=tip1>99?"99+":tip1;
+
+            var records_no = $("#records_no").val();
+            var search_text = $("#search_text").val();
+            var start_date = $("#orderStartDate").val();
+            var end_date = $("#orderEndDate").val();
+            var form_type = $("#form_type").val();
+            $.ajax({
+                type: "get",
+                url: "{:__URL('PLATFORM_MAIN/Finance/balanceDataExcel')}",
+                async: true,
+                data: {
+                    "records_no": records_no,
+                    "search_text": search_text,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "form_type": form_type
+                },
+                success: function (data) {
+                    if (data["code"] == 0) {
+                        document.getElementById("tip1").innerText = total_tips2;
+                        util.message(data["message"], 'success', getAccountList($('#page_index').val()));
+                    } else {
+                        util.message(data["message"], 'danger', getAccountList($('#page_index').val()));
+                    }
+                }
+            })
+            // window.location.href=__URL("PLATFORM_MAIN/Finance/balanceDataExcel?form_type="+form_type+"&records_no="+records_no+"&start_date="+start_date+"&end_date="+end_date+"&search_text="+search_text);
+        })
+    })
+</script>
+{/block}

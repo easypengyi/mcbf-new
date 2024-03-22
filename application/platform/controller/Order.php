@@ -7,7 +7,10 @@ use addons\bonus\model\VslAgentLevelModel;
 use addons\channel\server\Channel as ChannelServer;
 use addons\distribution\service\Distributor;
 use addons\invoice\server\Invoice as InvoiceService;
+use data\model\AlbumPictureModel;
 use data\model\UserModel;
+use data\model\VslAppointOrderModel;
+use data\model\VslGoodsModel;
 use data\model\VslMemberModel;
 use data\model\VslOrderGoodsExpressModel;
 use data\model\VslOrderGoodsModel;
@@ -413,6 +416,146 @@ class Order extends BaseController
             $this->assign('orderTypeList', $orderTypeList);
             return view($this->style . 'Order/orderList');
         }
+    }
+
+    /**
+     * 售后订单列表
+     *
+     */
+    public function appointOrderList()
+    {
+        if (request()->isAjax()) {
+            $page_index = request()->post('page_index', 1);
+            $page_size = request()->post('page_size', PAGESIZE);
+            $start_create_date = request()->post('start_create_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_create_date'));
+            $end_create_date = request()->post('end_create_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_create_date'));
+            $start_finish_date = request()->post('start_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_finish_date'));
+            $end_finish_date = request()->post('end_finish_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_finish_date'));
+            $user = request()->post('user', '');
+            $order_no = request()->post('order_no', '');
+            $payment_type = request()->post('payment_type', 1);
+            $goods_name = request()->post('goods_name', '');
+            $condition['nm.is_deleted'] = 0; // 未删除订单
+
+            $order_model = new VslAppointOrderModel();
+            $query_order_ids = "uncheck";
+            if ($goods_name) {
+                $where['goods_name'] = ['LIKE', '%' . $goods_name . '%'];
+                $goods_model = new VslGoodsModel();
+                $goods_ids = $goods_model::where($where)->column('goods_id');
+                if(count($goods_ids)){
+                    $condition['nm.goods_id'] = array(
+                        "in",
+                        $goods_ids
+                    );
+                }else{
+                    $condition['nm.goods_id'] = array(
+                        "in",
+                        [-1]
+                    );
+                }
+            }
+
+            if ($start_create_date) {
+                $condition['nm.appoint_time'][] = ['>=', date('Y-m-d H:i:s', $start_create_date)];
+            }
+            if ($end_create_date) {
+                $condition['nm.appoint_time'][] = ['<=', date('Y-m-d H:i:s', $start_create_date + 86399)];
+            }
+//            if ($start_finish_date) {
+//                $condition['appoint_time'][] = ['>=', $start_finish_date];
+//            }
+//            if ($end_finish_date) {
+//                $condition['appoint_time'][] = ['<=', $end_finish_date + 86399];
+//            }
+
+            if (!empty($payment_type)) {
+                $condition['nm.payment_type'] = $payment_type;
+            }
+            if (!empty($user)) {
+                $condition['nm.user_name|nm.buyer_id'] = array(
+                    "like",
+                    "%" . $user . "%"
+                );
+            }
+
+            if (!empty($order_no)) {
+                $condition['out_trade_no'] = array(
+                    "like",
+                    "%" . $order_no . "%"
+                );
+            }
+
+//            var_dump($condition);
+            $list = $order_model->getViewList($page_index, $page_size, $condition, 'create_time desc');
+//            echo $order_model->getLastSql();die;
+            if(count($list['data']) == 0){
+                return $list;
+            }
+
+            $img_ids = [];
+            foreach ($list['data'] as &$item){
+                $order_status_name = '未支付';
+                if($item['order_status'] == 1){
+                    $order_status_name = '已支付';
+                }else if($item['order_status'] == 2){
+                    $order_status_name = '已完成';
+                }else if($item['order_status'] == -1){
+                    $order_status_name = '已取消';
+                }
+                $item['order_status_name'] = $order_status_name;
+                $img_ids[] = $item['picture'];
+            }
+
+            $pic = new AlbumPictureModel();
+            $pic_list = $pic::where('pic_id', 'in', array_unique($img_ids))->column('pic_cover', 'pic_id');
+            foreach ($list['data'] as &$d){
+                $d['goods_image'] = isset($pic_list[$d['picture']]) ? $pic_list[$d['picture']] : '';
+            }
+            return $list;
+        } else {
+            return view($this->style . "Order/appointOrderList");
+        }
+    }
+
+    /**
+     * 确认完成
+     *
+     * @return array
+     */
+    public function confirmAppoint(){
+        $order_id = request()->post('order_id');
+        $order = new VslAppointOrderModel();
+        //是否被预约
+        $info = $order->getInfo(['order_id' => $order_id, 'pay_status'=> 1, 'order_status'=> 1],
+            'order_id,pay_money,pay_status,website_id,appoint_time');
+        if(is_null($info)){
+            return ['code' => -2,'message' => '未查找到订单，请刷新后重试'];
+        }
+
+        $date = date('Y-m-d H:i:s');
+        if($info['appoint_time'] > $date){
+            return ['code' => -2,'message' => '未到预约时间，不允许操作'];
+        }
+
+        //订单完成
+        $order->save(['order_status'=> 2], ['order_id' => $order_id, 'pay_status'=> 1, 'order_status'=> 1]);
+        return ['code' => 1,'message' => '订单完成'];
+    }
+
+    public function delAppoint(){
+        $order_id = request()->post('order_id');
+        $order = new VslAppointOrderModel();
+        //是否被预约
+        $info = $order->getInfo(['order_id' => $order_id, 'order_status'=> 0],
+            'order_id,pay_money,pay_status,website_id');
+        if(is_null($info)){
+            return ['code' => -2,'message' => '未查找到订单，请刷新后重试'];
+        }
+
+        //订单完成
+        $order->save(['is_deleted'=> 1], ['order_id' => $order_id, 'order_status'=> 0]);
+        return ['code' => 1,'message' => '删除成功'];
     }
 
     /**

@@ -14,6 +14,7 @@ use addons\invoice\server\Invoice as InvoiceServer;
 use data\model\AuthGroupModel;
 use data\model\SysAddonsModel;
 use data\model\UserModel;
+use data\model\VslAppointOrderModel;
 use data\model\VslIncreMentOrderModel;
 use data\model\VslMemberAccountModel;
 use data\model\VslMemberAccountRecordsModel;
@@ -304,6 +305,9 @@ class UnifyPay extends BaseService
         } elseif (strstr($out_trade_no, 'MD')) {
             $res = $this->updateStorePay($out_trade_no, $pay_type, $trade_no);
             return $res;
+        } elseif (strstr($out_trade_no, 'TC')) {
+            $res = $this->updateAppointOrderPay($out_trade_no, $pay_type, $trade_no);
+            return $res;
         }
         $pay = new VslOrderPaymentModel();
         $order = new VslOrderModel();
@@ -526,6 +530,37 @@ class UnifyPay extends BaseService
                 default:
                     break;
             }
+            return 1;
+        }catch(\Exception $e)
+        {
+            recordErrorLog($e);
+            Log::write("weixin-------------------------------".$e->getMessage());
+            return $e->getMessage();
+        }
+
+    }
+
+    /*
+     * 套餐订单支付成功，后续更新订单以及通知
+     * **/
+    public function updateAppointOrderPay($out_trade_no, $pay_type, $trade_no)
+    {
+        $pay = new VslAppointOrderModel();
+        try{
+            $pay_info = $pay->getInfo(['out_trade_no' => $out_trade_no]);
+            if($pay_info['pay_status'] == 1)
+            {
+                return 1;
+                exit();
+            }
+            $data = array(
+                'pay_status'     => 1,
+                'order_status'   => 1,
+                'payment_type'       => $pay_type,
+                'pay_time'       => time(),
+                'trade_no'      => $trade_no
+            );
+            $pay->save($data, ['out_trade_no' => $out_trade_no]);
             return 1;
         }catch(\Exception $e)
         {
@@ -897,6 +932,61 @@ class UnifyPay extends BaseService
         // TODO Auto-generated method stub
         
     }
+
+    /**
+     * 套餐微信支付
+     *
+     * @param $out_trade_no
+     * @param $trade_type
+     * @param $red_url
+     * @return array|Pay\unknown|false|mixed|\PDOStatement|string|\think\Model
+     */
+    public function appointWchatPay($out_trade_no, $trade_type, $red_url)
+    {
+        //渠道商订单号 QD前缀
+        $pay = new VslAppointOrderModel();
+        $data = $pay->getInfo(['out_trade_no' => $out_trade_no], 'create_time,pay_status,sum(pay_money) as pay_money,out_trade_no,website_id');
+
+        if($data < 0)
+        {
+            return $data;
+        }
+        $data['pay_body'] = '加盟店订单';
+        $data['pay_detail'] = '加盟店订单';
+        $weixin_pay = new WeiXinPay();
+        if($trade_type == 'JSAPI')
+        {
+//            $openid = $weixin_pay->get_openid();
+            $user  = new UserModel();
+            $openid = $user->getInfo(['uid'=>$this->uid],'wx_openid')['wx_openid'];
+            $product_id = '';
+        }
+        if($trade_type == 'NATIVE')
+        {
+            $openid = '';
+            $product_id = $out_trade_no;
+        }
+        if($trade_type == 'MWEB')
+        {
+            $openid = '';
+            $product_id = $out_trade_no;
+        }
+        if($trade_type == 'APP')
+        {
+            $openid = '';
+            $product_id = $out_trade_no;
+        }
+        if($trade_type == 'APP'){
+            $retval = $weixin_pay->setWeiXinApp($data['pay_body'], $data['pay_detail'], $data['pay_money']*100, $out_trade_no, $red_url, $trade_type, $openid, $product_id);
+        }else{
+            $retval = $weixin_pay->setWeiXinPay($data['pay_body'], $data['pay_detail'], $data['pay_money']*100, $out_trade_no, $red_url, $trade_type, $openid, $product_id);
+        }
+        return $retval;
+
+        // TODO Auto-generated method stub
+
+    }
+
     public function wchatPayMir($out_trade_no, $trade_type, $red_url, $website_id = 0)
     {
         //渠道商订单号 QD前缀

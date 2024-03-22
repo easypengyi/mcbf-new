@@ -139,6 +139,20 @@
             </div>
         </div>
     {/if}
+    <div class="form-group">
+        <label class="col-md-2 control-label">预约时间列表</label>
+        <div class="col-md-5">
+            <div class=" checkbox">
+                <!--复选框-->
+                {volist name="time_list" id="vo"}
+                <label>
+                    <input type="checkbox" name="reservation_time" value="{$vo.value}" {in name="$vo.value" value="$assistant_info.reservation_times"} checked {/in}> {$vo.start}:00 - {$vo.end}:00
+                </label>
+                {/volist}
+            </div>
+        </div>
+    </div>
+
     <div class="form-group"></div>
     <div class="form-group">
         <label class="col-md-2 control-label"></label>
@@ -198,6 +212,18 @@
                 util.message('请选择门店', 'danger');
                 return;
             }
+
+            //预约时间
+            var reservation_times = '';
+            $("input[name='reservation_time']:checked").each(function(){
+                reservation_times = reservation_times + ',' + $(this).val();
+            });
+            reservation_times = reservation_times.substring(1);
+            // if(reservation_times===''){
+            //     util.message('请选择门店', 'danger');
+            //     return;
+            // }
+
             var jobs_id = $("#jobs_id").val();
             var status = $('input[name=status]').is(':checked')?1:0;
             var is_commission = $("input[name='is_commission']:checked").val() ? 1 : 0;
@@ -238,6 +264,7 @@
                     'assistant_tel': assistant_tel,
                     'password': password,
                     'store_id': store_id,
+                    'reservation_times': reservation_times,
                     'jobs_id': jobs_id,
                     'status': status
                 },

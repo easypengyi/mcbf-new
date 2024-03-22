@@ -8,6 +8,9 @@ use addons\store\model\VslStoreMessageModel;
 use addons\store\model\VslStoreModel;
 use addons\store\Store as baseStore;
 use addons\store\server\Store as storeServer;
+use data\model\AlbumPictureModel;
+use data\model\UserModel;
+use data\model\VslAppointOrderModel;
 use data\model\VslGoodsModel;
 use data\model\VslGoodsSkuModel;
 use data\model\VslMemberCardModel;
@@ -948,10 +951,11 @@ class Wapstore extends baseStore
 
     public function getIndexCount()
     {
-        $start_date = strtotime(date('Y-m-d' . '00:00:00', time()));
-        $end_date = strtotime(date('Y-m-d' . '00:00:00', time() + 3600 * 24));
+        $start_date = strtotime(date('Y-m-d' . ' 00:00:00', time()));
+        $end_date = strtotime(date('Y-m-d' . ' 00:00:00', time() + 3600 * 24));
         $orderModel = new VslOrderModel();
         $orderGoodsModel = new VslOrderGoodsModel();
+        $appointOrderModel = new VslAppointOrderModel();
 
         $data = [];
         $condition = [
@@ -1009,6 +1013,26 @@ class Wapstore extends baseStore
         ];
         $store_message_mdl = new VslStoreMessageModel();
         $data['message'] = $store_message_mdl->getCount($message_condition);
+
+        $where = [
+            'website_id' => $this->website_id,
+            'store_id' => $this->store_id,
+            'is_deleted'=> 0,
+            'pay_status'=> 1
+        ];
+        $start_date = date('Y-m-d' . ' 00:00:00', time());
+        $end_date = date('Y-m-d' . ' 00:00:00', time() + 3600 * 24);
+        $where['appoint_time'][] = [
+            '>',
+            $start_date
+        ];
+        $where['appoint_time'][] = [
+            '<',
+            $end_date
+        ];
+//        var_dump($where);die;
+        $data['appoint_order_count'] = $appointOrderModel->getCount($where);
+
 
         return json(['code' => 1,
             'message' => '获取成功',
@@ -3790,5 +3814,131 @@ class Wapstore extends baseStore
         $storeServer = new storeServer();
         $list = $storeServer->getAccountDetail($id);
         return json($list);
+    }
+
+    /**
+     * 订单列表
+     *
+     * @return \data\model\unknown|\think\response\Json
+     */
+    public function getStoreAppointOrderList(){
+        $page_index = request()->post('page_index', 1);
+        $page_size = request()->post('page_size') ?: PAGESIZE;
+        $order_no =  request()->post('search_text');
+        $order_status =  request()->post('order_status');
+
+        $order_model = new VslAppointOrderModel();
+        $condition['nm.is_deleted'] = 0; // 未删除订单
+        $condition['nm.pay_status'] = 1;
+        $condition['nm.store_id'] = $this->store_id;
+
+
+        if($order_status ==1 ){
+            $start_date = date('Y-m-d' . ' 00:00:00', time());
+            $end_date = date('Y-m-d' . ' 00:00:00', time() + 3600 * 24);
+            $condition['appoint_time'][] = [
+                '>',
+                $start_date
+            ];
+            $condition['appoint_time'][] = [
+                '<',
+                $end_date
+            ];
+        }
+        if (!empty($order_no)) {
+
+            $where['user_name|nick_name|user_tel'] = ['LIKE', '%' . $order_no . '%'];
+            $user_model = new UserModel();
+            $buyer_ids = $user_model::where($where)->column('uid');
+            if(count($buyer_ids)){
+                $condition['nm.buyer_id'] = array(
+                    "in",
+                    $buyer_ids
+                );
+            }else{
+                $condition['nm.buyer_id'] = array(
+                    "in",
+                    [-1]
+                );
+            }
+
+//            $condition['out_trade_no'] = array(
+//                "like",
+//                "%" . $order_no . "%"
+//            );
+        }
+        $list = $order_model->getViewList($page_index, $page_size, $condition, 'appoint_time desc');
+        if(count($list['data']) == 0){
+            return $list;
+        }
+
+        $img_ids = [];
+        foreach ($list['data'] as &$item){
+            $order_status_name = '未支付';
+            if($item['order_status'] == 1){
+                $order_status_name = '已支付';
+            }else if($item['order_status'] == 2){
+                $order_status_name = '已完成';
+            }else if($item['order_status'] == -1){
+                $order_status_name = '已取消';
+            }
+            $item['order_status_name'] = $order_status_name;
+            $item['order_real_money'] = $item['pay_money'];
+            $item['pay_time'] = '下单时间：'.date('Y-m-d H:i:s', $item['pay_time']);
+            $item['username'] = empty($item['name']) ? $item['nick_name'] : $item['name'];
+            $img_ids[] = $item['picture'];
+        }
+
+        $pic = new AlbumPictureModel();
+        $pic_list = $pic::where('pic_id', 'in', array_unique($img_ids))->column('pic_cover', 'pic_id');
+
+        foreach ($list['data'] as $key=> $d){
+            $order_item_list = [];
+            $d['goods_image'] = isset($pic_list[$d['picture']]) ? $pic_list[$d['picture']] : '';
+            $order_item_list[] = [
+                'goods_name'=> $d['goods_name'],
+                'pic_cover'=> $d['goods_image'],
+                'user_name'=> "预约人：".$d['username'].'/'.$d['user_tel'],
+                'sku_name'=> "预约时间：".$d['appoint_time']
+            ];
+            $list['data'][$key]['order_item_list'] = $order_item_list;
+        }
+
+        return json([
+            'code' => 1,
+            'message' => '获取成功',
+            'data' => [
+                'order_list' => $list['data'],
+                'page_count' => $list['page_count'],
+                'total_count' => $list['total_count']
+            ]
+        ]);
+    }
+
+    /**
+     * 确认订单
+     *
+     * @return array|\multitype
+     */
+    public function appointOrderConfirm(){
+        if ($this->merchant_expire == 1) {
+            return AjaxReturn(-1);
+        }
+        $order_id = request()->post('order_id');
+        $order = new VslAppointOrderModel();
+        //是否被预约
+        $info = $order->getInfo(['order_id' => $order_id, 'pay_status'=> 1, 'order_status'=> 1],
+            'order_id,pay_money,pay_status,website_id,appoint_time');
+        if(is_null($info)){
+            return ['code' => -2,'message' => '未查找到订单，请刷新后重试'];
+        }
+        $date = date('Y-m-d H:i:s');
+        if($info['appoint_time'] > $date){
+            return ['code' => -2,'message' => '未到预约时间，不允许操作'];
+        }
+
+        //订单完成
+        $order->save(['order_status'=> 2], ['order_id' => $order_id, 'pay_status'=> 1, 'order_status'=> 1]);
+        return ['code' => 1,'message' => '订单完成'];
     }
 }
