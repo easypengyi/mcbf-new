@@ -67,7 +67,7 @@
                     <label class="radio-inline"><input class="type" type="radio" name="type" value="3">按分销商等级赠送</label>
                     {/eq}
                     <label class="radio-inline"><input class="type" type="radio" name="type" value="4">按会员ID赠送</label>
-                    <label class="radio-inline"><input class="type" type="radio" name="type" value="5" checked>赠送所有会员</label>
+                    <label class="radio-inline"><input class="type" type="radio" name="type" value="5">赠送所有会员</label>
                 </div>
             </div>
             <!-- 会员等级 -->
@@ -420,7 +420,7 @@
                     html += '<div class="col-md-5" style="display: flex;">';
                     html += '<div class="input-group w-400">';
                     html += '<span class="input-group-addon w-200">' + $(this).data('name') + '</span>';
-                    html += '<input type="number" class="form-control" min="1" name="coupon_num" id="coupon_num'+sort+'" value="" required max="10">';
+                    html += '<input type="number" class="form-control" min="1" name="coupon_num" id="coupon_num'+sort+'" value="" required max="1000">';
                     html += '<span class="input-group-addon">张</span>';
                     html += '</div>';
                     html += '<div class="col-md-3 control-label " style="display: flex;">';
@@ -451,7 +451,7 @@
                     html += '<div class="col-md-5" style="display: flex;">';
                     html += '<div class="input-group w-400">';
                     html += '<span class="input-group-addon w-200">' + $(this).data('name') + '</span>';
-                    html += '<input type="number" class="form-control" min="1" name="gift_num" id="gift_num'+sort+'" value="" required max="10">';
+                    html += '<input type="number" class="form-control" min="1" name="gift_num" id="gift_num'+sort+'" value="" required max="1000">';
                     html += '<span class="input-group-addon">张</span>';
                     html += '</div>';
                     html += '<div class="col-md-3 control-label " style="display: flex;">';

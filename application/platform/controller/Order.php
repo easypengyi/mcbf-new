@@ -6,7 +6,10 @@ use addons\blockchain\model\VslBlockChainRecordsModel;
 use addons\bonus\model\VslAgentLevelModel;
 use addons\channel\server\Channel as ChannelServer;
 use addons\distribution\service\Distributor;
+use addons\giftvoucher\model\VslGiftVoucherRecordsModel;
 use addons\invoice\server\Invoice as InvoiceService;
+use addons\store\model\VslStoreAssistantModel;
+use addons\store\model\VslStoreModel;
 use data\model\AlbumPictureModel;
 use data\model\UserModel;
 use data\model\VslAppointOrderModel;
@@ -50,6 +53,8 @@ class Order extends BaseController
      */
     public function selfOrderList()
     {
+
+
         $order_service = new OrderService();
         if (request()->isAjax()) {
             $page_index = request()->post('page_index', 1);
@@ -179,11 +184,121 @@ class Order extends BaseController
         }
     }
 
+    public function get_parent_id($arr,$cid,$type=0,$tops = []){
+        $member = new VslMemberModel();
+        $level = new VslAgentLevelModel();
+        if($type==1){
+            $member_info = $member->getInfo(['uid'=>$cid],'*');
+        }else{
+            $member_info = $member->getInfo(['uid'=>$cid,'isdistributor'=>2],'*');
+        }
+        $level_info = $level->getInfo(['id'=>$member_info['team_agent_level_id']],'level_name,weight');
+        $level_weight = $level_info['weight'];
+        $member_info['team_agent_level_name'] = $level_info['level_name'];
+        if($member_info['is_team_agent']==2){
+            if(empty($arr['agent_list'])){
+                $arr['agent_list'][] = $member_info['uid'];
+            }else{
+                if(is_array($arr['agent_list'])){
+                    array_push($arr['agent_list'],$member_info['uid']);
+                }
+            }
+            if (empty($arr['level_id'])){
+                $arr['weight'][] = $level_weight;
+                $arr['level_id'][] = $member_info['team_agent_level_id'];
+                $arr['level_info'][] = $member_info;
+            }else{
+                if(is_array($arr['level_id'])){
+                    array_push($arr['weight'],$level_weight);
+                    array_push($arr['level_id'],$member_info['team_agent_level_id']);
+                    array_push($arr['level_info'],$member_info);
+                }
+            }
+        }
+        array_push($tops,$cid);
+        if(in_array($member_info['referee_id'], $tops)){
+            debugLog($member_info['referee_id'],'重复上级==>');
+        }
+        if($member_info['referee_id'] && $cid!=$member_info['referee_id'] && !in_array($member_info['referee_id'], $tops)){
+            return $this->get_parent_id($arr,$member_info['referee_id'],$type,$tops);
+        }else{
+            return $arr;
+        }
+    }
+
     /**
      * 自营订单列表
      */
     public function orderList()
     {
+//        $order = new VslOrderModel();
+//        $order_info = $order->getInfo(['order_id'=>12802],'order_no,bargain_id,group_id,presell_id,shop_id,shop_order_money,luckyspell_id');
+//        $order_goods = new VslOrderGoodsModel();
+//        $order_goods_info = $order_goods->getInfo(['order_goods_id'=>13988,'order_id'=>12802]);
+//        $goods_ser = new \data\service\Goods();
+//        $goods_info = $goods_ser->getGoodsDetailById($order_goods_info['goods_id']);
+//        if(!empty($goods_info['teambonus_rule_val'])){
+//            $goods_info['teambonus_rule_val'] = json_decode(htmlspecialchars_decode($goods_info['teambonus_rule_val']), true);
+//            $level_bonus = $goods_info['teambonus_rule_val']['team_bonus'];
+//            $level_bonus_arr = explode(';', $level_bonus);
+//            $level_bonus_val = [];
+//            foreach($level_bonus_arr as $level_bonus_info){
+//                $agent_level_arr = explode(':', $level_bonus_info);
+//                $level_bonus_val[$agent_level_arr[0]] = $agent_level_arr[1];
+//            }
+//
+//            $arr =[];
+//            $agent_data = $this->get_parent_id($arr, 14449,1);//一条线上的队长信息
+//            //开启级差 并且未开启内购 并且本人是队长 需要去除队长本人
+//            array_shift($agent_data['level_info']);
+//            array_shift($agent_data['level_id']);
+//            array_shift($agent_data['weight']);
+//            $amount = 567;
+//
+//            $team_bonus_list = [];
+//            $insertData = [];
+//            $curr_rate = 0;
+//            $all_bonus = 0;
+//            foreach ($agent_data['level_info'] as $member){
+//                if(!isset($level_bonus_val[$member['team_agent_level_id']]) || $level_bonus_val[$member['team_agent_level_id']] <= 0){
+//                    continue;
+//                }
+//                $r = $level_bonus_val[$member['team_agent_level_id']];
+//                $ur = $r - $curr_rate;
+//                $commission = round(($amount * $ur / 100), 2);
+//                if($commission > 0){
+//                    $team_bonus_list[] = [
+//                        'uid'=> $member['uid'],
+//                        'amount'=> $amount,
+//                        'distributor_amount'=> $r,
+//                        'team_agent_level_id'=> $member['team_agent_level_id'],
+//                        'commission'=> $commission
+//                    ];
+//                    $all_bonus += $commission;
+//
+//                    $records_no = 'TBS' . time() . rand(111, 999);
+//                    //添加团队分红日志
+//                    $data_records = array(
+//                        'uid' => $member['uid'],
+//                        'data_id' => $order_info['order_no'],
+//                        'website_id' => 1,
+//                        'records_no' => $records_no,
+//                        'bonus' => abs($commission),
+//                        'text' => '订单支付,冻结极差分红增加',
+//                        'create_time' => time(),
+//                        'bonus_type' => 3, //团队分红
+//                        'from_type' => 3, //订单支付成功
+//                    );
+//                    array_push($insertData, $data_records);
+//
+//                    $curr_rate = $r;
+//                }
+//            }
+//        }
+//
+//
+//
+//        var_dump($agent_data);die;
         $order_service = new OrderService();
 
         if (request()->isAjax()) {
@@ -515,6 +630,92 @@ class Order extends BaseController
             return $list;
         } else {
             return view($this->style . "Order/appointOrderList");
+        }
+    }
+
+    /**
+     * 核销订单列表
+     *
+     */
+    public function clerkOrderList()
+    {
+        if (request()->isAjax()) {
+            $page_index = request()->post('page_index', 1);
+            $page_size = request()->post('page_size', PAGESIZE);
+            $start_create_date = request()->post('start_create_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('start_create_date'));
+            $end_create_date = request()->post('end_create_date') == "" ? 0 : getTimeTurnTimeStamp(request()->post('end_create_date'));
+            $user = request()->post('user', '');
+            $order_no = request()->post('order_no', '');
+            $goods_name = request()->post('goods_name', '');
+            $store_id = request()->post('store_id', '');
+
+            $order_model = new VslGiftVoucherRecordsModel();
+            if ($store_id) {
+                $condition['vgvr.store_id'] = $store_id;
+            }
+            if ($goods_name) {
+                $condition['vgv.giftvoucher_name'] = ['LIKE', '%' . $goods_name . '%'];
+            }
+
+            if ($start_create_date) {
+                $condition['vgvr.use_time'][] = ['>=', $start_create_date];
+            }
+            if ($end_create_date) {
+                $condition['vgvr.use_time'][] = ['<=', $start_create_date + 86399];
+            }
+
+            if (!empty($user)) {
+                $condition['su.user_name|su.uid|su.nick_name|su.user_tel'] = array(
+                    "like",
+                    "%" . $user . "%"
+                );
+            }
+
+            if (!empty($order_no)) {
+                $condition['gift_voucher_code'] = array(
+                    "like",
+                    "%" . $order_no . "%"
+                );
+            }
+
+            $condition['vgvr.state'] = 2;
+            $condition['vgvr.website_id'] = $this->website_id;
+            $condition['vgvr.shop_id'] = $this->instance_id;
+            $fields = 'vgvr.*,su.user_tel,su.nick_name,su.user_name,vs.shop_name,vgv.giftvoucher_name,vpg.price';
+//            var_dump($condition);
+            $list = $order_model->getVoucherHistory($page_index, $page_size, $condition, $fields,  'use_time desc');
+//            echo $order_model->getLastSql();die;
+            if(count($list['data']) == 0){
+                return $list;
+            }
+
+            $store_ids = [];
+            $assistant_ids = [];
+            foreach ($list['data'] as $i){
+                $store_ids[$i['store_id']] = $i['store_id'];
+                $assistant_ids[$i['assistant_id']] = $i['assistant_id'];
+            }
+            $assistant_list = [];
+            if(count($assistant_ids)){
+                //查询核销员名称
+                $assistant_list = VslStoreAssistantModel::where('assistant_id', 'in', $assistant_ids)->column('assistant_name', 'assistant_id');
+            }
+
+            $store_list = [];
+            if(count($store_ids)){
+                $store_list = VslStoreModel::where('store_id', 'in', $store_ids)->column('store_name', 'store_id');
+            }
+            foreach ($list['data'] as &$item){
+                $item['assistant_name'] = isset($assistant_list[$item['assistant_id']]) ? $assistant_list[$item['assistant_id']] : '';
+                $item['store_name'] = isset($store_list[$item['store_id']]) ? $store_list[$item['store_id']] : '自营店';
+                $item['use_time'] = date('Y-m-d H:i:s', $item['use_time']);
+            }
+
+            return $list;
+        } else {
+
+            $store_list = VslStoreModel::select();
+            return view($this->style . "Order/clerkOrderList", ['store_list'=> $store_list]);
         }
     }
 

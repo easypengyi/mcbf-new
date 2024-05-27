@@ -5414,6 +5414,7 @@ class Order extends BaseService
         } elseif ($is_presell_pay == 'payment_type_presell') {
             $out_trade_no['out_trade_no'] = $out_trade_no['out_trade_no_presell'];
         }
+
         if ($refund_fee == 0) {
             return array(
                 "is_success" => 0,

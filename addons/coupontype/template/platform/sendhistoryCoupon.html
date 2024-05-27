@@ -16,6 +16,7 @@
         <th>优惠券号码</th>
         <th>优惠金额</th>
         <th>使用时间</th>
+        <th class="col-md-2">操作</th>
     </tr>
     </thead>
     <tbody id="coupon_used_list">
@@ -28,28 +29,7 @@
 <!-- page end -->
 
 {/block}
-{block name="script"}
-<script id="tpl_coupon_used_list" type="text/html">
-    <%each data as item index%>
-    <tr>
-        <%if item.shop_id == 0%>
-        <td>自营店</td>
-        <%else%>
-        <td><%item.shop_name%></td>
-        <%/if%>
-        <td><%item.order_no%></td>
-        <td><%item.send_name%></td>
-        <td><%item.user_tel%></td>
-        <td><%item.coupon_code%></td>
-        <%if item.money != 0%>
-        <td><%item.money%>元</td>
-        <%else%>
-        <td><%item.discount%>折</td>
-        <%/if%>
-        <td><%timeStamp(item.use_time)%></td>
-    </tr>
-    <%/each%>
-</script>
+
 <script>
     require(['util', 'tpl'], function (util, tpl) {
         util.initPage(LoadingInfo);
@@ -77,6 +57,27 @@
         $("#search").on('click', function () {
             LoadingInfo(1);
         });
+
+        $("#coupon_used_list").on('click', '.confirm_arrival', function () {
+            var coupon_id = $(this).attr('data-coupon-id');
+            util.alert('确定撤销，返还到原用户优惠卷列表？', function () {
+                $.ajax({
+                    type: "post",
+                    url: "{$cancelSendCouponUrl}",
+                    async: true,
+                    data: {
+                        "coupon_id": coupon_id,
+                    },
+                    success: function (data) {
+                        if (data["code"] > 0) {
+                            util.message(data["message"], 'success', LoadingInfo($('#page_index').val()));
+                        } else {
+                            util.message(data["message"], 'danger', LoadingInfo($('#page_index').val()));
+                        }
+                    }
+                })
+            })
+        });
  
         function LoadingInfo(page_index) {
             $('#page_index').val(page_index ? page_index : 1);
@@ -90,14 +91,45 @@
                     'instance_id': '{$instance_id}',
                     'coupon_type_id': '{$coupon_type_id}',
                 },
-                success: function (data) {
-                    $("#coupon_used_list").html(tpl('tpl_coupon_used_list', data))
+                success: function (res) {
+                    var html = '';
+                    const data = res['data'];
+                    if (data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            html += '<tr>';
+                            html += '<td>' + data[i]["shop_name"]+ '</div></td>';
+                            html += '<td>' + data[i]["order_no"]+ '</td>';
+                            html += '<td>' + data[i]["send_name"] + '</td>';
+                            html += '<td>' + data[i]["user_tel"] + '</td>';
+                            html += '<td>' + data[i]["coupon_code"] + '</td>';
+                            if(data[i]['money'] != 0){
+                                html += '<td>' + data[i]["money"] + '元</td>';
+                            }else{
+                                html += '<td>' + data[i]["discount"] + '折</td>';
+                            }
+
+                            html += '<td>' + data[i]["use_time"] + '</td>';
+                            if(data[i]['status'] == 1){
+                                html += '<td><a href="javascript:void(0);" data-coupon-id="' + data[i]['coupon_id'] + '" class="btn-operation confirm_arrival">撤 销</a></td>';
+                            }else{
+                                html += '<td></td>';
+                            }
+
+                            html += '</tr>';
+                        }
+
+                    } else {
+                        html += '<tr align="center"><th colspan="8">暂无符合条件的数据记录</th></tr>';
+                    }
+                    $("#coupon_used_list").html(html);
+
+
+                    // $("#coupon_used_list").html(tpl('tpl_coupon_used_list', data))
                     $('#page').paginator('option', {
-                        totalCounts: data['total_count']  // 动态修改总数
+                        totalCounts: res['total_count']  // 动态修改总数
                     });
                 }
             });
         }
     })
 </script>
-{/block}

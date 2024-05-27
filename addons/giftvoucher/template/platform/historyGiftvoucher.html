@@ -2,7 +2,7 @@
 <!-- page -->
 <div class="mb-20 flex flex-pack-end">
     <div class="input-group search-input-group">
-        <input type="text" id="search_text" class="form-control" placeholder="门店/使用账号">
+        <input type="text" id="search_text" class="form-control" placeholder="门店/使用者姓名/使用账号/ID">
         <span class="input-group-btn"><button class="btn btn-primary" id="search">搜索</button></span>
     </div>
 </div>
@@ -10,6 +10,7 @@
     <thead>
     <tr class="order-list-item">
         <th>核销门店</th>
+        <th>使用者</th>
         <th>使用帐号</th>
         <th>礼品券号码</th>
         <th>赠品</th>
@@ -35,6 +36,7 @@
         <%else%>
         <td><%item.shop_name%></td>
         <%/if%>
+        <td><%item.name%></td>
         <td><%item.user_tel%></td>
         <td><%item.gift_voucher_code%></td>
         <td><%item.gift_name%></td>

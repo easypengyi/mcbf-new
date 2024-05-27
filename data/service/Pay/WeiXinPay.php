@@ -581,8 +581,8 @@ class WeiXinPay extends PayParam
         $orderModel = new VslOrderModel();
         $orderInfo = $orderModel->getInfo(['out_trade_no' => $out_trade_no], 'http_from');//1:小程序
         $is_mp = $orderInfo['http_from'] == 1 ? 1: 0;
+
         $order = $WxPayApi->refund($input, 30,$website_id, $is_mp);
-		
         $msg = '操作成功';
         // 检测签名配置是否正确
         if ($order['return_code'] == "FAIL") {

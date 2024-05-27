@@ -793,7 +793,12 @@ class Order extends BaseController
         $order_detail['order_promotion_money'] = $order_info['order_promotion_money'];//订单优惠 by sgw
         if ($order_info['store_id']) {
             $order_detail['store_id'] = $order_info['store_id'];
-            $order_detail['verification_code'] = $order_info['verification_code'];
+            $order_detail['
+            
+            
+            
+            
+            '] = $order_info['verification_code'];
             $order_detail['verification_qrcode'] = __IMG($order_info['verification_qrcode']);
             $order_detail['store_name'] = $order_info['order_pickup']['store_name'];
             $order_detail['store_tel'] = $order_info['order_pickup']['store_tel'];

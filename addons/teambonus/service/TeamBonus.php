@@ -724,6 +724,7 @@ class TeamBonus extends BaseService
         $order_goods_info = $order_goods->getInfo(['order_goods_id'=>$params['order_goods_id'],'order_id'=>$params['order_id']]);
         $cost_price = $order_goods_info['cost_price']*$order_goods_info['num'];//商品成本价
         $price = $order_goods_info['real_money'];//商品实际支付金额
+        $amount = $order_goods_info['actual_price']*$order_goods_info['num'];//商品金额
         $promotion_price = $order_goods_info ['price']*$order_goods_info['num'];//商品销售价
         $original_price = $order_goods_info ['market_price']*$order_goods_info['num'];//商品原价
         // $profit_price = $promotion_price-$cost_price-$order_goods_info['profile_price']*1+$order_goods_info['adjust_money'];//商品利润价
@@ -1025,53 +1026,106 @@ class TeamBonus extends BaseService
                             array_shift($agent_data['weight']);
                         }
 
-                        // 查询商品折扣
-                        $goodDiscount = new GoodsDiscount();
-                        $d_condition = [
-                            'goods_id' => $order_goods_info['goods_id'],
-                            'type' => 1,
-                            'website_id' => $params['website_id'],
-                        ];
-                        $discountRes = $goodDiscount->getInfo($d_condition);
-                        $good_discount = json_decode($discountRes['value'], true);
-                        $member_level_price = $good_discount['distributor_obj']['d_level_data'];
-
-                        //商品价格
                         $team_bonus_list = [];
                         $insertData = [];
-                        $amount = $price;
-                        $all_bonus = 0;
-                        foreach ($agent_data['level_info'] as $member){
-                            $distributor_amount = $member_level_price[$member['distributor_level_id']]['val'];
-                            $commission =  $amount - $distributor_amount;
-                            if($commission > 0){
-                                $team_bonus_list[] = [
-                                    'uid'=> $member['uid'],
-                                    'amount'=> $amount,
-                                    'distributor_amount'=> $member_level_price[$member['distributor_level_id']]['val'],
-                                    'distributor_level_id'=> $member['distributor_level_id'],
-                                    'distributor_level_name'=> $member_level_price[$member['distributor_level_id']]['name'],
-                                    'commission'=> $amount - $distributor_amount
-                                ];
-                                $amount = $distributor_amount;
-                                $all_bonus += $commission;
+                        if(!empty($goods_info['teambonus_rule_val'])){
+                            $goods_info['teambonus_rule_val'] = json_decode(htmlspecialchars_decode($goods_info['teambonus_rule_val']), true);
+                            $level_bonus = $goods_info['teambonus_rule_val']['team_bonus'];
+                            $level_bonus_arr = explode(';', $level_bonus);
+                            $level_bonus_val = [];
+                            foreach($level_bonus_arr as $level_bonus_info){
+                                $agent_level_arr = explode(':', $level_bonus_info);
+                                $level_bonus_val[$agent_level_arr[0]] = $agent_level_arr[1];
+                            }
+//                            $amount = $price;
 
-                                $records_no = 'TBS' . time() . rand(111, 999);
-                                //添加团队分红日志
-                                $data_records = array(
-                                    'uid' => $member['uid'],
-                                    'data_id' => $order_info['order_no'],
-                                    'website_id' => $params['website_id'],
-                                    'records_no' => $records_no,
-                                    'bonus' => abs($commission),
-                                    'text' => '订单支付,冻结极差分红增加',
-                                    'create_time' => time(),
-                                    'bonus_type' => 3, //团队分红
-                                    'from_type' => 3, //订单支付成功
-                                );
-                                array_push($insertData, $data_records);
+                            $curr_rate = 0;
+                            $all_bonus = 0;
+                            foreach ($agent_data['level_info'] as $member){
+                                if(!isset($level_bonus_val[$member['team_agent_level_id']]) || $level_bonus_val[$member['team_agent_level_id']] <= 0){
+                                    continue;
+                                }
+                                $r = $level_bonus_val[$member['team_agent_level_id']];
+                                $ur = $r - $curr_rate;
+                                $commission = round(($amount * $ur / 100), 2);
+                                if($commission > 0){
+                                    $team_bonus_list[] = [
+                                        'uid'=> $member['uid'],
+                                        'amount'=> $amount,
+                                        'distributor_amount'=> $r,
+                                        'distributor_level_id'=> $member['team_agent_level_id'],
+                                        'distributor_level_name'=> $member['team_agent_level_name'],
+                                        'commission'=> $commission
+                                    ];
+                                    $all_bonus += $commission;
+
+                                    $records_no = 'TBS' . time() . rand(111, 999);
+                                    //添加团队分红日志
+                                    $data_records = array(
+                                        'uid' => $member['uid'],
+                                        'data_id' => $order_info['order_no'],
+                                        'website_id' => 1,
+                                        'records_no' => $records_no,
+                                        'bonus' => abs($commission),
+                                        'text' => '订单支付,冻结极差分红增加',
+                                        'create_time' => time(),
+                                        'bonus_type' => 3, //团队分红
+                                        'from_type' => 3, //订单支付成功
+                                    );
+                                    array_push($insertData, $data_records);
+
+                                    $curr_rate = $r;
+                                }
                             }
                         }
+
+                        // 查询分红
+//                        $goodDiscount = new GoodsDiscount();
+//                        $d_condition = [
+//                            'goods_id' => $order_goods_info['goods_id'],
+//                            'type' => 1,
+//                            'website_id' => $params['website_id'],
+//                        ];
+//                        $discountRes = $goodDiscount->getInfo($d_condition);
+//                        $good_discount = json_decode($discountRes['value'], true);
+//                        $member_level_price = $good_discount['distributor_obj']['d_level_data'];
+//
+//                        //商品价格
+//                        $team_bonus_list = [];
+//                        $insertData = [];
+//                        $amount = $price;
+//                        $all_bonus = 0;
+//                        foreach ($agent_data['level_info'] as $member){
+//                            $distributor_amount = $member_level_price[$member['distributor_level_id']]['val'];
+//                            $commission =  $amount - $distributor_amount;
+//                            if($commission > 0){
+//                                $team_bonus_list[] = [
+//                                    'uid'=> $member['uid'],
+//                                    'amount'=> $amount,
+//                                    'distributor_amount'=> $member_level_price[$member['distributor_level_id']]['val'],
+//                                    'distributor_level_id'=> $member['distributor_level_id'],
+//                                    'distributor_level_name'=> $member_level_price[$member['distributor_level_id']]['name'],
+//                                    'commission'=> $amount - $distributor_amount
+//                                ];
+//                                $amount = $distributor_amount;
+//                                $all_bonus += $commission;
+//
+//                                $records_no = 'TBS' . time() . rand(111, 999);
+//                                //添加团队分红日志
+//                                $data_records = array(
+//                                    'uid' => $member['uid'],
+//                                    'data_id' => $order_info['order_no'],
+//                                    'website_id' => $params['website_id'],
+//                                    'records_no' => $records_no,
+//                                    'bonus' => abs($commission),
+//                                    'text' => '订单支付,冻结极差分红增加',
+//                                    'create_time' => time(),
+//                                    'bonus_type' => 3, //团队分红
+//                                    'from_type' => 3, //订单支付成功
+//                                );
+//                                array_push($insertData, $data_records);
+//                            }
+//                        }
 
                         //创建对应数据
                         if(count($team_bonus_list) > 0){
@@ -1579,7 +1633,9 @@ class TeamBonus extends BaseService
         }else{
             $member_info = $member->getInfo(['uid'=>$cid,'isdistributor'=>2],'*');
         }
-        $level_weight = $level->getInfo(['id'=>$member_info['team_agent_level_id']],'weight')['weight'];
+        $level_info = $level->getInfo(['id'=>$member_info['team_agent_level_id']],'level_name,weight');
+        $level_weight = $level_info['weight'];
+        $member_info['team_agent_level_name'] = $level_info['level_name'];
         if($member_info['is_team_agent']==2){
             if(empty($arr['agent_list'])){
                 $arr['agent_list'][] = $member_info['uid'];

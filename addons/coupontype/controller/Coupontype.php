@@ -15,6 +15,7 @@ use addons\coupontype\server\Coupon as CouponServer;
 use addons\coupontype\server\Coupon;
 use addons\shop\model\VslShopModel;
 use data\model\AlbumPictureModel;
+use data\model\VslMemberModel;
 use data\model\WebSiteModel;
 use data\model\VslGoodsCategoryModel as VslGoodsCategoryModel;
 class Coupontype extends baseCoupon
@@ -559,6 +560,96 @@ class Coupontype extends baseCoupon
         $res = $coupon_server->userAchieveFriendCoupon($uid, 14, $user_coupon_info);
         return json(AjaxReturn($res));
     }
+
+    /**
+     * 赠送多张优惠劵
+     *
+     * @return \think\response\Json
+     */
+    public function sendManyCouponToFriend(){
+        $coupon_id = request()->post('coupon_id', 0);
+        $uid = $this->uid;
+        if(!$uid){
+            return json(AjaxReturn(LOGIN_EXPIRE));
+        }
+        if(!$coupon_id){
+            return json(AjaxReturn(LACK_OF_PARAMETER));
+        }
+        $user_no = request()->post('user_no', 0);
+        if(!$user_no){
+            return json(AjaxReturn(FAIL,[], '请输入用户ID'));
+        }
+        if($uid == $user_no){
+            return json(AjaxReturn(FAIL,[], '自己不能赠送自己的券'));
+        }
+        //好友信息认证
+        $user = VslMemberModel::where('uid', $user_no)->find();
+        if(is_null($user)){
+            return json(AjaxReturn(FAIL,[], 'ID有误'));
+        }
+//        if($user['referee_id'] != $uid){
+//            return json(AjaxReturn(FAIL,[], '只能赠送给直接推荐的人哦'));
+//        }
+        $num = request()->post('num', 0);
+        if($num<= 0){
+            return json(AjaxReturn(FAIL,[], '请输入要赠送的数量'));
+        }
+        //同类型的优惠劵还有多少张
+        $coupon_server = new Coupon();
+        $user_coupon_info = $coupon_server->getUserCouponInfo($coupon_id);//赠送者的优惠券信息
+        if(!$user_coupon_info){
+            return json(AjaxReturn(FAIL,[], '当前优惠券已送出，请重新选择'));
+        }
+        $now_time = time();
+        $lists = VslCouponModel::where('uid', $this->uid)
+            ->where('coupon_type_id', $user_coupon_info['coupon_type_id'])
+            ->where('state', 1)
+            ->where('end_time', '>', $now_time)->limit($num)->select();
+        $data = $this->object2array($lists);
+        if($num != count($data)){
+            return json(AjaxReturn(FAIL,[], '当前优惠券数量不足'));
+        }
+        $res_num = 0;
+        foreach ($lists as $item){
+            //执行记录到账户，状态为未领取
+            $res = $coupon_server->userAchieveFriendCoupon($user_no, 14, $item);
+        }
+
+        return json(AjaxReturn($res));
+    }
+
+    /**
+     * 返还优惠劵
+     *
+     * @return \think\response\Json
+     */
+    public function cancelSendCoupon(){
+        $coupon_id = request()->post('coupon_id', 0);
+        if(!$coupon_id){
+            return json(AjaxReturn(LACK_OF_PARAMETER));
+        }
+
+        $coupon_server = new Coupon();
+        $user_coupon_info = $coupon_server->getUserCouponInfo($coupon_id);//优惠券信息
+        if(is_null($user_coupon_info) || empty($user_coupon_info['send_uid'])){
+            return json(AjaxReturn(FAIL,[], '优惠券信息有误，请刷新后尝试'));
+        }
+        $uid = $user_coupon_info['send_uid'];
+        //判断优惠券是否过期
+        $end_time = $user_coupon_info['end_time'];
+        $now_time = time();
+        if($now_time > $end_time){
+            return json(AjaxReturn(FAIL,[], '优惠券已过期'));
+        }
+        //判断优惠券是否已使用
+        if($user_coupon_info['state'] == -1 || $user_coupon_info['state'] == 2){
+            return json(AjaxReturn(FAIL,[], '优惠券已过期或已使用'));
+        }
+        //执行记录到账户，状态为未领取
+        $res = $coupon_server->userAchieveFriendCoupon($uid, 14, $user_coupon_info);
+        return json(AjaxReturn($res));
+    }
+
     /**
      * wap优惠券适用的商品列表
      */
@@ -790,7 +881,7 @@ class Coupontype extends baseCoupon
         $search_text = request()->post('search_text', '');
         $page_index = request()->post('page_index', 1);
         $page_size = request()->post('page_size', PAGESIZE);
-        $fields = 'nc.send_uid,nc.coupon_id,nc.coupon_code,nc.money,nc.discount,nc.use_time,su.user_tel,su.nick_name,no.order_no,no.shop_id,ns.shop_name';
+        $fields = 'nc.send_uid,nc.coupon_id,nc.coupon_code,nc.money,nc.discount,nc.use_time,su.user_tel,su.nick_name,no.order_no,no.shop_id,ns.shop_name,nc.state,nc.end_time';
         // 使用的历史记录,state = 2
         // $where['nc.state'] = 2;
         $where['nc.coupon_type_id'] = request()->post('coupon_type_id');
@@ -806,6 +897,26 @@ class Coupontype extends baseCoupon
         }
         
         $list = $promotion->getCouponHistory($page_index, $page_size, $condition, $where, $fields);
+        $time = time();
+
+        foreach ($list['data'] as &$item){
+            if($item['shop_id'] == 0){
+                $item['shop_name'] = '自营店';
+            }
+            $status = 0;
+            if($item['state'] == 1 && !empty($item['send_uid']) && $item['end_time'] > $time){
+                $status = 1;
+            }
+            $item['status'] = $status;
+            if(empty($item['order_no'])){
+                $item['order_no'] = '';
+            }
+            if($item['use_time'] > 0){
+                $item['use_time'] = date('Y-m-d H:i:s', $item['use_time']);
+            }else{
+                $item['use_time'] = '';
+            }
+        }
         return $list;
     }
 }

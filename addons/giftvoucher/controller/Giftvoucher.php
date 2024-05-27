@@ -2,10 +2,14 @@
 namespace addons\giftvoucher\controller;
 
 use addons\giftvoucher\Giftvoucher as baseGiftvoucher;
+use addons\giftvoucher\model\VslGiftVoucherRecordsModel;
 use addons\giftvoucher\server\GiftVoucher as VoucherServer;
 use addons\gift\model\VslPromotionGiftModel;
 use addons\shop\model\VslShopModel;
+use addons\store\model\VslStoreModel;
 use addons\store\server\Store as storeServer;
+use data\model\UserModel;
+use data\model\VslMemberModel;
 use data\model\WebSiteModel;
 use data\service\WebSite as WebSiteSer;
 
@@ -137,11 +141,49 @@ class Giftvoucher extends baseGiftvoucher
         $where['vgvr.gift_voucher_id'] = (int)input('get.gift_voucher_id');
         $where['vgvr.website_id'] = $this->website_id;
         $where['vgvr.shop_id'] = $this->instance_id;
-        $fields = 'vgvr.*,su.user_tel,su.nick_name,vs.shop_name,vpg.gift_name,vpg.price';
+        $fields = 'vgvr.*,su.user_tel,su.nick_name,su.user_name,vs.shop_name,vpg.gift_name,vpg.price';
         if ($search_text) {
-            $where['vs.shop_name|su.nick_name'] = ['like', '%' . $search_text . '%'];
+            $where_store_ids = VslStoreModel::where('store_name', 'like', '%' . $search_text . '%')
+                ->column('store_id');
+            $map['user_tel|uid|user_name|nick_name'] = ['like', '%' . $search_text . '%'];
+            $u_ids = UserModel::where($map)->column('uid');
+//            var_dump($where_store_ids, $u_ids);die;
+            $model = new VslGiftVoucherRecordsModel();
+            if(count($where_store_ids) || count($u_ids)){
+                if(count($where_store_ids)){
+                    $model->where('store_id', 'in', $where_store_ids);
+                }
+                if(count($u_ids)){
+                    $model->where('uid', 'in', $u_ids);
+                }
+                $ids = $model->column('record_id');
+                $where['vgvr.record_id'] = array('in', $ids);
+            }else{
+                $where['vgvr.record_id'] = 0;
+            }
         }
+//        var_dump($where);die;
         $list = $VoucherServer->getGiftVoucherHistory($page_index, $page_size, $where, $fields,'vgvr.use_time desc');
+        if(count($list['data']) == 0){
+            return $list;
+        }
+        $store_ids = [];
+        foreach ($list['data'] as $i){
+            $store_ids[$i['store_id']] = $i['store_id'];
+        }
+
+        $store_list = VslStoreModel::where('store_id', 'in', $store_ids)->column('store_name', 'store_id');
+        foreach ($list['data'] as &$item){
+            $item['shop_id'] = $item['store_id'];
+            $item['shop_name'] = isset($store_list[$item['store_id']]) ? $store_list[$item['store_id']] : '自营店';
+            if ($item['user_name']) {
+                $item['name'] = $item['user_name'];
+            } elseif ($item['nick_name']) {
+                $item['name'] = $item['nick_name'];
+            } elseif ($item['user_tel']) {
+                $item['name'] = $item['user_tel'];
+            }
+        }
         return $list;
     }
 

@@ -27,6 +27,8 @@ class Appointgivecoupon extends baseAppointgivecoupon
         $gift_arr = request()->post('gift_arr/a', '');
         $type = request()->post('type', 0);
         $sub_type = request()->post('sub_type/a', 0);
+        $data = json_encode(request()->post());
+
 
         if (empty($coupon_arr) && empty($gift_arr)) {
             return AjaxReturn(LACK_OF_PARAMETER);
@@ -38,7 +40,10 @@ class Appointgivecoupon extends baseAppointgivecoupon
 
         $appointgivecoupon = new \addons\appointgivecoupon\server\Appointgivecoupon();
         $res = $appointgivecoupon->addAppointgivecouponTask($coupon_arr, $gift_arr, $type, $sub_type);
+        if ($res) {
 
+            $this->addUserLog('定向送券设置', $data);
+        }
         return $res;
     }
 

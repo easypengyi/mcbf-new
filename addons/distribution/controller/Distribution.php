@@ -78,7 +78,7 @@ class Distribution extends baseDistribution
         $distributor_level_id = request()->post('level_id', '');
         $isdistributor = request()->post('isdistributor', '5');
         if ($search_text) {
-            $condition['us.user_name|us.nick_name'] = array('like', '%' . $search_text . '%');
+            $condition['us.user_name|us.nick_name|us.uid'] = array('like', '%' . $search_text . '%');
         }
         if ($referee_name) {
             //推荐人姓名换取推荐人uid

@@ -5047,8 +5047,9 @@ class Member extends BaseController
     public function esign()
     {
         $uid = $this->uid;
+        $type = request()->post('type', -1); // 收件人
         $thing_server = new \data\service\Member();
-        $res = $thing_server->getEsignDetail($uid);
+        $res = $thing_server->getEsignDetail($uid, $type);
         //标为已读
         return json(['code' => 1, 'message' => '获取成功', 'data' => $res]);
     }
@@ -5062,15 +5063,20 @@ class Member extends BaseController
         $id_card = request()->post('id_card'); // 电话
         $address = request()->post('address'); // 电话
         $mobile = request()->post('mobile'); // 电话
-
+        $type = request()->post('type', 1); // 合同类型
+        if(!in_array($type, [1,2])){
+            return json(['code' => -1, 'message' => '请选择签约合同']);
+        }
         $data = array(
             'name' => $name,
             'mobile' => $mobile,
             'id_card' => $id_card,
-            'address' => $address
+            'address' => $address,
+            'type'=> $type
         );
         $uid = $this->uid;
         $thing_server = new \data\service\Member();
+
         list($result, $data) = $thing_server->getEsignUrl($uid, $data);
 
         if ($result) {

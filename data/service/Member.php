@@ -4079,11 +4079,21 @@ class Member extends User
      * @return VslMemberEsignModel
      * @throws \think\Exception\DbException
      */
-    public function getEsignDetail($uid){
+    public function getEsignDetail($uid, $type){
         $express_address = new VslMemberEsignModel();
-        $data = $express_address->get(['uid'=> $uid]);
+        if($type == -1){
+            $data = $express_address->get(['uid'=> $uid, 'type'=> 1]);
+            if(is_null($data)){
+                $data = $express_address->get(['uid'=> $uid, 'type'=> 2]);
+            }
+        }else{
+            $data = $express_address->get(['uid'=> $uid, 'type'=> $type]);
+        }
+
         if(is_null($data)){
-            $data = [];
+            $data = [
+                'type'=> $type > 0 ? $type : 1
+            ];
         }
         return $data;
     }
@@ -4098,17 +4108,17 @@ class Member extends User
     public function getEsignUrl($uid, $data){
 
         $data['uid'] = $uid;
+        $where = [
+            'uid' => $uid, 'type'=> $data['type']
+        ];
         $member_esign = new VslMemberEsignModel();
-
-        $user = $member_esign->get(['uid'=> $uid]);
+        $user = $member_esign->get($where);
         if(is_null($user)){
             $data['create_time'] = time();
             $member_esign->isUpdate(false)->save($data);
         }else{
             $data['update_time'] = time();
-            $member_esign->save($data, [
-                'uid' => $uid
-            ]);
+            $member_esign->save($data, $where);
         }
 //        $signService = new EsignService();
 //        $res = $signService->personsAuthorizedInfo('b4a1f2c4dc2a4a2a96822f63abb6a445');
@@ -4130,21 +4140,20 @@ class Member extends User
             $date = date('Y-m-d');
             $data['a_date'] = $date;
             $data['b_date'] = $date;
-            $res = $signService->createTpl($data);
+            $res = $signService->createTpl($data, $data['type']);
+//            if($uid == 17545){
+//                var_dump($res);die;
+//            }
 
             if ($res['code'] == 0) {
                 $member_esign->save(['file_id' => $res['data']['fileId'],
                     'file_download_url' => $res['data']['fileDownloadUrl'],
-                    'esign_position' => json_encode($res['esign_position'])], [
-                    'uid' => $uid
-                ]);
+                    'esign_position' => json_encode($res['esign_position'])], $where);
                 $file_id = $res['data']['fileId'];
                 $position = $res['esign_position'];
             } else {
                 $member_esign->save([
-                    'result' => json_encode($res)], [
-                    'uid' => $uid
-                ]);
+                    'result' => json_encode($res)], $where);
                 return [false, '签署文件创建失败，请联系客服处理！'];
             }
         }
@@ -4154,8 +4163,10 @@ class Member extends User
         }else{
             //查询文件盖章位置
 //        $position = $signService->fileKeywordPositions($file_id);
+            $title = $data['type'] == 1 ? '无痕功肤幼态脸-纯然至尊会员卡会员合同' : '无痕三分钟美鼻-纯然至尊会员卡会员合同';
+
             //获取签署id
-            $res = $signService->createByFile($file_id, $position, $data['mobile'], $data['name']);
+            $res = $signService->createByFile($file_id, $position, $data['mobile'], $data['name'], $title);
 
             if($res['code'] !=0){
                 return [false, '签署流程创建失败，请联系客服处理！'];
@@ -4164,9 +4175,7 @@ class Member extends User
         }
         
         $url = $signService->getSignUrl($signFlowId, $data['mobile']);
-        $member_esign->save(['sign_flow_id'=> $signFlowId, 'sign_url'=> $url], [
-            'uid' => $uid
-        ]);
+        $member_esign->save(['sign_flow_id'=> $signFlowId, 'sign_url'=> $url], $where);
 
         return [true, ['url'=> $url]];
     }

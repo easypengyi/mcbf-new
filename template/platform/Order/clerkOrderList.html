@@ -8,15 +8,26 @@
         <div class="filter-item clearfix">
             <div class="filter-item__field">
                 <div class="v__control-group">
-                    <label class="v__control-label">订单编号</label>
+                    <label class="v__control-label">礼品券号码</label>
                     <div class="v__controls">
-                        <input type="text" id="order_no" class="v__control_input" placeholder="请输入订单编号" autocomplete="off">
+                        <input type="text" id="order_no" class="v__control_input" placeholder="请输入礼品劵号码" autocomplete="off">
                     </div>
                 </div>
                 <div class="v__control-group">
-                    <label class="v__control-label">商品信息</label>
+                    <label class="v__control-label">礼品劵信息</label>
                     <div class="v__controls">
-                        <input type="text" class="v__control_input" id="goods_name" placeholder="商品名称/商品编号" autocomplete="off">
+                        <input type="text" class="v__control_input" id="goods_name" placeholder="赠品信息" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">核销门店</label>
+                    <div class="v__controls">
+                        <select class="v__control_input" id="store_id">
+                            <option value="">全部</option>
+                            {volist name="store_list" id="ot"}
+                            <option value="{$ot['store_id']}">{$ot['store_name']}</option>
+                            {/volist}
+                        </select>
                     </div>
                 </div>
                 <div class="v__control-group">
@@ -25,18 +36,9 @@
                         <input type="text" class="v__control_input" id="user" autocomplete="off" placeholder="会员ID/用户名">
                     </div>
                 </div>
+
                 <div class="v__control-group">
-                    <label class="v__control-label">支付方式</label>
-                    <div class="v__controls">
-                        <select class="v__control_input" id="payment_type">
-                            <option value="">全部</option>
-                            <option value="1">微信</option>
-                            <option value="5">余额支付</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="v__control-group">
-                    <label class="v__control-label">预约时间</label>
+                    <label class="v__control-label">使用时间</label>
                     <div class="v__controls v-date-input-control">
                         <label for="orderTime">
                             <input type="text" class="v__control_input pr-30" id="orderTime" placeholder="请选择时间" autocomplete="off" data-types="datetime">
@@ -46,17 +48,6 @@
                         </label>
                     </div>
                 </div>
-<!--                <div class="v__control-group">-->
-<!--                    <label class="v__control-label">预约时间</label>-->
-<!--                    <div class="v__controls v-date-input-control">-->
-<!--                        <label for="completeTime">-->
-<!--                            <input type="text" class="v__control_input pr-30" id="completeTime" placeholder="请选择时间" autocomplete="off" data-types="datetime">-->
-<!--                            <i class="icon icon-calendar"></i>-->
-<!--                            <input type="hidden" id="finishStartDate">-->
-<!--                            <input type="hidden" id="finishEndDate">-->
-<!--                        </label>-->
-<!--                    </div>-->
-<!--                </div>-->
             </div>
         </div>
         <div class="filter-item clearfix">
@@ -74,7 +65,7 @@
 </form>
 
 <div class="screen-title">
-    <span class="text">预约订单列表</span>
+    <span class="text">核销订单列表</span>
 </div>
 <!--<ul class="nav nav-tabs v-nav-tabs">-->
 <!--<li role="presentation" class="active"><a href="#" class="flex-auto-center">全部</a></li>-->
@@ -85,19 +76,18 @@
 <table class="table v-table table-auto-center mb-10">
     <thead>
     <tr class="order-list-item">
-        <th class="col-md-3">预约项目</th>
-        <th class="col-md-1">预约价格</th>
-        <th class="col-md-1">预约时间</th>
-        <th class="col-md-2">预约人信息</th>
-        <th class="col-md-1">状态</th>
-        <th class="col-md-2">操作</th>
+        <th class="col-md-3">礼品劵信息</th>
+        <th class="col-md-1">价值</th>
+        <th class="col-md-1">使用时间</th>
+        <th class="col-md-2">使用人信息</th>
+        <th class="col-md-2">核销员</th>
+
     </tr>
     </thead>
 </table>
 <div class="tables" id="list">
 
 </div>
-
 
 <nav aria-label="Page navigation" class="clearfix">
     <ul id="page" class="pagination pull-right"></ul>
@@ -138,10 +128,10 @@
             // var end_finish_date = $("#finishEndDate").val();
             var user = $("#user").val();
             var goods_name = $("#goods_name").val();
-            var payment_type = $("#payment_type").val();
+            var store_id = $("#store_id").val();
         $.ajax({
             type: "post",
-            url: "{:__URL('PLATFORM_MAIN/order/appointOrderList')}",
+            url: "{:__URL('PLATFORM_MAIN/order/clerkOrderList')}",
             async: true,
             data: {
                 "page_index": page_index,
@@ -153,12 +143,12 @@
                 // "end_finish_date": end_finish_date,
                 "user": user,
                 "goods_name": goods_name,
-                "payment_type": payment_type,
+                "store_id": store_id,
             },
             success: function (data) {
                 var html = '';
                 if (data['data'] == undefined || data['data'].length == 0) {
-                    html += '<table class="table v-table table-auto-center mb-10"><tbody><tr align="center"><td colspan="7" class="h-200">暂无符合条件的订单</td></tr></tbody></table>';
+                    html += '<table class="table v-table table-auto-center mb-10"><tbody><tr align="center"><td colspan="6" class="h-200">暂无符合条件的订单</td></tr></tbody></table>';
                     $("#list").html(html);
                     $("#all_orders").html(data['total_count']);
                     $("#all_orders_money").html(data['all_pay_money']);
@@ -166,51 +156,36 @@
                 }
                 row = 0;
                 $.each(data['data'], function (k_order, v_order) {
-                    var order_no = v_order['out_trade_no'];//订单编号
-                    var create_time = timeStampTurnTime(v_order['create_time']);//下单时间
-                    var pic_cover_micro = v_order['goods_image'];//订单编号
+                    var order_no = v_order['gift_voucher_code'];//订单编号
+
                     html += '<table class="table v-table table-auto-center mb-10"><tbody><tr class="order-list-item">';
                     html += '<td colspan="6" class="text-left bg-f9">';
                     html += '<span class="mr-15-oList">' + v_order['store_name'] + '</span>';
-                    html += '<span class="mr-15-oList">订单号：' + order_no + '</span>';
-                    html += '<span class="mr-15-oList">下单时间：' + create_time + '</span>';
-                    html += '<span>预约订单</span>';
+                    html += '<span class="mr-15-oList">礼品劵号码：' + order_no + '</span>';
                     html += '</td>';
 
                     row += 1;
 
                     html += '<tr class="goods-order-items"><td class="col-md-3">';
                     html += '<div class="media text-left">';
-                    html += '<div class="media-left" style="width:60px;height:60px;">';
-                    html += '<img src="' + __IMG(pic_cover_micro) + '" alt="" width="60" height="60">';
-                    html += '</div>';
                     html += '<div class="media-left"> </div>';
                     html += '<div class="media-body break-word">';
                     html += '<div class="line-2-ellipsis">';
-                    html += '<a href="' + __URLS('SHOP_MAIN/goods/goodsinfo&goodsid=' + v_order['goods_id']) + '" target="_blank">' + v_order['goods_name'] + '</a>';
+                    html += v_order['giftvoucher_name'];
                     html += '</div></td>';
-                    html += '<td class="col-md-1">' + v_order['goods_money'] + '积分</td>';
+                    html += '<td class="col-md-1">' + v_order['price'] + '</td>';
                     html += '<td class="text-center col-md-2" rowspan="' + row + '" >';
-                    html += v_order['appoint_time'] + '<br>';
+                    html += v_order['use_time'] + '<br>';
                     html += '</td>';
                     if (row > 1) {
                         html += '<td  rowspan="' + row + '" class="border-left col-md-2">';
                     } else {
                         html += '<td  rowspan="' + row + '" class="col-md-2">';
                     }
-                    html += '<a href="' + __URL('PLATFORM_MAIN/member/myDetail?member_id=' + v_order['buyer_id']) + '" class="text-primary block mt-04" target="_blank">' + v_order['nick_name'] + '</a>' + v_order['name'] + '<br>' + v_order['user_tel'] + '';
+                    html += '<a href="' + __URL('PLATFORM_MAIN/member/myDetail?member_id=' + v_order['uid']) + '" class="text-primary block mt-04" target="_blank">' + v_order['nick_name'] + '</a>' + v_order['user_name'] + '<br>' + v_order['user_tel'] + '';
                     html += '</td>';
                     html += '<td class="text-center col-md-2" rowspan="' + row + '" >';
-                    html += v_order['order_status_name'] + '<br>';
-                    html += '</td>';
-                    html += '<td class="text-center col-md-2">';
-                    if(v_order['order_status'] == 0){
-                        html += '<a href="javascript:void(0);" data-order-id="' + v_order['order_id'] + '" class="label v-label-grey v-label-red confirm_del" >删除</a>';
-                    }
-                    if(v_order['order_status'] == 1){
-                        html += '<a href="javascript:void(0);" data-order-id="' + v_order['order_id'] + '" class="btn-operation confirm_arrival">确认到店</a>';
-                    }
-
+                    html += v_order['assistant_name'] + '<br>';
                     html += '</td>';
                     html += '</td>';
                     html += '</tr>';
@@ -230,49 +205,6 @@
             util.initPage(getAccountList);
         });
 
-        $("#list").on('click', '.confirm_arrival', function () {
-            var order_id = $(this).attr('data-order-id');
-
-            util.alert('确认到店？', function () {
-                $.ajax({
-                    type: "post",
-                    url: "{:__URL('PLATFORM_MAIN/order/confirmAppoint')}",
-                    async: true,
-                    data: {
-                        "order_id": order_id,
-                    },
-                    success: function (data) {
-                        if (data["code"] > 0) {
-                            util.message(data["message"], 'success', getAccountList($('#page_index').val()));
-                        } else {
-                            util.message(data["message"], 'danger', getAccountList($('#page_index').val()));
-                        }
-                    }
-                })
-            })
-        });
-
-        $("#list").on('click', '.confirm_del', function () {
-            var order_id = $(this).attr('data-order-id');
-
-            util.alert('确认删除？', function () {
-                $.ajax({
-                    type: "post",
-                    url: "{:__URL('PLATFORM_MAIN/order/delAppoint')}",
-                    async: true,
-                    data: {
-                        "order_id": order_id,
-                    },
-                    success: function (data) {
-                        if (data["code"] > 0) {
-                            util.message(data["message"], 'success', getAccountList($('#page_index').val()));
-                        } else {
-                            util.message(data["message"], 'danger', getAccountList($('#page_index').val()));
-                        }
-                    }
-                })
-            })
-        });
 
         /**
          * 余额流水数据导出

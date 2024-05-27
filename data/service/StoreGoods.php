@@ -10,6 +10,7 @@ use addons\gift\model\VslPromotionGiftModel;
 use addons\giftvoucher\model\VslGiftVoucherModel;
 use addons\giftvoucher\model\VslGiftVoucherRecordsModel;
 use addons\store\model\VslStoreAssistantModel;
+use data\model\UserModel;
 use data\model\VslMemberCardModel;
 use data\model\VslMemberCardRecordsModel;
 use data\model\VslOrderGoodsModel;
@@ -508,7 +509,7 @@ class StoreGoods extends BaseService
             $gift_voucher_records_model = new VslGiftVoucherRecordsModel();
             $gift_voucher_model = new VslGiftVoucherModel();
             $promotion_gift_model = new VslPromotionGiftModel();
-            $gift_voucher_records_info = $gift_voucher_records_model->getQuery($gift_condition, 'record_id,gift_voucher_id,gift_voucher_code,use_time,state,store_id,assistant_id', 'use_time DESC');
+            $gift_voucher_records_info = $gift_voucher_records_model->getQuery($gift_condition, 'record_id,gift_voucher_id,gift_voucher_code,use_time,state,store_id,assistant_id,uid', 'use_time DESC');
             if ($gift_voucher_records_info) {
                 foreach ($gift_voucher_records_info as $k => $v) {
                     $fields = $gift_voucher_model->getInfo(['gift_voucher_id' => $v['gift_voucher_id']], 'giftvoucher_name,promotion_gift_id');
@@ -528,6 +529,12 @@ class StoreGoods extends BaseService
                     //用于后面排序的字段
                     $gift_voucher_records_info[$k]['verification_time'] = $v['use_time'];
                     $gift_voucher_records_info[$k]['type'] = 2;
+
+                    //查询使用者
+                    $info = UserModel::field('uid,user_name,nick_name,user_tel')->where('uid', $v['uid'])->find();
+                    $name = empty($info['user_name']) ? $info['nick_name'] : $info['user_name'];
+                    $gift_voucher_records_info[$k]['user_name'] = '使用者：'.$name.'/'.$info['user_tel'];
+                    $gift_voucher_records_info[$k]['use_time'] = '使用时间：'.date('Y-m-d H:i:s', $v['use_time']);
                 }
                 unset($v);
             } else {
@@ -667,7 +674,8 @@ class StoreGoods extends BaseService
             $gift_voucher_records_model = new VslGiftVoucherRecordsModel();
             $gift_voucher_model = new VslGiftVoucherModel();
             $promotion_gift_model = new VslPromotionGiftModel();
-            $gift_data = $gift_voucher_records_model->pageQuery($page_index, $page_size, $gift_condition, 'use_time DESC', 'record_id,gift_voucher_id,gift_voucher_code,use_time,state,store_id,assistant_id');
+            $user = new UserModel();
+            $gift_data = $gift_voucher_records_model->pageQuery($page_index, $page_size, $gift_condition, 'use_time DESC', 'record_id,gift_voucher_id,gift_voucher_code,use_time,state,store_id,assistant_id,uid');
             $gift_voucher_records_info = $gift_data['data'];
             if ($gift_voucher_records_info) {
                 foreach ($gift_voucher_records_info as $k => $v) {
@@ -685,6 +693,12 @@ class StoreGoods extends BaseService
                     $albumPictureModel = new AlbumPictureModel();
                     $gift_voucher_records_info[$k]['gift_picture'] = $albumPictureModel->Query(['pic_id' => $gift_picture], 'pic_cover_small')[0];
                     $gift_voucher_records_info[$k]['type'] = 2;
+
+                    //查询使用者
+                    $info = UserModel::field('uid,user_name,nick_name,user_tel')->where('uid', $v['uid'])->find();
+                    $name = empty($info['user_name']) ? $info['nick_name'] : $info['user_name'];
+                    $gift_voucher_records_info[$k]['user_name'] = '使用者：'.$name.'/'.$info['user_tel'];
+                    $gift_voucher_records_info[$k]['use_time'] = '使用时间：'.date('Y-m-d H:i:s', $v['use_time']);
                 }
                 unset($v);
                 return [

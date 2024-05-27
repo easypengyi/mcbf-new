@@ -287,6 +287,7 @@ class Coupontype extends Addons
             $this->assign('saveCouponSettingUrl', __URL(addons_url_platform('coupontype://Coupontype/couponSetting')));
 
             $this->assign('sendhistoryCouponUrl', __URL(addons_url_platform('coupontype://Coupontype/sendhistoryCoupon')));
+            $this->assign('cancelSendCouponUrl', __URL(addons_url_platform('coupontype://Coupontype/cancelSendCoupon')));
         } else if ($this->module == 'admin') {
             $this->assign('getCouponTypeInfo', __URL(addons_url_admin('coupontype://Coupontype/getCouponTypeInfo')));
             $this->assign('couponTypeListUrl', __URL(addons_url_admin('coupontype://Coupontype/couponTypeList')));

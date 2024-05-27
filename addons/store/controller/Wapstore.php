@@ -767,6 +767,30 @@ class Wapstore extends baseStore
             return json(AjaxReturn(0));
         }
         $list['store_list'] = $list['data'];
+        foreach ($list['store_list'] as &$item){
+            $appointOrderModel = new VslAppointOrderModel();
+            $where = [
+                'website_id' => $this->website_id,
+                'store_id' => $item['store_id'],
+                'is_deleted'=> 0,
+                'pay_status'=> 1
+            ];
+            $start_date = date('Y-m-d' . ' 00:00:00', time());
+            $end_date = date('Y-m-d' . ' 00:00:00', time() + 3600 * 24);
+            $where['appoint_time'][] = [
+                '>',
+                $start_date
+            ];
+            $where['appoint_time'][] = [
+                '<',
+                $end_date
+            ];
+
+            $appoint_order_count = $appointOrderModel->getCount($where);
+            $item['count'] = $appoint_order_count;
+        }
+
+
         unset($list['data']);
         return json(['code' => 1,
             'message' => '获取成功',
@@ -882,7 +906,7 @@ class Wapstore extends baseStore
         $VoucherServer = new VoucherServer();
         $result = $VoucherServer->getUserUse($gift_voucher_code, $this->instance_id, $this->store_id, $this->assistantId);
         if ($result) {
-            $this->addUserLog('使用礼品券11', $result);
+            $this->addUserLog('使用礼品券11:'.$this->assistantId, $result);
         }
         return json(AjaxReturn($result));
     }
