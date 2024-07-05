@@ -103,7 +103,7 @@ class GoodsExpress extends BaseService
 //        var_dump($shippingAreaGet);die;
         //如果找不到就包邮
         if(!$shippingAreaGet){
-            return 0.00;
+            $shippingAreaGet = $shippingArea[0];
         }
         if ($shippingFee['calculate_type'] == 1) {//按重量计费
             if (($goodsInfo['goods_weight'] <= $shippingAreaGet['main_level_num']) || ($shippingAreaGet['extra_level_num'] == 0)) {

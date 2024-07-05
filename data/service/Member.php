@@ -37,6 +37,7 @@ use data\model\VslOrderModel;
 use addons\shop\model\VslShopApplyModel;
 use addons\shop\model\VslShopModel;
 use data\model\UserModel as UserModel;
+use data\model\VslOrderTeamLogModel;
 use data\model\WebSiteModel;
 use data\service\eqb\EsignService;
 use data\service\Member\MemberAccount;
@@ -2548,6 +2549,34 @@ class Member extends User
                 $team_grant_bonus = 0;
                 $team_ungrant_bonus = 0;
             }
+            //极差部分冻结
+            $model = new VslOrderTeamLogModel();
+            $where = [
+                'team_cal_status' => 0
+            ];
+
+            $freezing_bonus = 0;
+            $logs = $model->getQuery($where, 'order_id,order_goods_id,team_bonus_details');
+            $order_model = new VslOrderGoodsModel();
+            foreach ($logs as $log){
+                $lists = json_decode($log['team_bonus_details'], true);
+                foreach ($lists as $key=>$item){
+                    if($item['uid'] == $this->uid){
+                        //验证订单
+                        $data_take_delivery = array(
+                            'refund_status' => 0,
+                            'order_goods_id'=> $log['order_goods_id']
+                        );
+                        $info_order_goods = $order_model->getInfo($data_take_delivery, 'order_goods_id');
+                        if($info_order_goods){
+                            $freezing_bonus += $item['commission'];
+                        }
+                    }
+                }
+            }
+            $team_freezing_bonus += $freezing_bonus;
+
+
             $member = new VslMemberModel();
             $info['member_info'] = $member->getInfo(['uid' => $this->uid], '*');
             $level = new VslAgentLevelModel();

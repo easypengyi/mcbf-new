@@ -261,7 +261,7 @@ class Coupontype extends baseCoupon
         $search_text = request()->post('search_text', '');
         $page_index = request()->post('page_index', 1);
         $page_size = request()->post('page_size', PAGESIZE);
-        $fields = 'nc.coupon_id,nc.coupon_code,nc.money,nc.discount,nc.use_time,su.user_tel,su.nick_name,no.order_no,no.shop_id,ns.shop_name';
+        $fields = 'nc.coupon_id,nc.coupon_code,nc.money,nc.discount,nc.use_time,su.user_tel,su.nick_name,no.order_no,no.shop_id,ns.shop_name,nc.send_uid';
         // 使用的历史记录,state = 2
         $where['nc.state'] = 2;
         $where['nc.coupon_type_id'] = request()->post('coupon_type_id');

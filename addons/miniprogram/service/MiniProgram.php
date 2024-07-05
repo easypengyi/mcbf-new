@@ -640,6 +640,7 @@ class MiniProgram extends BaseService
           "uploaddomain" =>  [],
           "downloaddomain" => []
         ];
+        var_dump($domain_data);die;
         if (!empty($domain_data)) {
             $flag = 0;
             foreach ($domain_data as $key => $url) {

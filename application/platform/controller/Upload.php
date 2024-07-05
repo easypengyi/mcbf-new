@@ -4,6 +4,7 @@ namespace app\platform\controller;
 
 \think\Loader::addNamespace('data', 'data/');
 
+use data\model\MaterialModel;
 use data\service\Album as Album;
 use data\service\Config as WebConfig;
 use data\service\WebSite;
@@ -1163,6 +1164,102 @@ class Upload extends Controller {
             @unlink($this->reset_file_path . $this->file_name);
         }
         return $data;
+    }
+
+    /**
+     * 功能说明：文件(图片)上传(存入相册)
+     */
+    public function uploadMaterial() {
+        $data = array();
+        $year = date('Y',time());
+        $month = date('m',time());
+        $day = date('d',time());
+        $hour = date('H',time());
+        $this->file_path = 'upload/' . Session::get(request()->module() . 'website_id') . '/' . Session::get(request()->module() . 'instance_id') . '/'.$year.'/'.$month.'/'.$day.'/'.$hour.'/';
+        if ($this->file_path == "") {
+            $this->return['message'] = "文件路径不能为空";
+            return $this->ajaxFileReturn();
+        }
+        $file_type = request()->post('file_type',0);
+        // 重新设置文件路径
+        $this->resetFilePath();
+        // 检测文件夹是否存在，不存在则创建文件夹
+        if (!file_exists($this->reset_file_path)) {
+            $mode = intval('0777', 8);
+            mkdir($this->reset_file_path, $mode, true);
+        }
+
+        $this->file_name = $_FILES["file_upload"]["name"]; // 文件原名
+        $this->file_size = $_FILES["file_upload"]["size"]; // 文件大小
+        $this->file_type = $_FILES["file_upload"]["type"]; // 文件类型
+
+        if ($this->file_size == 0) {
+            $this->return['message'] = "文件大小为0MB";
+            return $this->ajaxFileReturn();
+        }
+
+        //限制1M
+        $limit_size = 1024 * 1024;
+        if ($this->file_size > $limit_size) {
+            $this->return['message'] = "文件大小不能大于1M";
+            return $this->ajaxFileReturn();
+        }
+        $validationType = 1;
+        if ($file_type) {
+            $validationType = 4; //视频文件验证不同
+        }
+        // 验证文件
+        if (!$this->validationFile($validationType)) {
+            return $this->ajaxFileReturn();
+        }
+        $guid = time().rand(100, 999);
+        $file_name_explode = explode(".", $this->file_name); // 图片名称
+        $suffix = count($file_name_explode) - 1;
+        $ext = "." . $file_name_explode[$suffix]; // 获取后缀名
+        $newfile = $guid . $ext; // 重新命名文件
+        // 特殊 判断如果是商品图
+        $ok = $this->moveUploadFile($_FILES["file_upload"]["tmp_name"], $this->reset_file_path . $newfile);
+        if ($ok["code"]) {
+            // 文件上传成功执行下边的操作
+
+            @unlink($_FILES['file_upload']);
+            $album = new MaterialModel();
+            $name = $file_name_explode[0];
+            $pic_name = request()->post("pic_name", $guid);
+            $pic_tag = request()->post("pic_tag", $name);
+            $pic_id = intval($_REQUEST['pic_id']) > 0 ? intval($_REQUEST['pic_id']) : '';
+            $res['path'] = $this->reset_file_path . $newfile;
+
+            // 上传到相册管理，生成四张大小不一的图
+            if($pic_id){
+                $retval = $album->ModifyAlbumPicture($pic_id, $ok["path"], '', '', $ok["path"], '', '', $ok["path"], '', '', $ok["path"], '', '', $ok["path"], '', '', $this->instance_id, $this->upload_type, $ok["domain"], $ok["bucket"]);
+            }else{
+                $retval = $album->addPicture($pic_name, $pic_tag, $ok["path"], '', '', $ok["path"], '', '', $ok["path"], '', '', $ok["path"], '', '', $ok["path"], '', '', $this->instance_id, $this->upload_type, $ok["domain"], $ok["bucket"], '', $file_type);
+            }
+            if ($retval > 0) {
+                $data['file_id'] = $retval;
+                $data['file_name'] = $ok["path"];
+                $data['origin_file_name'] = $this->file_name;
+                $data['file_path'] = $this->reset_file_path . $newfile;
+                $data['state'] = '1';
+                $data['message'] = "上传成功";
+            } else {
+                $data['state'] = '0';
+                $data['message'] = "视频上传失败";
+            }
+                // 视频文件
+            //删除本地的图片
+            if ($this->upload_type == 2) {
+                @unlink($this->reset_file_path . $newfile);
+            }
+        } else {
+            // 强制将文件后缀改掉，文件流不同会导致上传文件失败
+            $data['state'] = '0';
+            $data['message'] = "图片上传失败";
+//            $this->return['message'] = "请检查您的上传参数配置或上传的文件是否有误";
+        }
+        return $data;
+//        return $this->ajaxFileReturn();
     }
 
 }

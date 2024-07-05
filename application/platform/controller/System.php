@@ -9,10 +9,12 @@ use addons\goodhelper\server\GoodHelper;
 use addons\invoice\model\VslInvoiceFileModel;
 use addons\invoice\server\Invoice as InvoiceServer;
 use data\model\ConfigModel;
+use data\model\MaterialModel;
 use data\model\VslMemberModel;
 use data\model\WebSiteModel;
 use data\service\AddonsConfig;
 use data\service\Album as Album;
+use data\service\Config as WebConfig;
 use data\service\Goods as Goods;
 use data\model\AlbumPictureModel as AlbumPictureModel;
 use think\Exception;
@@ -1289,5 +1291,85 @@ class System extends BaseController
         $this->assign('getCityUrl', __URL(addons_url_platform('merchants://Merchants/getCity')));
         $this->assign('getDistrictUrl', __URL(addons_url_platform('merchants://Merchants/getDistrict')));
         return view($this->style . "System/becomeMerchants");
+    }
+
+    /**
+     * 相册图片列表
+     */
+    public function material()
+    {
+        if (request()->isAjax()) {
+            $page_index = request()->post("page_index", 1);
+            $page_size = request()->post("page_size", PAGESIZE);
+            $condition = array();
+            if($_REQUEST['pic_name']){
+                $condition['pic_name'] = ['like',"%".$_REQUEST['pic_name']."%"];
+            }
+            $album = new MaterialModel();
+            $list = $album->getPictureList($page_index, $page_size, $condition);
+            return $list;
+        } else {
+            $Config = new WebConfig();
+            $value = $Config->getConfig(0, 'MATERIAL_SHARE', $this->website_id, 1);
+            $this->assign('share_info', $value);
+            return view($this->style . "System/material");
+        }
+    }
+
+    //修改图片名称
+    public function update_material_name(){
+
+        $id = $_REQUEST['id'];
+        $name = $_REQUEST['name'];
+        if(empty($name)){
+            return AjaxReturn('-1','图片名称不能为空');
+        }
+
+        $album = new MaterialModel();
+        $album->save(['pic_name'=>$name],['pic_id'=>$id]);
+        return AjaxReturn('1','修改成功');
+    }
+
+    /**
+     * 删除图片
+     *
+     * @param unknown $pic_id_array
+     * @return unknown
+     */
+    public function deleteMaterial()
+    {
+        $pic_id_array = $_POST["pic_id_array"];
+        $album = new MaterialModel();
+        $retval = $album->deletePicture($pic_id_array);
+        return AjaxReturn($retval);
+    }
+
+    /*
+     * 配置物流查询
+     * * */
+    public function saveWords(){
+        $Config = new WebConfig();
+        if (request()->isPost()) {
+            $share_score= request()->post("share_score", '');
+            $share_words = request()->post("share_words", '');
+            $share_title = request()->post("share_title", '');
+            $update_time = date('Y-m-d H:i:s');
+            $array = array(
+                'instance_id' => 0,
+                'website_id' => $this->website_id,
+                'key' => 'MATERIAL_SHARE',
+                'value' => json_encode([
+                    'share_score'=> $share_score,
+                    'share_words'=>$share_words,
+                    'share_title'=> $share_title,
+                    'update_time'=> $update_time]),
+                'desc' => '打卡配置',
+                'is_use' => 1
+            );
+            $retval = $Config->setConfigOne($array);
+            return AjaxReturn($retval);
+        }
+
+        return 1;
     }
 }   

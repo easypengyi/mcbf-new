@@ -1040,29 +1040,34 @@ class TeamBonus extends BaseService
 //                            $amount = $price;
 
                             $curr_rate = 0;
+                            if(!empty($buyer_info['team_agent_level_id']) && isset($level_bonus_val[$buyer_info['team_agent_level_id']])){
+                                $curr_rate = $level_bonus_val[$buyer_info['team_agent_level_id']];
+                            }
                             $all_bonus = 0;
-                            foreach ($agent_data['level_info'] as $member){
-                                if(!isset($level_bonus_val[$member['team_agent_level_id']]) || $level_bonus_val[$member['team_agent_level_id']] <= 0){
+                            foreach ($agent_data['level_info'] as $ag_member){
+                                if(!isset($level_bonus_val[$ag_member['team_agent_level_id']]) || $level_bonus_val[$ag_member['team_agent_level_id']] <= 0){
                                     continue;
                                 }
-                                $r = $level_bonus_val[$member['team_agent_level_id']];
+                                $r = $level_bonus_val[$ag_member['team_agent_level_id']];
                                 $ur = $r - $curr_rate;
                                 $commission = round(($amount * $ur / 100), 2);
                                 if($commission > 0){
                                     $team_bonus_list[] = [
-                                        'uid'=> $member['uid'],
+                                        'uid'=> $ag_member['uid'],
                                         'amount'=> $amount,
                                         'distributor_amount'=> $r,
-                                        'distributor_level_id'=> $member['team_agent_level_id'],
-                                        'distributor_level_name'=> $member['team_agent_level_name'],
-                                        'commission'=> $commission
+                                        'distributor_level_id'=> $ag_member['team_agent_level_id'],
+                                        'distributor_level_name'=> $ag_member['team_agent_level_name'],
+                                        'commission'=> $commission,
+                                        'curr_rate'=> $curr_rate,
+                                        'team_agent_level_id'=> $buyer_info['team_agent_level_id']
                                     ];
                                     $all_bonus += $commission;
 
                                     $records_no = 'TBS' . time() . rand(111, 999);
                                     //添加团队分红日志
                                     $data_records = array(
-                                        'uid' => $member['uid'],
+                                        'uid' => $ag_member['uid'],
                                         'data_id' => $order_info['order_no'],
                                         'website_id' => 1,
                                         'records_no' => $records_no,
@@ -1832,10 +1837,12 @@ class TeamBonus extends BaseService
         if($basic_config['is_use']==1 && $config['withdrawals_check'] == 1){
             $order_grant = new VslUnGrantBonusOrderModel();
             $uids = array_unique($order_grant->Query(['from_type'=>3,'grant_status'=>1,'website_id'=>$params['website_id']],'uid'));
+//            var_dump($uids);die;
             $grant_time = time();
             $sn =  md5(uniqid(rand()));
             $up_grant = new VslGrantTimeModel();
             $up_grant_time = $up_grant->getInfo(['website_id'=>$params['website_id'],'from_type'=>3],'time,id');
+            $res = 1;
             if($config['limit_time'] && $config['limit_time']!=100){
                 $limit_time = $config['limit_time']*24*3600;
                 $now_time = strtotime(date('Y-m-d',time()));
@@ -1849,6 +1856,7 @@ class TeamBonus extends BaseService
                     $bonus = new VslBonusAccountModel();
                     $grant = new VslBonusGrantModel();
                     $bonus_info = $bonus->getInfo(['uid' => $v,'from_type'=>3], '*');
+//                    var_dump($rel_time , $now_time, $bonus_info);die;
                     //自动分红
                     if ($rel_time == $now_time) {
                         //添加分红发放流水

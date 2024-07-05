@@ -1,0 +1,220 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+{/block}
+{block name="main"}
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">会员ID</label>
+                    <div class="v__controls">
+                        <input type="text" id="member_id" class="v__control_input" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">会员信息</label>
+                    <div class="v__controls">
+                        <input type="text" class="v__control_input" id="user" placeholder="用户名/昵称/手机号码" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
+<!--                        <a class="btn btn-success ml-15 dataExcel">导出EXCEL</a>-->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<!--<div class="mb-10 flex flex-pack-justify">-->
+<!--    <div class="">-->
+<!--        <a class="btn btn-default delLists" href="javascript:void(0);">删除</a>-->
+<!--    </div>-->
+<!--</div>-->
+<table class="table v-table table-auto-center">
+    <thead>
+    <tr class="order-list-item">
+        <th><input type="checkbox" id="checkAll"></th>
+        <th>ID</th>
+        <th>用户ID</th>
+        <th>会员信息</th>
+        <th>截图</th>
+        <th>状态</th>
+        <th>说明</th>
+        <th>赠送积分</th>
+        <th>提交时间</th>
+        <th class="col-md-2 pr-14 operationLeft">操作</th>
+    </tr>
+    </thead>
+    <tbody id="list">
+
+    </tbody>
+</table>
+<input type="hidden" id="page_index">
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util'],function(util){
+        util.initPage(getMemberList);
+        function getMemberList(page_index){
+            $("#page_index").val(page_index);
+            var user = $("#user").val();
+            var member_id = $("#member_id").val();
+            $.ajax({
+                type : "post",
+                url : "{:__URL('PLATFORM_MAIN/user/checklog')}",
+                async : true,
+                data : {
+                    "page_index" : page_index,
+                    "search_text" : user,
+                    "member_id" : member_id
+                },
+                success : function(data) {
+                    var html = '';
+                    if (data["data"].length > 0) {
+                        for (var i = 0; i < data["data"].length; i++) {
+
+                            html += '<tr class="goods-items" style="min-height:80px;">';
+                            html +='<td><input type="checkbox" name="check_uid" value='+ data["data"][i]["id"]+'></td>';
+                            html += '<td>'+ data["data"][i]["id"]+'</td>';
+                            html += '<td>'+ data["data"][i]["uid"]+'</td>';
+                            html += '<td>'+ data["data"][i]["name"]+'</td>';
+                            html += '<td>';
+                            html += '<p><a href="'+__IMG(data["data"][i]["image_url"])+'"><img src="'+ __IMG(data["data"][i]["image_url"])+'" style="width:60px;height:60px;"></a></p>';
+                            html += '</td>';
+                            html += '<td>'+ data["data"][i]["status_name"]+'</td>';
+                            html += '<td>'+ data["data"][i]["remark"]+'</td>';
+                            html += '<td>'+ data["data"][i]["score"]+'</td>';
+                            html += '<td>'+ data["data"][i]["create_time"]+'</td>';
+                            html += '<td>';
+                            if(data["data"][i]["status"] == 0){
+                                html += '<a href="javascript:void(0);" class="btn-operation passList" data-id ='+ data['data'][i]['id']+' >通过</a>';
+                                html += '<a href="javascript:void(0);" class="btn-operation refuseList" data-id ='+ data['data'][i]['id']+' >拒绝</a>';
+                            }
+                            html += '</td>';
+                            html += '</tr>';
+                        }
+
+                    } else {
+                        html += '<tr align="center"><td colspan="11" class="h-200">暂无符合条件的数据记录</td></tr>';
+                    }
+                    $('#page').paginator('option', {
+                        totalCounts: data['total_count']  // 动态修改总数
+                    });
+                    $("#list").html(html);
+                    util.tips();
+                    passList();
+                    refuseList();
+                }
+            });
+        }
+        $('.search').on('click',function(){
+            util.initPage(getMemberList);
+        });
+
+        function refuseList() {
+            // 调整余额
+            $('.refuseList').on('click', function () {
+                var id = $(this).data('id');
+                var html = '<form class="form-horizontal padding-15" id="">';
+                html += "<div class='form-group'>";
+                html += "<label class='col-md-3 control-label'>拒绝理由</label>";
+                html += "<div class='col-md-8'>";
+                html += "<textarea class='form-control' id='adjustBalance_memo' rows='4' placeholder='输入拒绝理由'></textarea>";
+                html += "</div>";
+                html += '</form>';
+                util.confirm('审核', html, function () {
+                    var text = this.$content.find('#adjustBalance_memo').val();
+                    $.ajax({
+                        type: "post",
+                        url: "{:__URL('PLATFORM_MAIN/User/refuseRecord')}",
+                        data: {
+                            "id": id,
+                            "remark": text
+                        },
+                        success: function (data) {
+                            if (data["code"] > 0) {
+                                util.message(data["message"], 'success', getMemberList($('#page_index').val()));
+                            } else {
+                                util.message(data["message"], 'danger');
+                            }
+                        }
+                    });
+                })
+            });
+        }
+
+        // 移除黑名单
+        function passList(){
+            $('.passList').on('click',function(){
+                var uid = $(this).data('id');
+                $(".tooltip.fade.top.in").remove();
+                util.alert('确定审核通过，并赠送积分？',function(){
+                    $.ajax({
+                        type : "post",
+                        url : "{:__URL('PLATFORM_MAIN/User/passRecord')}",
+                        async : true,
+                        data : {
+                            "id" : uid
+                        },
+                        success : function(data) {
+                            if (data["code"] > 0) {
+                                util.message(data["message"],'success',getMemberList($("#page_index").val()));
+                            }else{
+                                util.message(data["message"],'danger');
+                            }
+                        }
+                    });
+                })
+            })
+        }
+
+        /**
+         * 会员数据导出
+         */
+        $('.dataExcel').on('click',function(){
+            var tip1 = document.getElementById("tip1").innerText;
+            var tip1 = parseInt(tip1)+parseInt(1);
+            var total_tips2=tip1>99?"99+":tip1;
+
+            var search_text = $("#user").val();
+            var member_id = $("#member_id").val();
+
+            $.ajax({
+                type: "get",
+                url: "{:__URL('PLATFORM_MAIN/user/giftDataExcel')}",
+                async: true,
+                data: {
+                    "search_text": search_text,
+                    "member_id": member_id
+                },
+                success: function (data) {
+                    if (data["code"] == 0) {
+                        document.getElementById("tip1").innerText = total_tips2;
+                        util.message(data["message"], 'success', getMemberList($('#page_index').val()));
+                    } else {
+                        util.message(data["message"], 'danger', getMemberList($('#page_index').val()));
+                    }
+                }
+            })
+        })
+        //    点击全选
+        $("#checkAll").on('click',function(){
+            $(".v-table input[type = 'checkbox']").prop("checked", this.checked);
+        })
+
+    })
+
+</script>
+{/block}

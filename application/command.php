@@ -30,4 +30,5 @@ return [
     'app\cli\controller\OrderBarrageTask',
     'app\cli\controller\OpenLuckspell',
     'app\cli\controller\SendLuckspell',
+    'app\cli\controller\TeamSettleTasks',
 ];

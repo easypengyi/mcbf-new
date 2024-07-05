@@ -1787,6 +1787,9 @@ class MemberAccount extends BaseService {
     }
     public static function getMemberAccountRecordsName($from_type) {
         switch ($from_type) {
+            case 203:
+                $type_name = '打卡奖励';
+                break;
             case 201:
                 $type_name = '美丽分转账';
                 break;

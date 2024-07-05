@@ -36,7 +36,7 @@ class VslCouponModel extends BaseModel
         return $this->belongsTo('\addons\shop\model\VslShopModel', 'shop_id', 'shop_id');
     }
 
-    public function order()
+    public function orderInfo()
     {
         return $this->belongsTo('\data\model\VslOrderModel', 'order_id', 'use_order_id');
     }
@@ -73,4 +73,36 @@ class VslCouponModel extends BaseModel
         $count = $this->viewCount($viewObj,$condition);
         return $count;
     }
+
+    /**
+     * 获取方式
+     *
+     * @param int $type
+     * @return mixed|string
+     */
+    public static function types($type = 3){
+        //1->订单,2->首页领取,3->注册营销获取,4->购物车获取,5->商品详情获取,6->复制链接领取,7->券包获取,8->活动领取,
+        //9->签到,10->海报设置奖励,11->会员卡开通送优惠券12->会员卡周期送优惠券,13->定向送券,14->朋友赠送15->装修设置
+        $arr = [
+            1=> '订单',
+            2=> '首页领取',
+            3=> '注册营销获取',
+            4=> '购物车获取',
+            5=> '商品详情获取',
+            6=> '复制链接领取',
+            7=> '券包获取',
+            8=> '活动领取',
+            9=> '签到',
+            10=> '海报设置奖励',
+            11=> '会员卡开通送优惠券',
+            12=> '会员卡周期送优惠券',
+            13=> '定向送券',
+            14=> '朋友赠送',
+            15=> '装修设置'
+        ];
+
+        return isset($arr[$type]) ? $arr[$type] : '';
+    }
+
+
 }

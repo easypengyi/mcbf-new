@@ -25,7 +25,7 @@ class VslGoodsModel extends BaseModel {
     const DEFAULT_GOODS_ID = 55;
 
     public static function getExchangeGoods(){
-        return [132, 133, 134];
+        return [132, 133, 134, 142, 143, 144];
         return [55, 65, 66, 67, 77, 78, 79];
     }
 

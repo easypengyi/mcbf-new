@@ -1,7 +1,12 @@
 <?php
 namespace data\service;
+use addons\coupontype\model\VslCouponModel;
+use addons\coupontype\server\Coupon as CouponServer;
 use addons\distribution\service\Distributor;
+use addons\giftvoucher\model\VslGiftVoucherRecordsModel;
+use addons\giftvoucher\server\GiftVoucher as VoucherServer;
 use addons\groupshopping\model\VslGroupShoppingRecordModel;
+use addons\store\model\VslStoreModel;
 use data\model\VslOrderModel;
 use data\service\BaseService;
 use data\model\VslExcelsModel;
@@ -86,6 +91,12 @@ class ExcelsExport extends BaseService
                 break;
             case '18': //导出用户佣金明细
                 $this->export_commissionLogDetail_list($info);
+                break;
+            case '19': //导出礼品劵列表
+                $this->export_gift_list($info);
+                break;
+            case '20': //导出优惠劵列表
+                $this->export_coupon_list($info);
                 break;
         }
     }
@@ -1015,6 +1026,149 @@ class ExcelsExport extends BaseService
         }
         unset($v);
         $res = dataExcel($xlsName, $xlsCell, $data,$this->reset_file_path);
+        $excelsModel = new VslExcelsModel();
+        if ($res['code'] > 0) { //导出成功
+            $file = $res['data'];
+            $excelsModel->save(['status'=>1,'updatetime'=>time(),'path'=>$file,'msg'=>'导出成功'],['id'=>$info['id']]);
+        }else{//导出失败
+            $excelsModel->save(['status'=>2,'updatetime'=>time(),'msg'=>$res['data']],['id'=>$info['id']]);
+        }
+    }
+
+    //导出礼品劵
+    public function export_gift_list($info){
+        set_time_limit(0);
+        ini_set('max_execution_time', '0');
+        ini_set('memory_limit', '1000M');
+        define('DOWN_EXCEL', 'excels/' . $info['website_id'] . '/'.$info['type'].'/');
+        $this->reset_file_path = DOWN_EXCEL;
+        if (!file_exists($this->reset_file_path)) {
+            $mode = intval('0777', 8);
+            mkdir($this->reset_file_path, $mode, true);
+        }
+        $xlsName = $info['exname'];
+        $xlsCell = unserialize($info['ids']);
+        $condition = unserialize($info['conditions']);
+        $VoucherServer = new VoucherServer();
+        $fields = 'vgvr.*,su.user_tel,su.nick_name,su.user_name,vs.shop_name,vpg.gift_name,vpg.price';
+        $list = $VoucherServer->getGiftVoucherHistory(1, 0, $condition, $fields,'vgvr.record_id desc');
+        $store_ids = [];
+        foreach ($list as $i){
+            $store_ids[$i['store_id']] = $i['store_id'];
+        }
+
+        $store_list = VslStoreModel::where('store_id', 'in', $store_ids)->column('store_name', 'store_id');
+        $data = [];
+        foreach ($list['data'] as &$item){
+            if ($item['user_name']) {
+                $item['name'] = $item['user_name'];
+            } elseif ($item['nick_name']) {
+                $item['name'] = $item['nick_name'];
+            } elseif ($item['user_tel']) {
+                $item['name'] = $item['user_tel'];
+            }
+            //礼品券状态 -1冻结 1已领用（未使用） 2已使用 3已过期
+            $state_name = '未使用';
+            if($item['state'] == 2){
+                $state_name = '已使用';
+            }
+            $type_name = VslGiftVoucherRecordsModel::types($item['get_type']);
+            //是否是别人转赠
+            if(!empty($item['send_uid'])){
+                $type_name .= '(来自：'.$item['send_uid'].' 转赠)';
+            }
+            if($item['use_time']){
+                $item['use_time'] = date('Y-m-d H:i:s', $item['use_time']);
+            }else{
+                $item['use_time'] = '';
+            }
+            $data[] = [
+                'record_id'=> $item['record_id'],
+                'uid'=> $item['uid'],
+                'name'=> $item['name'],
+                'gift_voucher_code'=> $item['gift_voucher_code'],
+                'gift_name'=> $item['gift_name'],
+                'state_name'=> $state_name,
+                'type_name'=> $type_name,
+                'fetch_time'=> date('Y-m-d H:i:s', $item['fetch_time']),
+                'use_time'=> $item['use_time'],
+                'shop_name'=> isset($store_list[$item['store_id']]) ? $store_list[$item['store_id']] : '',
+            ];
+        }
+
+        $res = dataExcel($xlsName, $xlsCell, $data, $this->reset_file_path);
+        $excelsModel = new VslExcelsModel();
+        if ($res['code'] > 0) { //导出成功
+            $file = $res['data'];
+            $excelsModel->save(['status'=>1,'updatetime'=>time(),'path'=>$file,'msg'=>'导出成功'],['id'=>$info['id']]);
+        }else{//导出失败
+            $excelsModel->save(['status'=>2,'updatetime'=>time(),'msg'=>$res['data']],['id'=>$info['id']]);
+        }
+    }
+
+    //导出礼品劵
+    public function export_coupon_list($info){
+        set_time_limit(0);
+        ini_set('max_execution_time', '0');
+        ini_set('memory_limit', '1000M');
+        define('DOWN_EXCEL', 'excels/' . $info['website_id'] . '/'.$info['type'].'/');
+        $this->reset_file_path = DOWN_EXCEL;
+        if (!file_exists($this->reset_file_path)) {
+            $mode = intval('0777', 8);
+            mkdir($this->reset_file_path, $mode, true);
+        }
+        $xlsName = $info['exname'];
+        $xlsCell = unserialize($info['ids']);
+        $condition = [];
+        $where = unserialize($info['conditions']);
+        $fields = 'nc.coupon_id,nc.coupon_code,nc.money,nc.discount,nc.use_time,nc.fetch_time,nc.state,nc.get_type,nc.uid,
+            su.user_tel,su.nick_name,su.user_name,no.order_no,no.shop_id,ns.shop_name,nc.send_uid';
+        $promotion = new CouponServer();
+        $list = $promotion->getCouponHistory(1, 0, $condition, $where, $fields, 'nc.coupon_id desc');
+        $data = [];
+        foreach ($list['data'] as &$item){
+            if ($item['user_name']) {
+                $item['name'] = $item['user_name'];
+            } elseif ($item['nick_name']) {
+                $item['name'] = $item['nick_name'];
+            } elseif ($item['user_tel']) {
+                $item['name'] = $item['user_tel'];
+            }
+
+            if($item['use_time']){
+                $item['use_time'] = date('Y-m-d H:i:s', $item['use_time']);
+            }else{
+                $item['use_time'] = '';
+            }
+            //礼品券状态 -1冻结 1已领用（未使用） 2已使用 3已过期
+            $state_name = '未使用';
+            if($item['state'] == 2){
+                $state_name = '已使用';
+            }
+            $item['state_name'] = $state_name;
+            $type_name = VslCouponModel::types($item['get_type']);
+            //是否是别人转赠
+            if(!empty($item['send_uid'])){
+                $type_name .= '(来自：'.$item['send_uid'].' 转赠)';
+            }
+            $item['type_name'] = $type_name;
+
+            $data[] = [
+                'coupon_id'=> $item['coupon_id'],
+                'uid'=> $item['uid'],
+                'name'=> $item['name'],
+                'coupon_code'=> $item['coupon_code'],
+                'money'=> $item['money'],
+                'state_name'=> $state_name,
+                'type_name'=> $type_name,
+                'fetch_time'=> date('Y-m-d H:i:s', $item['fetch_time']),
+                'use_time'=> $item['use_time'],
+                'order_no'=> empty($item['order_no']) ? '':$item['order_no'],
+                'shop_name'=> $item['shop_id'] == 0 ? '自营店':$item['shop_name']
+            ];
+        }
+
+        $res = dataExcel($xlsName, $xlsCell, $data, $this->reset_file_path);
         $excelsModel = new VslExcelsModel();
         if ($res['code'] > 0) { //导出成功
             $file = $res['data'];

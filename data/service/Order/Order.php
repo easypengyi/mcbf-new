@@ -1385,7 +1385,7 @@ class Order extends BaseService
             // 判断是否需要在本阶段赠送积分
             $this->giveGoodsOrderPoint($orderid, 2);
             //发货直接结算极差佣金
-            $this->addOrderTeamLog($orderid, $order_info['order_no']);
+//            $this->addOrderTeamLog($orderid, $order_info['order_no']);
 
             $this->order->commit();
             return 1;

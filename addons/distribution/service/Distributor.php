@@ -8342,7 +8342,7 @@ class Distributor extends BaseService
             }
             if(isset($item['children'])){
                 $children = $item['children'];
-                unset($item['children']);
+//                unset($item['children']);
                 $arr[] = $item;
                 $arr = array_merge($arr, $this->rec_list_member($pid, $children));
             }

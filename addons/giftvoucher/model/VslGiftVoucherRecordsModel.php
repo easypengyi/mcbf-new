@@ -72,4 +72,24 @@ class VslGiftVoucherRecordsModel extends BaseModel
         }
         return $detail;
     }
+
+    /**
+     * 获取方式
+     *
+     * @param int $type
+     * @return mixed|string
+     */
+    public static function types($type = 3){
+        //获取方式:1->链接领取,2->活动获得,3->签到,4->注册营销,5->海报设置奖励,8->定向送券
+        $arr = [
+            1=> '链接领取',
+            2=> '活动获得',
+            3=> '订单完成赠送劵',
+            4=> '注册营销',
+            5=> '海报设置奖励',
+            8=> '定向送券'
+        ];
+
+        return isset($arr[$type]) ? $arr[$type] : '';
+    }
 }

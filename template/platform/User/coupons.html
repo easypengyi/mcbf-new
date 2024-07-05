@@ -1,0 +1,215 @@
+{extend name="platform/new_base" /}
+{block name="resources"/}
+{/block}
+{block name="main"}
+<form class="v-filter-container">
+    <div class="filter-fields-wrap">
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label">会员ID</label>
+                    <div class="v__controls">
+                        <input type="text" id="member_id" class="v__control_input" autocomplete="off">
+                    </div>
+                </div>
+                <div class="v__control-group">
+                    <label class="v__control-label">会员信息</label>
+                    <div class="v__controls">
+                        <input type="text" class="v__control_input" id="user" placeholder="用户名/昵称/手机号码" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter-item clearfix">
+            <div class="filter-item__field">
+                <div class="v__control-group">
+                    <label class="v__control-label"></label>
+                    <div class="v__controls">
+                        <a class="btn btn-primary search"><i class="icon icon-search"></i> 搜索</a>
+                        <a class="btn btn-success ml-15 dataExcel">导出EXCEL</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<div class="mb-10 flex flex-pack-justify">
+    <div class="">
+        <a class="btn btn-default delLists" href="javascript:void(0);">删除</a>
+    </div>
+</div>
+<table class="table v-table table-auto-center">
+    <thead>
+    <tr class="order-list-item">
+        <th><input type="checkbox" id="checkAll"></th>
+        <th>ID</th>
+        <th>用户ID</th>
+        <th>会员信息</th>
+        <th>优惠劵号码</th>
+        <th>优惠金额</th>
+        <th>状态</th>
+        <th>来源</th>
+        <th>领取时间</th>
+        <th>使用时间</th>
+        <th>订单号</th>
+        <th>使用店铺</th>
+        <th class="col-md-2 pr-14 operationLeft">操作</th>
+    </tr>
+    </thead>
+    <tbody id="list">
+
+    </tbody>
+</table>
+<input type="hidden" id="page_index">
+<nav aria-label="Page navigation" class="clearfix">
+    <ul id="page" class="pagination pull-right"></ul>
+</nav>
+<!-- page end -->
+{/block}
+{block name="script"}
+<script>
+    require(['util'],function(util){
+        util.initPage(getMemberList);
+        function getMemberList(page_index){
+            $("#page_index").val(page_index);
+            var user = $("#user").val();
+            var member_id = $("#member_id").val();
+            $.ajax({
+                type : "post",
+                url : "{:__URL('PLATFORM_MAIN/user/coupons')}",
+                async : true,
+                data : {
+                    "page_index" : page_index,
+                    "search_text" : user,
+                    "member_id" : member_id
+                },
+                success : function(data) {
+                    var html = '';
+                    if (data["data"].length > 0) {
+                        for (var i = 0; i < data["data"].length; i++) {
+
+                            html += '<tr class="goods-items" style="min-height:80px;">';
+                            html +='<td><input type="checkbox" name="check_uid" value='+ data["data"][i]["coupon_id"]+'></td>';
+                            html += '<td>'+ data["data"][i]["coupon_id"]+'</td>';
+                            html += '<td>'+ data["data"][i]["uid"]+'</td>';
+                            html += '<td>'+ data["data"][i]["name"]+'</td>';
+                            html += '<td>'+ data["data"][i]["coupon_code"]+'</td>';
+                            html += '<td>'+ data["data"][i]["money"]+'</td>';
+                            html += '<td>'+ data["data"][i]["state_name"]+'</td>';
+                            html += '<td>'+ data["data"][i]["type_name"]+'</td>';
+                            html += '<td>'+ data["data"][i]["fetch_time"]+'</td>';
+                            html += '<td>'+ data["data"][i]["use_time"]+'</td>';
+                            html += '<td>'+ data["data"][i]["order_no"]+'</td>';
+                            html += '<td>'+ data["data"][i]["shop_name"]+'</td>';
+                            html += '<td>';
+                            html += '<a href="javascript:void(0);" class="btn-operation delList" data-id ='+ data['data'][i]['coupon_id']+' >删除</a>';
+                            html += '</td>';
+                            html += '</tr>';
+                        }
+
+                    } else {
+                        html += '<tr align="center"><td colspan="11" class="h-200">暂无符合条件的数据记录</td></tr>';
+                    }
+                    $('#page').paginator('option', {
+                        totalCounts: data['total_count']  // 动态修改总数
+                    });
+                    $("#list").html(html);
+                    util.tips();
+                    delList();
+                }
+            });
+        }
+        $('.search').on('click',function(){
+            util.initPage(getMemberList);
+        });
+
+        $('.delLists').on('click',function(){
+            var check_uid = $("input:checkbox[name='check_uid']:checked").map(function (index, elem) {
+                return $(elem).val();
+            }).get().join(',');
+            if(check_uid==''){
+                util.message('请先选择对应的记录','danger');
+                return false;
+            }
+            util.alert('是否删除优惠劵？',function(){
+                $.ajax({
+                    type : "post",
+                    url : "{:__URL('PLATFORM_MAIN/User/deleteCoupons')}",
+                    async : true,
+                    data : {
+                        "id" : check_uid
+                    },
+                    success : function(data) {
+                        if (data["code"] > 0) {
+                            util.message(data["message"],'success',getMemberList($('#page_index').val()));
+                        }else{
+                            util.message(data["message"],'danger');
+                        }
+                    }
+                });
+            })
+        });
+
+        // 移除黑名单
+        function delList(){
+            $('.delList').on('click',function(){
+                var uid = $(this).data('id');
+                $(".tooltip.fade.top.in").remove();
+                util.alert('是否删除优惠劵？',function(){
+                    $.ajax({
+                        type : "post",
+                        url : "{:__URL('PLATFORM_MAIN/User/deleteCoupons')}",
+                        async : true,
+                        data : {
+                            "id" : uid
+                        },
+                        success : function(data) {
+                            if (data["code"] > 0) {
+                                util.message(data["message"],'success',getMemberList($("#page_index").val()));
+                            }else{
+                                util.message(data["message"],'danger');
+                            }
+                        }
+                    });
+                })
+            })
+        }
+
+        /**
+         * 会员数据导出
+         */
+        $('.dataExcel').on('click',function(){
+            var tip1 = document.getElementById("tip1").innerText;
+            var tip1 = parseInt(tip1)+parseInt(1);
+            var total_tips2=tip1>99?"99+":tip1;
+
+            var search_text = $("#user").val();
+            var member_id = $("#member_id").val();
+
+            $.ajax({
+                type: "get",
+                url: "{:__URL('PLATFORM_MAIN/user/couponDataExcel')}",
+                async: true,
+                data: {
+                    "search_text": search_text,
+                    "member_id": member_id
+                },
+                success: function (data) {
+                    if (data["code"] == 0) {
+                        document.getElementById("tip1").innerText = total_tips2;
+                        util.message(data["message"], 'success', getMemberList($('#page_index').val()));
+                    } else {
+                        util.message(data["message"], 'danger', getMemberList($('#page_index').val()));
+                    }
+                }
+            })
+        })
+        //    点击全选
+        $("#checkAll").on('click',function(){
+            $(".v-table input[type = 'checkbox']").prop("checked", this.checked);
+        })
+
+    })
+
+</script>
+{/block}

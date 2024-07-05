@@ -280,7 +280,7 @@ class Task extends Controller
         foreach ($website_id as $k => $v) {
             $event->autoGrantGlobalBonus($v);
             $event->autoGrantAreaBonus($v);
-            $event->autoGrantTeamBonus($v);
+//            $event->autoGrantTeamBonus($v);
         }
         unset($v);
     }
@@ -1455,10 +1455,10 @@ class Task extends Controller
     }
 
     /**
-     * 手动结算订单
-     *
-     * @throws \Exception
-     */
+ * 手动结算订单
+ *
+ * @throws \Exception
+ */
     public function handSettleOrder(){
         $order_id = request()->param('order_id', 0);
         $order = new Order();
@@ -1477,5 +1477,21 @@ class Task extends Controller
         $distribution->updateOrderCommission($params);
 
         echo "success";die;
+    }
+
+    /**
+     * 手动结算订单
+     *
+     * @throws \Exception
+     */
+    public function handGrantTeamBonus(){
+        $website_id = 1;
+        $params['website_id'] = $website_id;
+//        $params['type'] = 2;
+        $team_status = getAddons('teambonus', $website_id);
+        if ($team_status == 1) {
+            hook('autoGrantTeamBonus', $params); //队长分红发放到账户余额，已发放分红增加，待发放分红减少
+        }
+        echo 'success';die;
     }
 }
